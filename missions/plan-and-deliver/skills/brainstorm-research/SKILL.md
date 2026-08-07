@@ -128,22 +128,22 @@ Under Checkpoint trust, **happy-path protocol steps auto-advance without a turn-
 | **4** — Present for approval | **Gate** — **first developer-pick gate on this lane** | Report approval (below) |
 | **5** — On Approve report | Auto-advance to **`mission_control_refocus_parent_lane`** + terminal MCP result | — |
 | **6** — On Abandon dispatch | Auto-advance to refocus + terminal MCP result | — |
-| **Revise research** at step **4** | Auto-advance back to steps **1–3** on this lane | no gate until step **4** re-presents |
+| **Continue brainstorming** at step **4** | Auto-advance back to steps **1–3** on this lane | no gate until step **4** re-presents |
 
 ### Report approval gate (binding)
 
-USER_CHECKPOINT — approve brainstorm report, revise research, or abandon dispatch on this lane. defaultOptionId: approve-report
+USER_CHECKPOINT — continue brainstorming, approve report, or abandon dispatch on this lane. defaultOptionId: continue-brainstorming
 
 **Spawned lane — MCP structured choice (binding):** On spawned **`brainstorm-research`** lanes, **in order to use the AskQuestion modal**, call **`mission_control_present_structured_choice`** (recap in **`displayMarkdown`**; options in **`askQuestion`**) per **`../README.md`** § *Recap, structured choice, act* and **`.sedea/centers/sedea/rules/2_ask-question-instructions.mdc`**.
 
 | Option id | Label |
 |-----------|--------|
+| `continue-brainstorming` | Continue brainstorming — explore more sources or questions |
 | `approve-report` | Approve report — send to Squad Leader |
-| `revise-research` | Revise research — continue session on this lane |
 | `abandon-dispatch` | Abandon dispatch — direction not viable |
 | `more-details` | More details for option _ |
 
-**Forbidden at step 4:** prose-only recap with bullet menus; tell-me-when / review-and-reply handoff; ending without **`mission_control_present_structured_choice`** / **AskQuestion** on spawned lanes.
+**Forbidden at step 4:** listing **`approve-report`** as the first mission-specific option or using **`defaultOptionId: approve-report`** — terminal handoff requires an explicit Approve pick after research continuation is offered first; prose-only recap with bullet menus; tell-me-when / review-and-reply handoff; ending without **`mission_control_present_structured_choice`** / **AskQuestion** on spawned lanes.
 
 ## Research session (steps)
 
@@ -173,7 +173,7 @@ USER_CHECKPOINT — approve brainstorm report, revise research, or abandon dispa
 
    - **Next-step resolution:** Auto-advance to terminal MCP result — no additional `USER_CHECKPOINT` on this step.
 
-**On Revise research** — Continue steps **1–3** on this lane; return to step **4** when the report is updated.
+**On Continue brainstorming** — Continue steps **1–3** on this lane (more sources, questions, or report revision); return to step **4** when the report is updated.
 
    - **Next-step resolution:** Auto-advance through revision work — no gate until step **4** re-presents.
 
