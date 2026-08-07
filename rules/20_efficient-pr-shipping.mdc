@@ -542,7 +542,7 @@ Break work down recursively until each piece is a **PR leaf**: one reviewable **
 
 ### Planning and validation (diagrams)
 
-For **multi-step or multi-PR** plans, include **at least one Mermaid diagram** (dependency order, data/control flow, or PR slice boundaries). A single trivial PR in one obvious place may omit a diagram. Sequence-heavy work can add a **numbered list** or **PR ↔ module** table alongside Mermaid; prefer Mermaid for **structure** because it renders in GitHub and in-editor. Safe-generation contract: [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md) — opaque ids, sequence `Note` single-line (no `<br/>`), flowchart-only `<br/>` in quoted labels.
+For **multi-step or multi-PR** plans, include **at least one Mermaid diagram** (dependency order, data/control flow, or PR slice boundaries). A single trivial PR in one obvious place may omit a diagram. Sequence-heavy work can add a **numbered list** or **PR ↔ module** table alongside Mermaid; prefer Mermaid for **structure** because it renders in GitHub and in-editor. Safe-generation contract: [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md) — opaque ids, sequence `Note` single-line (no `<br/>`, no bare `;`), sequence message labels without bare `;`, flowchart-only `<br/>` in quoted labels.
 
 After each decomposition step, make validation easy for the human: **(a)** diagram, **(b)** ordered leaves marked **independent** vs **depends on …** (see [Plan for independence](#plan-for-independence)), **(c)** explicit **out of scope**. Prefer validation before hosting repo worktrees spin up.
 

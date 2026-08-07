@@ -369,7 +369,7 @@ One or two sentences on how this plan keeps each PR single-concern (Strategy #6)
 
 #### `### Sequencing`
 
-How PRs relate in time — **authoritative for depth-first expand eligibility** (see **development-process.md** § *Depth-first plan-tree traversal*). Use staged bullets with explicit **`(sequential)`** or **`(parallel)`** labels, e.g. *Stage 1 (sequential): PR 1 → PR 2; Stage 2 (parallel): PR 3, PR 4*. Labels must match bolded titles in **`### PR list`**. Optional Mermaid supplements the bullets; when both exist, the staged bullet form governs **`new-plan`** gates. When emitting Mermaid, follow [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md) (opaque ids, sequence `Note` single-line, flowchart-only `<br/>`).
+How PRs relate in time — **authoritative for depth-first expand eligibility** (see **development-process.md** § *Depth-first plan-tree traversal*). Use staged bullets with explicit **`(sequential)`** or **`(parallel)`** labels, e.g. *Stage 1 (sequential): PR 1 → PR 2; Stage 2 (parallel): PR 3, PR 4*. Labels must match bolded titles in **`### PR list`**. Optional Mermaid supplements the bullets; when both exist, the staged bullet form governs **`new-plan`** gates. When emitting Mermaid, follow [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md) (opaque ids, sequence `Note` single-line, no bare `;` in message labels, flowchart-only `<br/>`).
 
 #### `### PR list`
 

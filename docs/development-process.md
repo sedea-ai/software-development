@@ -132,7 +132,7 @@ Labels reuse numbers and § symbols across documents. **Read the owning doc** be
 
 ### Diagram and feedback channels
 
-- **Mermaid** (or similar) — Diagrams inside plan files (mode #1 **Architectural design**, mode #2 **Code design**, mode #3 **Sequencing** optional graph). Safe-generation contract (opaque ids, no reserved bare ids including uppercased traps like `OPT`/`ALT`/`END`/`LOOP`, sequence `Note` single-line, flowchart-only `<br/>`): [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md). **Planner skills** (`master-planner`, `phase-planner`) must run `node .sedea/centers/sedea/scripts/verify-mermaid-authoring.mjs "<absolute plan path>"` after any Mermaid fence edit and before echo/handoff.
+- **Mermaid** (or similar) — Diagrams inside plan files (mode #1 **Architectural design**, mode #2 **Code design**, mode #3 **Sequencing** optional graph). Safe-generation contract (opaque ids, no reserved bare ids including uppercased traps like `OPT`/`ALT`/`END`/`LOOP`, sequence `Note` single-line, no bare `;` in sequence message labels, flowchart-only `<br/>`): [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md). **Planner skills** (`master-planner`, `phase-planner`) must run `node .sedea/centers/sedea/scripts/verify-mermaid-authoring.mjs "<absolute plan path>"` after any Mermaid fence edit and before echo/handoff.
 - **Slack**, support tickets, production telemetry, customer interviews — Async inputs listed under **Cadence** → *Customer feedback* / *New ideas from teammates*; drained at *Plan Updates*, not plan-authoring tools.
 
 
