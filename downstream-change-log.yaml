@@ -1,6 +1,22 @@
 ---
 lastSyncedUpstreamSha: 8b7019dc923300ee7d45aea9a886f15e3cb64ed8
-entries: []
+entries:
+- commitSha: e42cca2cd22f2854a8cce950bc36976d574ce15c
+  capturedAt: '2026-08-09T16:01:06-04:00'
+  summary: Harden extensions-only-link dogfood readiness in agent contracts.
+  paths:
+  - missions/debug-and-fix/skills/debug-and-fix/SKILL.md
+  - missions/plan-and-deliver/docs/coding-session-ship-chain.md
+  - missions/plan-and-deliver/skills/coding-session/SKILL.md
+  - rules/20_efficient-pr-shipping.mdc
+- commitSha: d6a1876135edb1c26e66fe649d04f57da6c8efb4
+  capturedAt: '2026-08-09T16:31:19-04:00'
+  summary: Harden extensions-only-link dogfood readiness in agent contracts (#50)
+  paths:
+  - missions/debug-and-fix/skills/debug-and-fix/SKILL.md
+  - missions/plan-and-deliver/docs/coding-session-ship-chain.md
+  - missions/plan-and-deliver/skills/coding-session/SKILL.md
+  - rules/20_efficient-pr-shipping.mdc
 history:
 - upstreamSha: 6b5b9ce52e061c06a36b4a1fa61f9753545d0101
   syncedAt: '2026-08-02T23:15:33Z'
@@ -15,5 +31,5 @@ history:
   syncedAt: '2026-08-04T22:41:06Z'
   centerPrUrl: https://github.com/sedea-ai/software-development/pull/47
 - upstreamSha: 8b7019dc923300ee7d45aea9a886f15e3cb64ed8
-  syncedAt: "2026-08-09T20:10:42Z"
+  syncedAt: '2026-08-09T20:10:42Z'
   centerPrUrl: https://github.com/sedea-ai/software-development/pull/49
