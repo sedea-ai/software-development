@@ -596,7 +596,7 @@ One or more diagrams showing what the implementation will look like. Pick the di
 - State diagram — lifecycle / state-machine changes.
 - ER / schema diagram — data model or database changes.
 
-Use **Mermaid** (in fenced ```mermaid blocks) so the diagrams render in Cursor and in GitHub. Include only what is necessary to understand the *shape*; don't draft pseudocode here. If multiple diagrams are needed, label each one. Follow [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md) — opaque ids, sequence `Note` single-line (no `<br/>`), flowchart-only `<br/>` in quoted node labels.
+Use **Mermaid** (in fenced ```mermaid blocks) so the diagrams render in Cursor and in GitHub. Include only what is necessary to understand the *shape*; don't draft pseudocode here. If multiple diagrams are needed, label each one. Follow [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md) — opaque ids, sequence `Note` single-line (no `<br/>`, no bare `;`), sequence message labels without bare `;`, flowchart-only `<br/>` in quoted node labels.
 
 **High-risk abbreviations:** Never use uppercased reserved keywords as bare ids — e.g. `OPT`, `ALT`, `END`, `LOOP`, `PAR`, `AND`, `AS` (Mermaid matches case-insensitively → `opt`, `alt`, …). Prefer opaque ids + labels (`participant scopeOpts as OPT`, `participant ScopeOpts as Scope options`). Do **not** reuse a flowchart node id as a sequence `participant` id.
 
@@ -610,7 +610,7 @@ After the §4 Architectural design StrReplace (any fenced ```mermaid in the Mast
    node .sedea/centers/sedea/scripts/verify-mermaid-authoring.mjs "<absolute-path-to-master-plan>"
    ```
 
-2. **Exit 0** → continue. **Non-zero** → fix reserved bare ids / Note bodies in the plan file, re-run until exit **0**.
+2. **Exit 0** → continue. **Non-zero** → fix reserved bare ids / Note bodies / message-label semicolons in the plan file, re-run until exit **0**.
 3. **Forbidden:** complexity echo or Step **7** with failing Mermaid.
 
 Re-run after any Mermaid-only revise before re-echo.
