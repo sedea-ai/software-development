@@ -228,6 +228,28 @@ When pre-PR validation and push preconditions pass:
 
 If creation is not authorized, produce the PR prompt below and set `continuationStatus: "active"` — do not call `gh pr create`.
 
+## `gh pr create` procedure (binding)
+
+When authorized to open the PR ([Gate](#gate), [Checkpoint — auto-advance `authorize-create-pr`](#checkpoint--auto-advance-authorize-create-pr-binding), or [Pre-gh authorization gate](#pre-gh-authorization-gate-binding)):
+
+1. **Derive PR base branch** — From inline **`baseRef`** (e.g. `origin/main`): strip a leading `origin/` prefix → **`<prBaseBranch>`** (e.g. `main`). When **`baseRef`** uses another remote prefix, strip that remote name and `/` only.
+2. **Pre-create self-check** — `gh api repos/{owner}/{repo} --jq .default_branch`. When the result ≠ **`<prBaseBranch>`**, **`--base` is mandatory** (always safe to pass even when equal).
+3. **Create PR** — From **`worktreePath`**:
+
+```bash
+gh pr create \
+  --base "<prBaseBranch>" \
+  --head "<worktreeName>" \
+  --title "<title>" \
+  --body "<body>"
+```
+
+Body per rule **20** § *Comprehensive PR descriptions*.
+
+4. **Forbidden:** bare **`gh pr create`** without **`--base`** — GitHub repository **`default_branch`** may differ on fork layouts.
+
+Cross-ref: rule **20** § *Hosting-repo PR base branch (binding)*. **Center-repo PRs:** [`.sedea/centers/sedea/rules/3_center.mdc`](.sedea/centers/sedea/rules/3_center.mdc) § *Center-repo worktree procedure*; **`development-process.md`** § *Center-repo PR base (binding)*.
+
 ## PR prompt fallback
 
 When direct PR creation is not authorized, generate a copy-paste prompt for a future **`coding-session`** ship pass. Gather:
