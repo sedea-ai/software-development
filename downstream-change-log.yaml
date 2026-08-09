@@ -1,24 +1,6 @@
 ---
-lastSyncedUpstreamSha: 42052857e355f0cbabd63d3f4cb538b05beee4f1
-entries:
-- commitSha: 1c6ca6df27da612722ff9a7d04e25e29dd834fad
-  capturedAt: '2026-08-06T15:05:02-04:00'
-  summary: 'Enforce pin transcript silence and pr-plan null-parent mode'
-  paths:
-  - docs/development-process.md
-  - missions/plan-and-deliver/skills/coding-session/SKILL.md
-  - missions/plan-and-deliver/skills/pr-plan/SKILL.md
-  - rules/20_efficient-pr-shipping.mdc
-  - rules/40_maintain-rules.mdc
-- commitSha: 2fe719e8208eea41d8ea5762d7936b7baba03b9d
-  capturedAt: '2026-08-06T15:08:26-04:00'
-  summary: 'Pin transcript silence + pr-plan null-parent mode (community#32) (#48)'
-  paths:
-  - docs/development-process.md
-  - missions/plan-and-deliver/skills/coding-session/SKILL.md
-  - missions/plan-and-deliver/skills/pr-plan/SKILL.md
-  - rules/20_efficient-pr-shipping.mdc
-  - rules/40_maintain-rules.mdc
+lastSyncedUpstreamSha: 8b7019dc923300ee7d45aea9a886f15e3cb64ed8
+entries: []
 history:
 - upstreamSha: 6b5b9ce52e061c06a36b4a1fa61f9753545d0101
   syncedAt: '2026-08-02T23:15:33Z'
@@ -32,3 +14,6 @@ history:
 - upstreamSha: 42052857e355f0cbabd63d3f4cb538b05beee4f1
   syncedAt: '2026-08-04T22:41:06Z'
   centerPrUrl: https://github.com/sedea-ai/software-development/pull/47
+- upstreamSha: 8b7019dc923300ee7d45aea9a886f15e3cb64ed8
+  syncedAt: "2026-08-09T20:10:42Z"
+  centerPrUrl: https://github.com/sedea-ai/software-development/pull/49
