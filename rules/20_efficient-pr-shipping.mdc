@@ -583,6 +583,17 @@ Every description starter (including on the first push in this cadence) should c
 - **Plan lineage (when applicable)** — one line with plan slug or path (e.g. `.sedea/operations/**/plans/<slug>.plan.md`) and, if useful, "see Mermaid in plan" so intent is not trapped in chat.
 - **Verification pointer** — how to confirm behavior (which tests or observable behavior); still no separate "test plan" essay.
 
+## Hosting-repo PR base branch (binding)
+
+When **`create-pr`** opens a PR on the **hosting repo** (or separate product repo worktree):
+
+1. Resolve **`<prBaseBranch>`** from inline **`baseRef`** — strip remote prefix (typically `origin/` → `main`).
+2. **`gh pr create`** **must** include **`--base "<prBaseBranch>" --head "<worktreeName>"`**. **Forbidden:** bare **`gh pr create`** without **`--base`**.
+3. **Pre-create self-check:** When **`gh api repos/<owner>/<repo> --jq .default_branch`** ≠ **`<prBaseBranch>`**, **`--base` is mandatory** (always safe to pass even when equal).
+4. Executable procedure: [`create-pr/SKILL.md`](../missions/plan-and-deliver/skills/create-pr/SKILL.md) § *`gh pr create` procedure (binding)*.
+
+**Center-repo PRs** (content in a **center git repository**): rule **20** does **not** apply — use [`.sedea/centers/sedea/rules/3_center.mdc`](.sedea/centers/sedea/rules/3_center.mdc) § *Center-repo worktree procedure* and **`development-process.md`** § *Center-repo PR base (binding)*.
+
 ## Worktree naming
 
 Names apply to the **hosting repo** (or separate repo) worktree that receives the code change — the **`--worktree-name`** on center **`worktree-setup.sh`** (same string as the git ref the script creates), not necessarily the repo where `.sedea/` planning scripts run. **Worktree setup examples** above are split by repo type — use Example A or B, not both.
