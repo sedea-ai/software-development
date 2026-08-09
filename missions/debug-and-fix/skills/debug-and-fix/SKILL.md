@@ -194,20 +194,20 @@ Follow [`.sedea/centers/sedea/rules/0_hosting-repo.mdc`](.sedea/centers/sedea/ru
 | Step | Action |
 |------|--------|
 | 1 | From **`HOSTING_ROOT`**, run center **`worktree-setup.sh`** with `--hosting-root`, `--worktree-path` (absolute **`WORKTREE_ROOT`** from step **1**), `--worktree-name`, `--base-ref origin/main`. **Forbidden on the default path:** inline **`git worktree add`**. |
-| 2 | Parse the **one JSON line on stdout**. Set **`WORKTREE_ROOT`** from hint **`worktreeRoot`**. When hint **`bootstrapStatus`** is **`success`**, **`skipped-noop`**, or **`skipped-idempotent`**, set **`outputs.bootstrapStatus: success`** and **`outputs.bootstrapMode`** from the hint. **Do not** run inline [`worktree-bootstrap/SKILL.md`](../../../plan-and-deliver/skills/worktree-bootstrap/SKILL.md) after successful setup. |
+| 2 | Parse the **one JSON line on stdout**. Set **`WORKTREE_ROOT`** from hint **`worktreeRoot`**. When hint **`bootstrapStatus`** is **`success`**, **`skipped-noop`**, or **`skipped-idempotent`**, set **`outputs.bootstrapStatus: success`** and **`outputs.bootstrapMode`** from the hint. **Do not** run inline [`worktree-bootstrap/SKILL.md`](../../../plan-and-deliver/skills/worktree-bootstrap/SKILL.md) after successful setup. When **`outputs.bootstrapMode`** is **`extensions-only-link`**, also pass [Dogfood readiness (`extensions-only-link`)](../../../plan-and-deliver/skills/coding-session/SKILL.md#dogfood-readiness-extensions-only-link-binding) (worktree-local native `node_modules` + mission-control MCP SDK `types.d.ts` when that extension exists) before treating bootstrap as ready — on failure set **`bootstrapStatus: failed`** and open [Bootstrap retry gate](#bootstrap-retry-gate-binding). |
 | 3 | When JSON **`nextAction`** is **`attach-required`**, MCP **`sedea_add_worktree_folder`** with absolute **`WORKTREE_ROOT`**. **Forbidden:** attach before setup exits **0**. |
 
 **Exception (inline retry only):** When step **1** fails or bootstrap is not success-class, stop product edits and offer retry per rule **20** § *Bootstrap profiles* — inline deprecated [`worktree-bootstrap/SKILL.md`](../../../plan-and-deliver/skills/worktree-bootstrap/SKILL.md) **only** when setup failed and the developer attests retry (not spawn-by-default).
 
-Do **not** edit product code before **`outputs.bootstrapStatus: success`**.
+Do **not** edit product code before **`outputs.bootstrapStatus: success`** (including dogfood readiness when mode is **`extensions-only-link`**).
 
 - **Next-step resolution:** Auto-advance to step **5** on happy path — no `USER_CHECKPOINT` until [Bootstrap retry gate](#bootstrap-retry-gate-binding) when setup or bootstrap is not success-class.
 
 #### Bootstrap retry gate (binding)
 
-When center **`worktree-setup.sh`** exits non-zero or hint **`bootstrapStatus`** is not success-class, close the turn with structured choice **before** product edits under **`WORKTREE_ROOT`**.
+When center **`worktree-setup.sh`** exits non-zero, hint **`bootstrapStatus`** is not success-class, or **`extensions-only-link`** [Dogfood readiness](../../../plan-and-deliver/skills/coding-session/SKILL.md#dogfood-readiness-extensions-only-link-binding) fails, close the turn with structured choice **before** product edits under **`WORKTREE_ROOT`**.
 
-**When required:** Exception-only retry path after setup failure. **Forbidden:** opening this gate when setup already reported success-class **`bootstrapStatus`**. **Forbidden:** prose-only bootstrap recap without this gate under Checkpoint trust.
+**When required:** Exception-only retry path after setup or dogfood-readiness failure. **Forbidden:** opening this gate when setup already reported success-class **`bootstrapStatus`** **and** dogfood readiness passed (or mode is not **`extensions-only-link`**). **Forbidden:** prose-only bootstrap recap without this gate under Checkpoint trust.
 
 Put resolved **`WORKTREE_ROOT`**, **`HOSTING_ROOT`**, **`outputs.bootstrapMode`**, and any attested **`bootstrapSkipFlags`** in **`display.markdown`**.
 
