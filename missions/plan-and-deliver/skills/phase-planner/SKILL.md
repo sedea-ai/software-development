@@ -396,7 +396,7 @@ flowchart LR
 - Emit `LegendTouch` only when the phase has at least one `phaseTouch` node; emit `LegendNew` only when it has at least one `phaseNew` node. If the phase has only one of the two, drop the unused legend node and its `class … phaseNew` / `class … phaseTouch` entry from the legend.
 - **Skip** the `Legend` subgraph for non-flowchart reused diagrams (`sequenceDiagram`, `erDiagram`, `stateDiagram`, etc.) — `subgraph` is flowchart-only syntax. For those, fall back to a short prose legend below the diagram (e.g. "*Bold actors are touched in this phase.*").
 
-**Flowchart vs sequence (binding):** Do **not** copy flowchart patterns into `sequenceDiagram` blocks. HTML `<br/>` in quoted labels and `subgraph` / `classDef` / `class` styling are **flowchart-only**. Sequence diagrams use opaque participant ids (`participant plannerAgent as Planner`) and single-line `Note` statements — **forbidden** in Note bodies: `<br/>`, multi-line Note text. Full contract: [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md).
+**Flowchart vs sequence (binding):** Do **not** copy flowchart patterns into `sequenceDiagram` blocks. HTML `<br/>` in quoted labels and `subgraph` / `classDef` / `class` styling are **flowchart-only**. Sequence diagrams use opaque participant ids (`participant plannerAgent as Planner`) and single-line `Note` statements — **forbidden** in Note bodies: `<br/>`, multi-line Note text, bare semicolons (`;`); **forbidden** in arrow message labels after `:`: bare semicolons (`;`). Full contract: [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md).
 
 **High-risk abbreviations:** Never use uppercased reserved keywords as bare ids — e.g. `OPT`, `ALT`, `END`, `LOOP`, `PAR`, `AND`, `AS` (Mermaid matches case-insensitively → `opt`, `alt`, …). Prefer opaque ids + labels (`participant scopeOpts as OPT`, `participant ScopeOpts as Scope options`). Do **not** reuse a flowchart node id as a sequence `participant` id.
 
@@ -412,7 +412,7 @@ A new Mermaid diagram giving a visual representation of the change introduced by
 - State diagram — when the change introduces a new lifecycle / state machine.
 - ER / schema diagram — when the change is a data-model / DB delta.
 
-Use **Mermaid** in fenced ```` ```mermaid ```` blocks so the diagram renders in Cursor and in GitHub. Include only what is necessary to understand the *shape* of the change; this is design granularity, not pseudocode. Follow [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md) — opaque ids; when the diagram is a **flowchart**, `<br/>` in quoted labels and Legend `subgraph` are allowed; when it is a **`sequenceDiagram`**, use single-line `Note` only (no `<br/>`, no flowchart `subgraph`/`classDef`).
+Use **Mermaid** in fenced ```` ```mermaid ```` blocks so the diagram renders in Cursor and in GitHub. Include only what is necessary to understand the *shape* of the change; this is design granularity, not pseudocode. Follow [`.sedea/centers/sedea/docs/mermaid-authoring.md`](.sedea/centers/sedea/docs/mermaid-authoring.md) — opaque ids; when the diagram is a **flowchart**, `<br/>` in quoted labels and Legend `subgraph` are allowed; when it is a **`sequenceDiagram`**, use single-line `Note` only (no `<br/>`, no bare `;` in Notes or message labels, no flowchart `subgraph`/`classDef`).
 
 The § 3 diagram complements § 2's reused-with-highlight diagram: § 2 shows *where in the parent's design* this phase lives; § 3 shows *what new shape* this phase introduces. They are usually different diagram types — § 2 inherits the parent's type (often component or flow), § 3 picks whatever conveys the per-phase change best (often sequence or state).
 
@@ -427,7 +427,7 @@ After **any** Write/StrReplace that creates or edits a fenced ```` ```mermaid ``
    ```
 
 2. **Exit 0** → continue to Step **4f** / **5b**.
-3. **Non-zero** → fix reserved bare ids / Note bodies in the plan file, re-run until exit **0**. **Forbidden:** echoing or handing off with failing Mermaid.
+3. **Non-zero** → fix reserved bare ids / Note bodies / message-label semicolons in the plan file, re-run until exit **0**. **Forbidden:** echoing or handing off with failing Mermaid.
 
 Also run this lint after any later Mermaid-only revise (Step **5d**) before re-echo.
 
