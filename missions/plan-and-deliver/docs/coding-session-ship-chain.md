@@ -165,7 +165,7 @@ When Checkpoint auto-advance does **not** apply (non-Checkpoint dispatch, or any
 
 ## Ship cut-point gate (approve, commit, Before deploy)
 
-**Precondition:** `outputs.bootstrapStatus: success` (or bootstrap not required on this run). If bootstrap is `pending` or `failed`, finish or retry [Worktree bootstrap (mandatory)](../skills/coding-session/SKILL.md#worktree-bootstrap-mandatory) before opening this gate.
+**Precondition:** `outputs.bootstrapStatus: success` (or bootstrap not required on this run). If bootstrap is `pending` or `failed`, finish or retry [Worktree bootstrap (mandatory)](../skills/coding-session/SKILL.md#worktree-bootstrap-mandatory) before opening this gate. When **`outputs.bootstrapMode`** is **`extensions-only-link`**, also satisfy [Dogfood readiness (`extensions-only-link`)](../skills/coding-session/SKILL.md#dogfood-readiness-extensions-only-link-binding) — do not open this gate (or Before deploy) on success-class JSON alone if worktree native deps are missing.
 
 When implementation is **ready for developer review** (or the developer signals *ready for review* / *review my changes*), **stop** implementation edits and reach this gate — either auto-advance (Checkpoint clean path) or call **`mission_control_present_structured_choice`** (non-Checkpoint or exception path). This implements **20_efficient-pr-shipping.mdc** § *Review before commit* — **developer code review comes before any commit** — and combines what were separate approve, commit, and Before deploy inline modals into **one** structured choice when plan-anchored and §7 has work to walk.
 
@@ -348,7 +348,7 @@ If commit fails or tree stays dirty after commit, stop with `partial` — do not
 
 ## Before deploy deploy-walk handoff
 
-**Precondition:** `outputs.bootstrapStatus: success`. **Do not** run Before deploy **`deploy-walk`** inline while bootstrap is `pending` or `failed`.
+**Precondition:** `outputs.bootstrapStatus: success` (and [Dogfood readiness](../skills/coding-session/SKILL.md#dogfood-readiness-extensions-only-link-binding) when mode is **`extensions-only-link`**). **Do not** run Before deploy **`deploy-walk`** inline while bootstrap is `pending` or `failed`.
 
 Run from [Act after ship cut-point pick](#act-after-ship-cut-point-pick) when the cut-point pick authorizes inline walk (**`commit-only`**, **`executive-override-push`**, or **`spawn-before-deploy-walk`**) — **no second AskQuestion** for the walk on that path. **Do not** spawn **`pre-pr-review`** or run inline **`create-pr`** until this step completes or is skipped via **`commit-only-skip-before-deploy`** / **`skip-before-deploy`**.
 

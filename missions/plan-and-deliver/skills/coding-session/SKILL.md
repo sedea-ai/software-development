@@ -1126,7 +1126,7 @@ Run only **after** [Pre-worktree validation](#pre-worktree-validation-plan-compl
 
  This MCP attach is mandatory before post-setup work. If the MCP call fails, stop with `partial`; report the worktree path and the attach error, and keep `continuationStatus: "active"` so the Squad Leader does not close the implementation lane.
 
-4. **Bootstrap complete (default path)** — When step **1** hint **`bootstrapStatus`** is **`success`**, **`skipped-noop`**, or **`skipped-idempotent`**, set **`outputs.bootstrapStatus: success`** (and **`outputs.bootstrapMode`** from hint). Set **`outputs.shipPhase: worktree`** on the first MCP result call that reports setup complete. **Do not** run inline **`worktree-bootstrap`** on the default path. **Exception:** retry only per [Worktree bootstrap (inline mandatory)](#worktree-bootstrap-inline-mandatory) when setup failed or developer attests **`--skip-*`** on a follow-up turn.
+4. **Bootstrap complete (default path)** — When step **1** hint **`bootstrapStatus`** is **`success`**, **`skipped-noop`**, or **`skipped-idempotent`**, set **`outputs.bootstrapStatus: success`** (and **`outputs.bootstrapMode`** from hint). Set **`outputs.shipPhase: worktree`** on the first MCP result call that reports setup complete. **Do not** run inline **`worktree-bootstrap`** on the default path. **Exception:** retry only per [Worktree bootstrap (inline mandatory)](#worktree-bootstrap-inline-mandatory) when setup failed or developer attests **`--skip-*`** on a follow-up turn. When **`outputs.bootstrapMode`** is **`extensions-only-link`** (or the hosting overlay equivalent), pass [Dogfood readiness (`extensions-only-link`)](#dogfood-readiness-extensions-only-link-binding) **before** treating bootstrap as implementation-ready — success-class setup JSON alone is **not** enough if worktree native deps are missing.
 
 5. **Branch** per [Execution mode after worktree attach](#execution-mode-after-worktree-attach):
  - **Spawned implementation lane** → continue with [Spawned implementation lane](#spawned-implementation-lane) (steps 1–7 there).
@@ -1147,7 +1147,19 @@ After Generic flow step **3** (`sedea_add_worktree_folder`) succeeds, **`outputs
 
 **`--skip-*` flags** — Use only when the developer attests partial setup. Record flags in chat and in `outputs.bootstrapSkipFlags`.
 
-**Success** — Set `outputs.bootstrapStatus: success`, then continue to Generic flow step 5. Set `outputs.shipPhase: worktree` on the first MCP result call that reports setup complete (before `implementing`).
+**Success** — Set `outputs.bootstrapStatus: success`, then continue to Generic flow step 5. Set `outputs.shipPhase: worktree` on the first MCP result call that reports setup complete (before `implementing`). When **`outputs.bootstrapMode`** is **`extensions-only-link`**, complete [Dogfood readiness (`extensions-only-link`)](#dogfood-readiness-extensions-only-link-binding) first — if readiness fails, treat as **Failure** below (do not advance to step 5).
+
+### Dogfood readiness (`extensions-only-link`) (binding)
+
+When **`outputs.bootstrapMode`** is **`extensions-only-link`** (or the hosting overlay equivalent that links vscode build artifacts and native extension `out`/`dist`):
+
+1. **Spot-check under `WORKTREE_ROOT` before implementation** (after success-class setup JSON):
+   - **`app/extensions/*/node_modules`** exist (or **`app/extensions/node_modules`** when an npm workspaces root is present).
+   - When **`app/extensions/mission-control/`** exists:  
+     **`app/extensions/mission-control/node_modules/@modelcontextprotocol/sdk/dist/cjs/types.d.ts`** is present.
+2. **If any check fails** — set **`outputs.bootstrapStatus: failed`**, **`outputs.bootstrapFailureReason`** naming the missing path, open the bootstrap retry structured choice — **do not** implement, commit, or launch. **Forbidden:** treating WARN-and-succeed smoke / missing native `node_modules` as success-class readiness.
+3. **Launch after readiness** — default dogfood is **`app/scripts/run-dev-sedea.sh`** from **`$WORKTREE_ROOT`** **without** **`SKIP_BUILD=1`** (post–sedea-ai/app#39 bootstrap retains per-extension **`npm ci`** and may skip native **rebuild** only via **`SKIP_NATIVE_REBUILD`**). Complete hosting overlay § *Fast bootstrap verification checklist* when present.
+4. **Forbidden tip:** recommending **`SKIP_BUILD=1`** as the **default** happy-path launch after success-class link-mode bootstrap. **`SKIP_BUILD=1`** is **break-glass** only (older pins without the retained-`npm ci` fix, or developer-attested partial setup). Prefer re-run center **`worktree-setup.sh`** on a pin that includes the fail-closed bootstrap.
 
 **Failure** — When bootstrap fails:
 
@@ -1201,6 +1213,8 @@ Follow that skill’s **Completion (inline)** — report `bootstrapStatus`, `boo
 | Auto-authorize path skips bootstrap | Auto-authorize skips worktree-open modal only |
 | “Bootstrap note” in ship recap without `bootstrapStatus` in outputs | Set outputs; stop at failure before implementation |
 | Retry with undocumented `--skip-*` | Developer attestation first; record in `bootstrapSkipFlags` |
+| Mapped `bootstrapStatus: success` while native extension `node_modules` / mission-control MCP SDK `types.d.ts` missing (`extensions-only-link`) | `failed` + retry per [Dogfood readiness](#dogfood-readiness-extensions-only-link-binding); do not implement |
+| “Use `SKIP_BUILD=1`” as the primary tip after link-mode success | Fix/re-bootstrap; `SKIP_BUILD` break-glass only |
 
 **Forbidden (default path):** Emit **`mission_control_spawn_agent`** for **`worktree-bootstrap/SKILL.md`**. Center **`worktree-setup.sh`** owns bootstrap on the default path; retry uses **inline** [`worktree-bootstrap/SKILL.md`](../worktree-bootstrap/SKILL.md) per [Worktree bootstrap (inline mandatory)](#worktree-bootstrap-inline-mandatory) only.
 

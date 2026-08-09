@@ -272,7 +272,7 @@ BASE_REF="origin/main"
 
 **Lane ownership:** On a spawned **`coding-session`** implementation lane, [Generic flow](../missions/plan-and-deliver/skills/coding-session/SKILL.md) steps 1–3 are normative. Map **`outputs.bootstrapStatus`** from setup JSON hints — **do not** run inline **`worktree-bootstrap`** after successful setup. Retry only per **`coding-session/SKILL.md`** § *Worktree bootstrap (inline mandatory)* when setup failed.
 
-**Bootstrap inside setup (default).** Center **`worktree-setup.sh`** runs fast bootstrap per **`.cursor/rules/dot-sedea.mdc`** § *Worktree bootstrap mode* (`extensions-only-link`, `none`, or hosting overlay). **`coding-session`** sets **`outputs.bootstrapStatus: success`** from setup hints before implementation. On setup failure, ship phase stays at `worktree` until retry succeeds.
+**Bootstrap inside setup (default).** Center **`worktree-setup.sh`** runs fast bootstrap per **`.cursor/rules/dot-sedea.mdc`** § *Worktree bootstrap mode* (`extensions-only-link`, `none`, or hosting overlay). **`coding-session`** sets **`outputs.bootstrapStatus: success`** from setup hints before implementation. On setup failure, ship phase stays at `worktree` until retry succeeds. On hosting repos with **`extensions-only-link`**, post–sedea-ai/app#39 bootstrap **retains per-extension `npm ci`** and may skip native **rebuild** only (`SKIP_NATIVE_REBUILD`) — linked native `out`/`dist` is **not** license to skip worktree-local extension deps. Agents must also satisfy **`coding-session`** [Dogfood readiness (`extensions-only-link`)](../missions/plan-and-deliver/skills/coding-session/SKILL.md#dogfood-readiness-extensions-only-link-binding) before implementation.
 
 | Profile | When | Action |
 |---------|------|--------|
@@ -316,6 +316,8 @@ When dot-sedea documents a dev launcher script on the hosting repo:
 
 ```bash
 cd "$WORKTREE_ROOT"
+# Prefer default run-dev / launcher after dogfood readiness (no SKIP_BUILD).
+# SKIP_BUILD=1 is break-glass only (older pins / attested partial setup) — see coding-session Dogfood readiness.
 # Run the launcher and fast-restart variants per dot-sedea § *Dev launcher*
 ```
 
@@ -325,6 +327,7 @@ Hub activation must reference add-on packages under **`WORKTREE_ROOT`**, not the
 
 | dot-sedea mode | Typical verification (examples — dot-sedea wins when present) |
 |----------------|------------------------------------------------------------------|
+| **`extensions-only-link`** | Setup exit **0** + success-class status; worktree-local native **`app/extensions/*/node_modules`** (or workspaces root); mission-control MCP SDK **`types.d.ts`** when that extension exists ([Dogfood readiness](../missions/plan-and-deliver/skills/coding-session/SKILL.md#dogfood-readiness-extensions-only-link-binding)); then remainder of hosting **Fast bootstrap verification checklist**. **Forbidden:** treating missing native `node_modules` as success |
 | **`script-bootstrap`** | Script exit **0**; phases in that repo's checklist (for example Docker, submodules, deps, local-docker on orchestrator repos) |
 | **`full`** / linked-build | Build artifacts and add-on **`node_modules`** per dot-sedea checklist; optional fast-restart launch when documented |
 | **`submodule-init`** | Submodule checkout + attested skip flags — not full compile smoke |
