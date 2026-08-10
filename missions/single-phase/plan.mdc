@@ -261,6 +261,7 @@ Parent: null
 - **Target agent role:** Master Plan agent
 - **Assigned skill:** [`.sedea/centers/software-development/missions/plan-and-deliver/skills/master-planner/SKILL.md`](.sedea/centers/software-development/missions/plan-and-deliver/skills/master-planner/SKILL.md)
 - **Inputs:** §4 seed (`seedBlock`, `featurePlanningTitle`, `prdRef`, `Parent: null`, `related: []`) compiled into spawn **`inputs`** per **`plan-and-deliver/plan.mdc`** §5 *Spawn preflight* — when seed has **`Parent: null`**, spawn **`"parent": "null"`** (JSON string), **not** JSON `null`.
+- **Feature flag gate:** Shared **`master-planner`** Step **5.5** asks whether to plan a **new feature flag** (default off → developer on → remove at ship) before drafting §§1–5. Squad Leader does not duplicate that AskQuestion.
 - **Expected output:** `outputs.masterPlanPath`, `outputs.complexityScore`, `outputs.complexityBand`, ledger fields, `outputs.continuationOwner`, `outputs.continuationStatus`.
 
 **Spawn preflight (binding):** Before **`mission_control_spawn_agent`**, read **`planner/SKILL.md`** frontmatter and **`plan-and-deliver/skills/README.md`** § *Universal spawn preflight* (row **1b**). **`Parent: null`** in the §4 seed is semantic; spawn wire uses **`"parent": "null"`**. Paste-ready example: **`planner/SKILL.md`** § *Spawn contract*.
