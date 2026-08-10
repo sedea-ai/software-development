@@ -38,6 +38,7 @@ missions:
       - missions/plan-and-deliver/skills/brainstorm-research/SKILL.md
       - missions/plan-and-deliver/skills/ad-hoc-prd/SKILL.md
       - missions/plan-and-deliver/skills/capture-release-note/SKILL.md
+      - missions/plan-and-deliver/skills/ship-release-note-fragment/SKILL.md
       - missions/plan-and-deliver/skills/coding-session/SKILL.md
       - missions/plan-and-deliver/skills/create-pr/SKILL.md
       - missions/plan-and-deliver/skills/delivery-phases/SKILL.md

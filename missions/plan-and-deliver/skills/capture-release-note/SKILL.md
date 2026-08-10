@@ -3,21 +3,22 @@ name: capture-release-note
 description: >-
   Once-per-dispatch lane: generate a release-note fragment from dispatch commits,
   get developer structured approval, write hosting docs/release-notes/unreleased/
-  (optional center unreleased mirror), spawn coding-session to land a hosting
-  fragment PR onto origin/main, or skip when internal functionality needs no
-  note; terminal releaseNoteStatus success only with merge proof for the dissolve gate.
+  (optional center unreleased mirror), run ship-release-note-fragment inline to land
+  a hosting fragment PR onto origin/main, or skip when internal functionality needs
+  no note; terminal releaseNoteStatus success only with merge proof for the dissolve gate.
 designation:
   allowed: >-
     Generate release-note fragment; structured approve/revise/skip-internal; write
     hosting (and optional Software Development center) unreleased fragment; register fragment
-    path(s) in Mission Control Relevant Links after first write; spawn coding-session
-    for hosting fragment PR; verify merge proof; terminal releaseNoteStatus
-    (success with merge proof, or skipped) notifying Squad Leader
+    path(s) in Mission Control Relevant Links after first write; inline
+    ship-release-note-fragment for hosting fragment PR; verify merge proof; terminal
+    releaseNoteStatus (success with merge proof, or skipped) notifying Squad Leader
   forbidden: >-
     Dispatch resolution; ad-hoc skip outside approve-gate option; bump/publish
     consolidation; overlay edits; re-spawn after success or skipped;
     sedea-builtin-center skill body; filesystem-only success without merge proof;
-    Squad Leader create-pr / promote-center-submodule-pin from this skill
+    spawning coding-session for fragment ship; Squad Leader create-pr /
+    promote-center-submodule-pin from this skill
 inputs:
   baseRef:
     type: string
@@ -61,7 +62,7 @@ warmUpRules:
 
 **Spawn-only (binding).** Squad Leaders spawn this skill **once per dispatch** when the hosting overlay sets **`releaseVersions: release-versions`** and commits landed — see [`../plan.mdc`](../../plan.mdc) § *Release-versions dissolve gate*. Mission Control validates frontmatter **`inputs`** at spawn time. **Forbidden:** running this skill **inline** on the Squad Leader lane as a substitute for the once-per-dispatch child; inventing a second spawn after terminal **`success`**; landing or editing a skill body under **`.sedea/centers/sedea/skills/`** or **`sedea-builtin-center`**.
 
-**Owns:** generate → structured approve/revise **or** skip-internal → write unreleased fragment(s) + Relevant Links (when approved) → spawn **`coding-session`** to land a hosting fragment PR that merges the fragment onto **`origin/main`** → verify **merge proof** → terminal **`mission_control_send_agent_result`** with **`releaseNoteStatus`** (`success` with merge proof \| `skipped`) so the Squad Leader dissolve gate can clear. On skip-internal: no write, no fragment PR.
+**Owns:** generate → structured approve/revise **or** skip-internal → write unreleased fragment(s) + Relevant Links (when approved) → run **`ship-release-note-fragment`** **inline** to land a hosting fragment PR that merges the fragment onto **`origin/main`** → verify **merge proof** → terminal **`mission_control_send_agent_result`** with **`releaseNoteStatus`** (`success` with merge proof \| `skipped`) so the Squad Leader dissolve gate can clear. On skip-internal: no write, no fragment PR.
 
 **Out of scope:** overlay enablement; bump/sentinel consolidation; GitHub Release publish; Master Plan / phase planning; dispatch resolution; catch-up of pre-gap local `??` unreleased files; hosting submodule pin (ship lane after center merge — not this skill).
 
@@ -107,12 +108,12 @@ Per [`.sedea/centers/sedea/docs/lane-manifest-contract.md`](.sedea/centers/sedea
 |--------|----------|
 | **This** spawned lane terminal (and terminal re-emits) | **`mission_control_send_agent_result`** |
 | Developer approve / revise | **`mission_control_present_structured_choice`** (or AskQuestion when available) |
-| Fragment PR ship (after approve + write) | **`mission_control_spawn_agent`** → **`coding-session/SKILL.md`** |
+| Fragment PR ship (after approve + write) | Inline **`ship-release-note-fragment/SKILL.md`** (same lane — no spawn) |
 | Optional parent refocus before terminal | **`mission_control_refocus_parent_lane`** |
 
 **Forbidden in MCP args:** host-resolved identity keys (`correlationId`, `dispatchId`, `slotId`, …).
 
-**Forbidden:** **`mission_control_propose_dispatch_resolution`** — only the Squad Leader closes the dispatch. **Forbidden:** this skill calling **`gh pr create`**, hosting **`create-pr`**, or **`promote-center-submodule-pin`** — fragment PR and pin are **`coding-session`** / ship-lane owned.
+**Forbidden:** **`mission_control_propose_dispatch_resolution`** — only the Squad Leader closes the dispatch. **Forbidden:** spawning **`coding-session`** for fragment ship. Fragment PR create/merge runs via inline **`ship-release-note-fragment`** (which may call hosting **`create-pr`**). **Forbidden:** **`promote-center-submodule-pin`** from this skill.
 
 ## Inputs
 
@@ -139,11 +140,10 @@ flowchart TD
   F --> R[Relevant Links register]
   R --> G{writeCenterUnreleased?}
   G -->|yes| H[Write Software Development center unreleased]
-  G -->|no| S[Spawn coding-session fragment PR]
+  G -->|no| S[Inline ship-release-note-fragment]
   H --> R2[Register RD Relevant Links]
   R2 --> S
-  S --> W[#external-wait fragment ship]
-  W --> M{Merge proof on origin/main?}
+  S --> M{Merge proof on origin/main?}
   M -->|yes| I[Terminal success + merge proof]
   M -->|no| J[Terminal non-success]
   E -->|skip-internal| K[Terminal skipped notify parent]
@@ -156,11 +156,7 @@ Under Checkpoint trust (`trustLevel: checkpoint`), auto-advance scripted happy-p
 
 Marker syntax: [`.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md`](.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md).
 
-**External-wait surfaces (binding):**
-
-| Surface | When |
-|---------|------|
-| Fragment PR ship child | After Step **6** spawn — wait for **`coding-session`** **`mission_control_send_agent_result`** before merge-proof check / terminal |
+**External-wait surfaces (binding):** This skill documents **none** for fragment ship — Step **6** runs **`ship-release-note-fragment`** **inline** on this lane (auto-advance through merge on the clean path).
 
 Fragment approval remains a developer-input **USER_CHECKPOINT**, not external-wait.
 
@@ -171,7 +167,7 @@ Fragment approval remains a developer-input **USER_CHECKPOINT**, not external-wa
 | **3** — Draft fragment | Auto-advance | — |
 | **4** — Approve / revise / skip-internal | **Gate** — USER_CHECKPOINT | approve → write; revise → redraft; skip-internal → Step **7** skipped terminal; abort → non-success |
 | **5** — Write unreleased path(s) + Relevant Links | Auto-advance after approve | exception: write failure → `failure`; Relevant Links MCP failure → log + continue (do not fail capture); **skip** when Step **4** chose skip-internal |
-| **6** — Spawn coding-session fragment PR + wait | Auto-advance spawn; **#external-wait** for child result | exception: spawn failure / child non-success → `failure`; **skip** when Step **4** chose skip-internal |
+| **6** — Inline ship-release-note-fragment | Auto-advance full clean ship chain on this lane | exception: ship failure → `failure`; **skip** when Step **4** chose skip-internal |
 | **7** — Merge proof + terminal MCP result | Auto-advance | success only with merge proof (or skipped internal) — both notify Squad Leader |
 
 ## Session orientation table (binding)
@@ -290,35 +286,24 @@ Call **`mission_control_present_structured_choice`** (`modalTitle`: *Release not
 
 - **Next-step resolution:** Auto-advance to Step **6** (fragment PR handoff). **Do not** emit terminal success after write alone.
 
-### 6. Spawn coding-session for hosting fragment PR
+### 6. Inline ship-release-note-fragment
 
 **After** Step **5** succeeds (hosting fragment file exists on **`HOSTING_ROOT`**):
 
 1. Record `outputs.hostingFragmentPath` and the **repo-relative** path under hosting (for example `docs/release-notes/unreleased/YYYY-MM-DD-….md`).
-2. Emit **`mission_control_spawn_agent`** **once** with:
-   - **`skillPath`:** `.sedea/centers/software-development/missions/plan-and-deliver/skills/coding-session/SKILL.md`
-   - **`slug`:** `release-note-fragment` (dispatch-unique; **do not** open a second fragment ship after merge-proven success)
-   - **`name`:** `RN-Fragment PR ship` (rule **50** prefix shape)
-   - **`description`:** Land hosting fragment PR for the approved unreleased note onto `origin/main`
-   - **`inputs`:**
-     - `repoPath`: absolute **`HOSTING_ROOT`**
-     - `baseRef`: `origin/main` (or resolved hosting integration ref)
-     - `readyForImplementation`: `true`
-     - `planningHandoffApproved`: `true`
-     - `planningHandoffMode`: `sections-1-4-complete`
-     - `promptOnly`: `false`
-     - `upstreamSkill`: `capture-release-note`
-     - **`hostingFragmentPath`:** absolute path from Step **5** (required — do **not** rely on prose alone)
-     - **`hostingFragmentRelPath`:** repo-relative path under hosting (for example `docs/release-notes/unreleased/YYYY-MM-DD-….md`) — required for merge-proof checks
-     - **`centerFragmentPath`:** optional absolute center unreleased path when written in Step **5**
-   - **`initiatingPrompt`:** Single-concern fragment ship — stage **only** the paths in **`inputs.hostingFragmentPath`** / **`hostingFragmentRelPath`** (and **`centerFragmentPath`** only when set). Create hosting worktree → commit → ship chain through merge onto **`origin/main`**. On terminal success, set **`outputs.mergeProofVerified: true`**, **`outputs.mergeProofPath`** (= **`hostingFragmentRelPath`**), and evidence (`git ls-tree origin/main -- <path>` or equivalent). **Forbidden:** expanding to product code; Squad Leader create-pr; filesystem-only “done”; dropping the fragment path because it appeared only in this prompt.
-3. Set `outputs.fragmentShipStatus: pending` and **#external-wait** for the child **`mission_control_send_agent_result`**.
-4. On child terminal **`success`** with merge-proof fields (or clear merge evidence in summary/outputs): proceed to Step **7** merge-proof verification on **this** lane.
-5. On child **`partial`** / **`failure`** / **`aborted`** / **`abandoned`**: set `outputs.fragmentShipStatus: failed`; proceed to Step **7** with **`releaseNoteStatus: failed`** (do **not** claim success from the local write alone).
+2. Set `outputs.fragmentShipStatus: pending`.
+3. **Read** and execute [`.sedea/centers/software-development/missions/plan-and-deliver/skills/ship-release-note-fragment/SKILL.md`](../ship-release-note-fragment/SKILL.md) **inline** (same agent session — **no** **`mission_control_spawn_agent`**) with:
+   - **`repoPath`:** absolute **`HOSTING_ROOT`**
+   - **`baseRef`:** `origin/main` (or resolved hosting integration ref)
+   - **`hostingFragmentPath`:** absolute path from Step **5** (required)
+   - **`hostingFragmentRelPath`:** repo-relative path under hosting (required for merge-proof checks)
+   - **`centerFragmentPath`:** optional absolute center unreleased path when written in Step **5**
+4. On inline Completion with **`fragmentShipStatus: merged`** and merge-proof fields: proceed to Step **7** merge-proof verification on **this** lane.
+5. On inline failure / **`fragmentShipStatus: failed`**: set `outputs.fragmentShipStatus: failed`; proceed to Step **7** with **`releaseNoteStatus: failed`** (do **not** claim success from the local write alone).
 
-**Forbidden:** calling **`gh pr create`** or inline **`create-pr`** from this capture lane; treating local write + Relevant Links as done; skipping the spawn when approve + write succeeded; Squad Leader owning fragment PR create/merge.
+**Forbidden:** spawning **`coding-session`** (or any child) for fragment ship; treating local write + Relevant Links as done; skipping Step **6** when approve + write succeeded; Squad Leader owning fragment PR create/merge outside this inline skill.
 
-- **Next-step resolution:** After child result (or spawn failure), auto-advance to Step **7**. On the spawn turn under Checkpoint, emit the #external-wait resume surface per rule **2** when StreamFinal yields before the child returns.
+- **Next-step resolution:** After inline ship completes (or fails), auto-advance to Step **7**.
 
 ### 7. Merge proof + terminal result
 
@@ -372,7 +357,7 @@ Call MCP **`mission_control_send_agent_result`** exactly once at skill terminal 
 | `releaseNoteWritten` | boolean | `true` after hosting write; `false` on skip-internal |
 | `mergeProofVerified` | boolean | `true` when fragment path proven on `origin/main` |
 | `mergeProofPath` | string | Repo-relative path proven on integration tip |
-| `fragmentShipStatus` | string | `pending` \| `merged` \| `failed` — coding-session fragment PR |
+| `fragmentShipStatus` | string | `pending` \| `merged` \| `failed` — inline ship-release-note-fragment |
 | `hostingFragmentPath` | string | Absolute path under hosting unreleased |
 | `centerFragmentPath` | string | Optional absolute Software Development center unreleased path |
 | `fragmentFilename` | string | Basename |
@@ -393,9 +378,9 @@ Call MCP **`mission_control_send_agent_result`** exactly once at skill terminal 
 | Treating skip-internal as `failed` | Use **`skipped`** so dissolve hard-block clears |
 | Second spawn after `releaseNoteStatus: success` or `skipped` | Leader once-per-dispatch — this skill does not re-open |
 | Write only Software Development center, skip hosting | Hosting write is required on approve |
-| Terminal **`success`** after local write without merge proof | Step **6** fragment PR + Step **7** merge proof required |
-| Fragment path only in `initiatingPrompt` (no spawn `inputs`) | Pass **`hostingFragmentPath`** + **`hostingFragmentRelPath`** in Step **6** spawn **`inputs`** |
-| `gh pr create` / create-pr from capture lane | Spawn **`coding-session`** for fragment ship |
+| Terminal **`success`** after local write without merge proof | Step **6** inline fragment ship + Step **7** merge proof required |
+| Skipping inline ship after approve + write | Run **`ship-release-note-fragment`** Step **6** with abs/rel fragment paths |
+| Spawning **`coding-session`** for fragment ship | Inline **`ship-release-note-fragment`** on this lane |
 | Skip Relevant Links after first hosting write | Step **5** item **4** — call **`mission_control_update_relevant_documents`** same turn |
 | Fail capture because Relevant Links MCP ack is transcript-only | Registration is best-effort for panel UX; fragment write + merge proof + **`releaseNoteStatus`** still govern dissolve |
 | Land skill under builtin-center / `.sedea/centers/sedea/skills/` | software-development plan-and-deliver path only |
