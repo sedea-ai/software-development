@@ -1,6 +1,37 @@
 ---
 lastSyncedUpstreamSha: 17ed44d16c61e7218211d541f44705cfdd62658c
-entries: []
+entries:
+- commitSha: 4900e7a782fe6cde0934316114550a9562b9bea4
+  capturedAt: '2026-08-09T21:56:18-04:00'
+  summary: Extract ship-release-note-fragment; run it inline from capture.
+  paths:
+  - center.yaml
+  - missions/debug-and-fix/plan.mdc
+  - missions/plan-and-deliver/docs/coding-session-checkpoint-ux.md
+  - missions/plan-and-deliver/plan.mdc
+  - missions/plan-and-deliver/skills/capture-release-note/SKILL.md
+  - missions/plan-and-deliver/skills/coding-session/SKILL.md
+  - missions/plan-and-deliver/skills/ship-release-note-fragment/SKILL.md
+  - missions/quick-fix/plan.mdc
+  - missions/single-phase/plan.mdc
+- commitSha: 28e4a2a52c3f470cd23abd9ab6a4744deb71ee92
+  capturedAt: '2026-08-09T21:56:18-04:00'
+  summary: 'fix(ship-release-note-fragment): drop warmUpRules/laneRules frontmatter'
+  paths:
+  - missions/plan-and-deliver/skills/ship-release-note-fragment/SKILL.md
+- commitSha: 84d910ab6913232f5794002571a802427058d216
+  capturedAt: '2026-08-09T21:56:18-04:00'
+  summary: Extract ship-release-note-fragment (inline from capture) (#53)
+  paths:
+  - center.yaml
+  - missions/debug-and-fix/plan.mdc
+  - missions/plan-and-deliver/docs/coding-session-checkpoint-ux.md
+  - missions/plan-and-deliver/plan.mdc
+  - missions/plan-and-deliver/skills/capture-release-note/SKILL.md
+  - missions/plan-and-deliver/skills/coding-session/SKILL.md
+  - missions/plan-and-deliver/skills/ship-release-note-fragment/SKILL.md
+  - missions/quick-fix/plan.mdc
+  - missions/single-phase/plan.mdc
 history:
 - upstreamSha: 6b5b9ce52e061c06a36b4a1fa61f9753545d0101
   syncedAt: '2026-08-02T23:15:33Z'
