@@ -273,6 +273,7 @@ Marker syntax: [`.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md`](.s
 | **3a** — Pick target repo(s) | **Gate** when multi-select is required — **first developer-pick gate** | Repo selection (below) |
 | **3a** — Single-repo default | Auto-advance when exactly one hosting repo remains after filtering | — |
 | **3b–3c** — Sync repos and load rules | Auto-advance on happy path | — |
+| **5.5** — New feature flag | **Gate** | Optional flag for this feature |
 | **4+** | Deferred to JIT step PRs after real-dispatch verdict on prior gates | — |
 
 ## Step 1 — Optional one-line model audit (non-blocking)
@@ -543,9 +544,39 @@ After writing, present the plan file as a backtick path so Mission Control can o
 
 Do **not** wrap a backtick label in a `file://` Markdown link (for example `` [`<slug>.plan.md`](file:///<absolute-targetPlanPath>) ``); that shape is mangled by transcript Markdown parsing.
 
+## Step 5.5 — New feature flag (USER_CHECKPOINT)
+
+After the Master Plan file is scaffolded and **before** drafting §§ 1–5, ask whether this feature should ship behind a **new feature flag** so end-user workstations stay on current behavior until the feature is ready.
+
+USER_CHECKPOINT — choose whether to plan a new feature flag for this Master Plan.
+
+**Lifecycle contract (binding when the developer picks yes):**
+
+1. **Default off for installs** — packaged / end-user builds hide the new functionality (registry packaged default **off**; do not expose breaking UI/behavior without an explicit enable).
+2. **Developer workstation on** — the developer turns the flag **on** for their own development host (`sedea.features.<flagId>` override or develop default) so they can build and dogfood.
+3. **Ship = remove the flag** — when the feature is fully developed and ready for all users, **remove** the flag (registry entry + guards) so the behavior is **on by default** for everyone who installs the new version — do **not** leave a permanent off-switch as the long-term control.
+
+**Align with hosting contract:** When the target repo includes `.cursor/rules/feature-flags-contract.mdc` (or equivalent), follow that registry / `sedea.features.*` / lifecycle wording for implementation bullets. This step is **planning policy** — it does not edit the registry.
+
+**Structured choice (binding)** — required options in this order (then universal modal trailer per rule **2**):
+
+| Option id | Label |
+|-----------|-------|
+| `plan-new-feature-flag` | Yes — plan a new feature flag (default off; dev on; remove at ship) |
+| `no-feature-flag` | No — ship without a new feature flag |
+| `defer-flag-decision` | Defer — decide later before implementation |
+
+**On `plan-new-feature-flag`:** Carry `newFeatureFlag: true` for Step **6**. In § 4 Architectural design, note the flag gate surface. In § 5 Changes, include concrete bullets: registry id (proposed kebab-case), Settings key `sedea.features.<id>`, packaged default **off**, develop/workstation enable path, and a **removal** change when the feature graduates. Prefer a short `### Feature flag` subsection under § 5 when yes.
+
+**On `no-feature-flag`:** Carry `newFeatureFlag: false`; draft §§ 1–5 with no flag scaffolding.
+
+**On `defer-flag-decision`:** Carry `newFeatureFlag: deferred`; draft §§ 1–5 without flag scaffolding; add one open item in Step **7a** recap that the flag decision is still open before coding-session.
+
+- **Next-step resolution:** After a named pick → auto-advance Step **6**. Do not draft §§ 1–5 until this gate resolves (or the developer explicitly chose defer).
+
 ## Step 6 — Draft sections 1 through 5 into the plan file
 
-Following the **Master Plan template** in the dev-process doc (loaded in step 2), populate the `_TBD_` placeholders under § 1 through § 5 of the plan file scaffolded in step 5. Use `StrReplace` per section — never rewrite the whole file.
+Following the **Master Plan template** in the dev-process doc (loaded in step 2), populate the `_TBD_` placeholders under § 1 through § 5 of the plan file scaffolded in step 5. Use `StrReplace` per section — never rewrite the whole file. Honor Step **5.5** `newFeatureFlag` when drafting §§ 4–5 (include flag architecture + change bullets when `true`; omit when `false`; note deferred open item when `deferred`).
 
 The placeholder `_TBD_` appears seven times in the fresh scaffold (one per section), so each `StrReplace` call's `old_string` must include the section header above it as disambiguating context. Concretely, for § 4 the call looks like:
 
