@@ -37,18 +37,13 @@ inputs:
     type: string
     description: Optional absolute center unreleased mirror (stage only if set and in-repo)
     required: false
-laneRules:
-  - ".sedea/centers/sedea/rules/6_git-commit-push-gate.mdc"
-  - ".sedea/centers/software-development/rules/20_efficient-pr-shipping.mdc"
-  - ".sedea/centers/software-development/missions/plan-and-deliver/skills/ship-release-note-fragment/SKILL.md"
-warmUpRules:
-  - ".sedea/centers/software-development/missions/plan-and-deliver/skills/README.md"
-  - ".sedea/centers/sedea/rules/7_stacked-pr-worktree-naming.mdc"
 ---
 
 # Ship release-note fragment
 
 **Inline from capture (primary).** [`capture-release-note`](../capture-release-note/SKILL.md) Step **6** reads and runs this skill **in-session** after approve + write. **Do not** spawn a child agent for this skill on the capture happy path.
+
+**Lane requirement (no separate warm-up).** This skill has **no** frontmatter **`warmUpRules`** / **`laneRules`** by design — invoker lane already loaded ship rules.
 
 **Consent:** Parent **`approve-fragment`** only. **Forbidden on the clean path:** any `USER_CHECKPOINT`, AskQuestion, or **`mission_control_present_structured_choice`**.
 
