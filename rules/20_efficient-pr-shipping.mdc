@@ -687,7 +687,7 @@ This file is the **Software Development ship-lane worktree / commit-push / PR-cr
 | PR approve-merge modal scope / **`approve-merge-pr`** ordering / merge inspect | **baseline-governs** (reference) | This rule § *PR approve-merge and merge inspect*; rule **6** owns contract |
 | Wrong-lane `gh pr create` / create-PR URL handoff | **auto-advance** (policy stop) | This § *PR creation* — redirect to **`coding-session`** ship chain; no prose create-PR substitute |
 | Commit and push cadence after same-message / gate consent | **auto-advance** | This § *Commit and push cadence*; sedea rule **6** + skill gates authorize git |
-| Center submodule pin promotion after center merge | **auto-advance** | This § *Center submodule pin promotion*; inline **`promote-submodule-pin`** |
+| Center submodule pin promotion after center merge | **auto-advance** | This § *Center submodule pin promotion*; script-backed **`promote-submodule-pin`** (not **`create-pr`**) |
 | Turn completion after ship-policy guidance in chat | **baseline-governs** (reference) | Rules **1**–**2**; pointer in Related below |
 
 **Forbidden in this file:** prescribing prose *tell me when* / *come back when* / *I'll wait* / *over to you* / *ask how to proceed* as the primary wait surface for ownership-unsure stops, hosting-root picks, or ship-gate stands-in; duplicating **`coding-session`** / rule-6 AskQuestion option tables; `USER_CHECKPOINT` tokens for happy-path script cwd, worktree setup, or PR-creation policy redirects.
