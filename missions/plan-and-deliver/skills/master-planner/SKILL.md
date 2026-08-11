@@ -273,7 +273,7 @@ Marker syntax: [`.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md`](.s
 | **3a** — Pick target repo(s) | **Gate** when multi-select is required — **first developer-pick gate** | Repo selection (below) |
 | **3a** — Single-repo default | Auto-advance when exactly one hosting repo remains after filtering | — |
 | **3b–3c** — Sync repos and load rules | Auto-advance on happy path | — |
-| **5.5** — New feature flag | **Gate** | Optional flag for this feature |
+| **7c.5** — New feature flag | **Gate** when delivery **PR count K > 1** (after §6); **auto** `newFeatureFlag: false` when **K = 1** | Optional flag for multi-PR delivery |
 | **4+** | Deferred to JIT step PRs after real-dispatch verdict on prior gates | — |
 
 ## Step 1 — Optional one-line model audit (non-blocking)
@@ -544,39 +544,9 @@ After writing, present the plan file as a backtick path so Mission Control can o
 
 Do **not** wrap a backtick label in a `file://` Markdown link (for example `` [`<slug>.plan.md`](file:///<absolute-targetPlanPath>) ``); that shape is mangled by transcript Markdown parsing.
 
-## Step 5.5 — New feature flag (USER_CHECKPOINT)
-
-After the Master Plan file is scaffolded and **before** drafting §§ 1–5, ask whether this feature should ship behind a **new feature flag** so end-user workstations stay on current behavior until the feature is ready.
-
-USER_CHECKPOINT — choose whether to plan a new feature flag for this Master Plan.
-
-**Lifecycle contract (binding when the developer picks yes):**
-
-1. **Default off for installs** — packaged / end-user builds hide the new functionality (registry packaged default **off**; do not expose breaking UI/behavior without an explicit enable).
-2. **Developer workstation on** — the developer turns the flag **on** for their own development host (`sedea.features.<flagId>` override or develop default) so they can build and dogfood.
-3. **Ship = remove the flag** — when the feature is fully developed and ready for all users, **remove** the flag (registry entry + guards) so the behavior is **on by default** for everyone who installs the new version — do **not** leave a permanent off-switch as the long-term control.
-
-**Align with hosting contract:** When the target repo includes `.cursor/rules/feature-flags-contract.mdc` (or equivalent), follow that registry / `sedea.features.*` / lifecycle wording for implementation bullets. This step is **planning policy** — it does not edit the registry.
-
-**Structured choice (binding)** — required options in this order (then universal modal trailer per rule **2**):
-
-| Option id | Label |
-|-----------|-------|
-| `plan-new-feature-flag` | Yes — plan a new feature flag (default off; dev on; remove at ship) |
-| `no-feature-flag` | No — ship without a new feature flag |
-| `defer-flag-decision` | Defer — decide later before implementation |
-
-**On `plan-new-feature-flag`:** Carry `newFeatureFlag: true` for Step **6**. In § 4 Architectural design, note the flag gate surface. In § 5 Changes, include concrete bullets: registry id (proposed kebab-case), Settings key `sedea.features.<id>`, packaged default **off**, develop/workstation enable path, and a **removal** change when the feature graduates. Prefer a short `### Feature flag` subsection under § 5 when yes.
-
-**On `no-feature-flag`:** Carry `newFeatureFlag: false`; draft §§ 1–5 with no flag scaffolding.
-
-**On `defer-flag-decision`:** Carry `newFeatureFlag: deferred`; draft §§ 1–5 without flag scaffolding; add one open item in Step **7a** recap that the flag decision is still open before coding-session.
-
-- **Next-step resolution:** After a named pick → auto-advance Step **6**. Do not draft §§ 1–5 until this gate resolves (or the developer explicitly chose defer).
-
 ## Step 6 — Draft sections 1 through 5 into the plan file
 
-Following the **Master Plan template** in the dev-process doc (loaded in step 2), populate the `_TBD_` placeholders under § 1 through § 5 of the plan file scaffolded in step 5. Use `StrReplace` per section — never rewrite the whole file. Honor Step **5.5** `newFeatureFlag` when drafting §§ 4–5 (include flag architecture + change bullets when `true`; omit when `false`; note deferred open item when `deferred`).
+Following the **Master Plan template** in the dev-process doc (loaded in step 2), populate the `_TBD_` placeholders under § 1 through § 5 of the plan file scaffolded in step 5. Use `StrReplace` per section — never rewrite the whole file. Draft §§ 4–5 **without** new-feature-flag scaffolding by default — the optional flag gate runs at Step **7c.5** only after §6 phase/PR breakdown makes delivery **PR count** known (see below). When `newFeatureFlag` is already `true` from a prior pass on this plan, include flag architecture + change bullets when revising §§ 4–5.
 
 The placeholder `_TBD_` appears seven times in the fresh scaffold (one per section), so each `StrReplace` call's `old_string` must include the section header above it as disambiguating context. Concretely, for § 4 the call looks like:
 
@@ -830,7 +800,51 @@ Execute **only** what the user selected in **AskQuestion** (or the matching **`o
 3. Pass inline context: `targetPlanPath`, `targetPlanSlug`, `parentAgentRole: "master-plan-agent"`, `ledgerParent: <masterPlanSlug>`, `complexityBand`, `complexityScore`, `decompositionAssessment`, `routeLock`.
 4. When the inline skill returns **`## Completion (inline)`** fields, merge `activeLanes`, `openLedgerEntries`, `spawnedPlans`, `remainingTasks`, **`expandEligibleIndices`**, and **`expandNextEligibleIndex`** into this skill’s ledger. Append each new child **`planPath`** / **`planSlug`** from inline **`new-plan`** (including inline **`pr-plan`**) into **`outputs.spawnedPlans`** on the next **`mission_control_send_agent_result`** re-emit so Mission Control lane documents list PR plans — not only **`masterPlanPath`**. If the inline skill opened **`phase-planner`** child lanes or **`coding-session`** from inline **`pr-plan`**, wait on this lane for their **`mission_control_send_agent_result`** deliveries per that skill’s aggregation step, then continue **`master-planner`** Step **7b** — **do not** emit child lanes for **`delivery-phases`**, **`pr-breakdown`**, or **`new-plan`**.
 
-**Pending inline `pr-plan` handoff (binding):** When inline **`pr-breakdown`** / **`new-plan`** merged fields show a fresh PR plan with **`implementationHandoffStatus: not-offered`** or **`offered`** (§5c open, **`coding-session`** not yet spawned), **do not** offer Step **7b** **`route-6`** / master-plan menus on this turn — **unless** **`prPlanHandoffSkipped: true`** (auto-chain after **`approve-list`**). In that case continue Step **7b**; offer **Start coding session** via re-entering inline **`pr-plan`** §5c on **`targetPlanPath`**. When **`prPlanHandoffSkipped`** is absent, **re-enter** inline **`pr-plan`** §5c–§5e on **this Master Plan lane** (same **`targetPlanPath`**) until the developer picks **Start coding session**, **`defer`**, or a **`coding-session`** child terminal arrives. **PRD source is irrelevant** — every **`plan and deliver`** dispatch reaches **`master-planner`** only after Squad Leader §3 **`author-prd`** approval; only **`pr-plan`** §5c–§5d opens **`coding-session`**.
+5. Run Step **7c.5** when `newFeatureFlag` is still unset and §6 made delivery PR (or multi-phase) count known — **before** Step **7b** menus or Start coding session handoff when this lane still owns the next pick.
+
+#### Step 7c.5 — New feature flag (after §6 count known)
+
+Ask whether this feature should ship behind a **new feature flag** so end-user workstations stay on current behavior until the feature is ready — **only after** phase/PR breakdown makes delivery size known. **Forbidden:** asking before §§ 1–5 draft; asking when delivery is a **single PR**.
+
+**When to run (first time `newFeatureFlag` is unset on this Master Plan lane):**
+
+| After inline skill merge | Count | Action |
+|--------------------------|-------|--------|
+| **`pr-breakdown`** list-approved (or equivalent) | **K = 1** (one PR in the approved list) | Set `newFeatureFlag: false` — **auto-advance**, **no** modal |
+| **`pr-breakdown`** list-approved | **K > 1** | Open USER_CHECKPOINT below — in recap **recommend** `plan-new-feature-flag` |
+| **`delivery-phases`** list-approved | **N > 1** phases | Open USER_CHECKPOINT below — multi-phase delivery implies multi-PR; **recommend** yes |
+| **`delivery-phases`** list-approved | **N = 1** phase | Leave `newFeatureFlag` unset; when that phase subtree’s **`pr-breakdown`** list-approved **K** is known on this lane (bubbled completion or same-lane merge), apply the **K** rows above |
+
+**Timing vs `approve-list` auto-chain:** Prefer this gate **immediately after** list approval and **before** Start coding session / further expand. When **`pr-breakdown`** already auto-chained inline **`new-plan`** / **`pr-plan`** in the same pass, still run this gate **before** coding-session handoff; on yes, **revise** Master Plan §§ 4–5 and any already-expanded PR plan Changes with flag scaffolding.
+
+USER_CHECKPOINT — choose whether to plan a new feature flag when delivery PR count **K > 1** (or multi-phase **N > 1**).
+
+**Lifecycle contract (binding when the developer picks yes):**
+
+1. **Default off for installs** — packaged / end-user builds hide the new functionality (registry packaged default **off**; do not expose breaking UI/behavior without an explicit enable).
+2. **Developer workstation on** — the developer turns the flag **on** for their own development host (`sedea.features.<flagId>` override or develop default) so they can build and dogfood.
+3. **Ship = remove the flag** — when the feature is fully developed and ready for all users, **remove** the flag (registry entry + guards) so the behavior is **on by default** for everyone who installs the new version — do **not** leave a permanent off-switch as the long-term control.
+
+**Align with hosting contract:** When the target repo includes `.cursor/rules/feature-flags-contract.mdc` (or equivalent), follow that registry / `sedea.features.*` / lifecycle wording for implementation bullets. This step is **planning policy** — it does not edit the registry.
+
+**Structured choice (binding)** — required options in this order (then universal modal trailer per rule **2**):
+
+| Option id | Label |
+|-----------|-------|
+| `plan-new-feature-flag` | Yes — plan a new feature flag (default off; dev on; remove at ship) — **recommended** when **K > 1** |
+| `no-feature-flag` | No — ship without a new feature flag |
+| `defer-flag-decision` | Defer — decide later before implementation |
+
+**On `plan-new-feature-flag`:** Carry `newFeatureFlag: true`. **Revise** § 4 Architectural design to note the flag gate surface. **Revise** § 5 Changes with concrete bullets: registry id (proposed kebab-case), Settings key `sedea.features.<id>`, packaged default **off**, develop/workstation enable path, and a **removal** change when the feature graduates. Prefer a short `### Feature flag` subsection under § 5. When PR plans already exist, add matching flag bullets to those plans’ Changes as needed.
+
+**On `no-feature-flag`:** Carry `newFeatureFlag: false`; leave §§ 1–5 without flag scaffolding (no flag revise).
+
+**On `defer-flag-decision`:** Carry `newFeatureFlag: deferred`; add one open item that the flag decision is still open before coding-session.
+
+- **Next-step resolution:** After a named pick (or auto **K = 1**) → continue Pending inline `pr-plan` handoff / Step **7b** as applicable. **Do not** open this gate when **K = 1**.
+
+
+**Pending inline `pr-plan` handoff (binding):** When inline **`pr-breakdown`** / **`new-plan`** merged fields show a fresh PR plan with **`implementationHandoffStatus: not-offered`** or **`offered`** (§5c open, **`coding-session`** not yet spawned), **do not** offer Step **7b** **`route-6`** / master-plan menus on this turn — **unless** **`prPlanHandoffSkipped: true`** (auto-chain after **`approve-list`**). In that case continue Step **7b**; offer **Start coding session** via re-entering inline **`pr-plan`** §5c on **`targetPlanPath`**. When **`prPlanHandoffSkipped`** is absent, **re-enter** inline **`pr-plan`** §5c–§5e on **this Master Plan lane** (same **`targetPlanPath`**) until the developer picks **Start coding session**, **`defer`**, or a **`coding-session`** child terminal arrives. **PRD source is irrelevant** — every **`plan and deliver`** dispatch reaches **`master-planner`** only after Squad Leader §3 **`author-prd`** approval; only **`pr-plan`** §5c–§5d opens **`coding-session`**. Resolve Step **7c.5** first when it applies on this turn.
 
 **Spawn-chain ship notifications:** When Mission Control delivers **`agent-result-response delivered`** with **`outputs.prShipComplete`** or **`outputs.phaseShipComplete`** (bubbled from **`coding-session`** → **`pr-plan`** / **`new-plan`** → **`pr-breakdown`** / **`phase-planner`** → **`delivery-phases`**), merge into the ledger per `docs/spawn-ship-contracts.md` § *Upstream ship-complete notification*, **re-emit updated** **`mission_control_send_agent_result`** (same **`correlationId`**) when this lane is standalone spawned, then return to Step **7b** with expand options when indices unlock.
 
