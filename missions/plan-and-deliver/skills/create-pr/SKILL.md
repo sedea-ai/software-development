@@ -89,7 +89,7 @@ If Mission Control opened a session whose only intent is **`create-pr`** / *open
 - Using this skill (or `gh pr create` while executing this skill) for **gitlink-only** / **hosting pin promotion** PRs.
 - Opening a hosting PR whose committed diff is **only** submodule pointer change(s) with no implementation files in scope.
 
-**Required instead:** [`.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md`](.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md) § *Script invocation* — call `center-pull-promote-pin.sh`, `hosting-gitlink-pull-promote-pin.sh`, or `batch-promote-submodule-pins.sh` **before** or **after** the implementation PR per the ship chain — never via **`create-pr`**.
+**Required instead:** [`.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md`](.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md) § *Script invocation* — call `center-pull-promote-pin.sh`, `hosting-gitlink-pull-promote-pin.sh`, or `batch-promote-submodule-pins.sh` **before** or **after** the implementation PR per the ship chain — never via **`create-pr`**. Promote scripts create the hosting worktree with **`worktree-setup.sh --pin-only`**. **Forbidden:** default **`worktree-setup.sh`** or **`create-pr`** for pin PRs.
 
 **Worktree removal ownership (binding).** **Do not remove worktrees you do not own.** Opening a PR does **not** grant cleanup on other worktrees. **`git worktree remove`**, **`git worktree prune`**, and **`sedea_remove_worktree_folder`** apply **only** to **this pass’s** **`WORKTREE_ROOT`** when rule **0** § *Worktree ownership* and rule **20** § *Worktree removal ownership (binding)* preconditions hold. **`git worktree list` is read-only** when ownership is unclear — **stop; do not remove**.
 

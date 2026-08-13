@@ -307,6 +307,10 @@ Agents repeatedly call **`sedea_add_worktree_folder`** instead of **`git worktre
 
 **Setup and cleanup git orchestration** run through built-in **sedea** center shells from **`HOSTING_ROOT`**. **MCP attach/detach remain explicit agent steps** — shells emit JSON hints; they do **not** invoke **`sedea_add_worktree_folder`** or **`sedea_remove_worktree_folder`**.
 
+**Dev implementation worktrees (this skill):** [Generic flow](#generic-flow-single-repo) calls default **`worktree-setup.sh`** (no **`--pin-only`**) — integration prep + fast bootstrap per hosting overlay.
+
+**Pin promotion (script-owned):** When this lane runs inline **`promote-submodule-pin`**, worktree creation is **script-owned** — promote scripts invoke **`worktree-setup.sh --pin-only`**. **Forbidden on pin passes:** default **`worktree-setup.sh`** from this lane; post-MCP **`bootstrap-worktree-dev.sh`** recovery when JSON shows **`bootstrapMode: pin-only`** / **`bootstrapStatus: skipped-pin-only`**.
+
 | Script | Path | Replaces on this skill |
 |--------|------|------------------------|
 | **Setup** | `.sedea/centers/sedea/scripts/worktree-setup.sh` | Inline dirty-primary gate, **`git fetch`**, **`git worktree add`**, and default-path inline **`worktree-bootstrap`** |
@@ -323,10 +327,10 @@ Each script prints **one JSON line on stdout** (human progress on stderr). On **
 | **`exitCode`** | Shell exit (**0** = success) | Same |
 | **`nextAction`** | **`attach-required`** → MCP attach (step 3) | **`none`** on success; **`detach-required`** → run MCP detach before retry |
 | **`worktreeRoot`**, **`worktreeName`** | Set **`WORKTREE_ROOT`** / sidecar + cleanup attestation | Same |
-| **`bootstrapMode`**, **`bootstrapStatus`** | Map to **`outputs`** — **`success`**, **`skipped-noop`**, **`skipped-idempotent`** allow implementation | N/A |
+| **`bootstrapMode`**, **`bootstrapStatus`** | Dev: map to **`outputs`** — **`success`**, **`skipped-noop`**, **`skipped-idempotent`** allow implementation. Pin promotion (via **`promote-submodule-pin`** only): **`pin-only`** / **`skipped-pin-only`** — **forbidden** post-attach bootstrap recovery | N/A |
 | **`cleanupStatus`** | N/A | **`success`** → **`outputs.postMergeCleanupStatus: success`** |
 
-**Forbidden on default setup path:** raw **`git worktree add`**, inline **`bootstrap-worktree-dev.sh`**, or **`full`** bootstrap escalation when center setup fails (exit **11** warm-primary → structured retry; exit **12** overlay → fix dot-sedea). **Forbidden on default cleanup path:** inline **`git worktree remove`** + hosting **`git pull`** when **`worktree-cleanup.sh`** applies for an owned path after MCP detach.
+**Forbidden on default setup path:** raw **`git worktree add`**, inline **`bootstrap-worktree-dev.sh`**, or **`full`** bootstrap escalation when center setup fails (exit **11** warm-primary → structured retry; exit **12** overlay → fix dot-sedea). **Forbidden on pin promotion path:** default **`worktree-setup.sh`** without **`--pin-only`**; post-MCP **`bootstrap-worktree-dev.sh`** when setup JSON reports **`bootstrapMode: pin-only`**. **Forbidden on default cleanup path:** inline **`git worktree remove`** + hosting **`git pull`** when **`worktree-cleanup.sh`** applies for an owned path after MCP detach.
 
 ## Structured choice (Mission Control)
 

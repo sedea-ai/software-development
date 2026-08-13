@@ -304,6 +304,8 @@ When changes under a **non-built-in** center submodule (for example **`.sedea/ce
 
 Pin the center **`defaultBranch`** tip only. Git is **skill-owned** per [`.sedea/centers/sedea/rules/6_git-commit-push-gate.mdc`](.sedea/centers/sedea/rules/6_git-commit-push-gate.mdc) § *Submodule pin promotion (skill-owned)*. Canonical semantics: [`.sedea/centers/sedea/rules/3_center.mdc`](.sedea/centers/sedea/rules/3_center.mdc) § *Git repo semantics*.
 
+**Pin worktree setup (binding):** **`promote-submodule-pin`** runs inline and calls promote shell scripts (skill § *Script invocation*). Those scripts create the hosting worktree via **`worktree-setup.sh --pin-only`** from **`HOSTING_ROOT`** — gitlink-only pass: skips integration prep, overlay bootstrap, and product gitlink init. Expect JSON **`bootstrapMode: pin-only`**, **`bootstrapStatus: skipped-pin-only`**. **Forbidden:** default **`worktree-setup.sh`** (without **`--pin-only`**) for pin promotion; **forbidden:** manual **`git worktree add`** on pin passes.
+
 **Mandatory before ship row close (binding):** When the ship chain touched submodule gitlinks, **`prShipComplete: true`** is **forbidden** until hosting **`origin/main`** records merged tips and **`HOSTING_ROOT`** is refreshed. Pin promotion is **not** optional developer follow-up — see **`coding-session/SKILL.md`** § *Hosting-pin-complete gate (before prShipComplete)*. **Forbidden recap language:** *"if you want"*, *"optional follow-up"*, *"when you're ready"*, *"remains follow-up"*.
 
 **Calibration:** `incident_hosting_pin_promotion_treated_optional_2026-08-03.agent-incident-report.md`.

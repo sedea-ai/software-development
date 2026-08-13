@@ -60,7 +60,7 @@ Subsections below are **indexes** — load linked rules, skills, or on-demand do
 
 | Topic | Load when |
 | --- | --- |
-| Center submodule git (two repos) | [`.sedea/centers/sedea/rules/3_center.mdc`](.sedea/centers/sedea/rules/3_center.mdc) § *Git repo semantics*; [`promote-submodule-pin`](.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md) after center merge; § *Center-repo PR base (binding)* below for **`--base`** |
+| Center submodule git (two repos) | [`.sedea/centers/sedea/rules/3_center.mdc`](.sedea/centers/sedea/rules/3_center.mdc) § *Git repo semantics*; [`promote-submodule-pin`](.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md) after center merge (promote scripts use **`worktree-setup.sh --pin-only`**); § *Center-repo PR base (binding)* below for **`--base`** |
 | Git governance (worktree-only) | [`.sedea/centers/software-development/rules/20_efficient-pr-shipping.mdc`](../rules/20_efficient-pr-shipping.mdc); Sedea rules **0**, **6**, **7** |
 | Governance scripts / CI | `./scripts/verify-center-governance.sh` on hosting repo; [`.github/workflows/center-governance.yml`](../.github/workflows/center-governance.yml) on this center repo |
 | PRD routing | **`plan-and-deliver/plan.mdc`** §§2–3; **`author-prd/SKILL.md`** |
@@ -82,7 +82,7 @@ When opening a PR for **center-repo content** (rules, docs, missions, skills tra
 3. **Pre-create self-check:** When **`gh api repos/<owner>/<repo> --jq .default_branch`** ≠ registry **`<defaultBranch>`**, **`--base` is mandatory** (always safe to pass even when equal).
 4. **Anti-conflation:** **`forkCenterLayout.githubDefaultBranch`** (for example **`upstream-main`**) is for **upstream sync / fork HEAD** — **not** the merge target for feature worktrees branched from registry **`defaultBranch`**.
 5. Platform normative detail: [`.sedea/centers/sedea/rules/3_center.mdc`](.sedea/centers/sedea/rules/3_center.mdc) § *Center-repo worktree procedure*; mission-maintenance **Center-repo ship cadence**.
-6. After center merge on the hosting repo: **`promote-submodule-pin`** inline (index row *Center submodule git* above).
+6. After center merge on the hosting repo: **`promote-submodule-pin`** inline (promote scripts → **`worktree-setup.sh --pin-only`**; index row *Center submodule git* above).
 
 ### Agent glossary — step and section labels
 
