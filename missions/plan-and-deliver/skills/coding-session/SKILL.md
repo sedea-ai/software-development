@@ -2328,29 +2328,55 @@ Run from [Act after post-create-pr pick](#act-after-post-create-pr-pick) when th
    - **Binding — agent capability inventory:** Apply **`deploy-walk/SKILL.md`** § *Agent capability inventory (binding)*. Run the [Autonomous agent-executable pass](../deploy-walk/SKILL.md#autonomous-agent-executable-pass) without asking the developer to run terminal commands, grep logs, parse files, or search for phrases when the inventory covers the step.
    - **Forbidden:** prose or modal handoff such as “run this command”, “grep the log for …”, “open the file and find …”, or “parse the output” for agent-executable After-deploy steps.
    - **Manual steps only:** present full **Testing steps** per **`deploy-walk`** § *Step 4 — Step presentation contract* — not a one-line “please verify.” Close each manual gate with **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) — step-by-step (**`deploy-step-n-done`**, **`present-next-manual-step`**) **and** batch **`all-manual-steps-done`** when the developer verified all remaining manual steps in one take.
-5. When inline **`deploy-walk`** sets **`outputs.returnToImplementation: true`**, stop the ship tail and run [Return to implementation from deploy walk (new worktree)](#return-to-implementation-from-deploy-walk-new-worktree) on the **next** turn — do **not** open [Post–After deploy remainder authorization](#post-after-deploy-remainder-authorization) until implementation resumes or the developer defers.
+5. When inline **`deploy-walk`** sets **`outputs.returnToImplementation: true`**, stop the ship tail and run [Return to implementation from deploy walk](#return-to-implementation-from-deploy-walk-new-worktree) on the **next** turn — do **not** open [Post–After deploy remainder authorization](#post-after-deploy-remainder-authorization) until implementation resumes or the developer defers.
 6. When the walk completes with **`deployStatus: done`** and **`deployTodoStatus: done`** (developer confirmed the last After-deploy §7 step, or the walk reported no remaining manual steps), under Checkpoint trust **auto-run** [Post–After deploy remainder inventory](#post-after-deploy-remainder-inventory) on the **next** turn when non-empty — **forbidden:** [Post–After deploy remainder authorization](#post-after-deploy-remainder-authorization) batch modal on clean happy path. When Checkpoint trust does **not** apply, continue to [Post–After deploy remainder authorization](#post-after-deploy-remainder-authorization) on the **next** turn when [remainder inventory](#post-after-deploy-remainder-inventory) is non-empty. When inventory is empty, under Checkpoint auto-run [Plan-reconcile handoff (inline)](#plan-reconcile-handoff-inline) defer only when reconcile preconditions fail — **forbidden:** re-open [Post-create-pr handoff gate](#post-create-pr-handoff-gate).
+
+### Return-to-implementation option label (binding)
+
+Option id **`return-to-implementation-new-worktree`** is stable in every gate that exposes it. **Resolve the label at modal emission time:**
+
+| Condition | Label (brief) |
+|-----------|---------------|
+| Session **`WORKTREE_ROOT`** or **`outputs.worktreePath`** is set **and** the directory exists on disk | **Continue implementation on the same worktree** |
+| Path missing or directory not on disk | **Return to implementation — new worktree** |
+
+**Spawned lane — MCP structured choice (binding):** Emit the **resolved** label in **`askQuestion.options`** — **forbidden:** hard-coding the new-worktree label when the session worktree still exists.
+
+**Cross-reference:** Inline **`deploy-walk`** gates on this lane use the same resolution when **`worktreePath`** is set in inline context.
 
 ### Return to implementation from deploy walk (new worktree)
 
 Run on the **spawned coding-session lane** when inline **`deploy-walk`** reports **`outputs.returnToImplementation: true`**, when the developer picks **`return-to-implementation-new-worktree`** at [Post–After deploy remainder authorization](#post-after-deploy-remainder-authorization), or at **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) (including mid–After deploy verification).
 
-**Purpose:** During deploy verification (Before deploy, After deploy, or post-deploy tail), open a **fresh** worktree from **`origin/main`** on **`HOSTING_ROOT`** for a follow-on fix pass — product defect **or** skill/Checkpoint calibration the developer directs from deploy verification (for example post-merge modal scope). **Do not** reuse the removed session worktree from [Post-merge workspace cleanup](#post-merge-workspace-cleanup).
+**Purpose:** During deploy verification (Before deploy, After deploy, or post-deploy tail), resume implementation for a follow-on fix pass — product defect **or** skill/Checkpoint calibration the developer directs from deploy verification (for example post-merge modal scope). Route to **Branch A** when the session worktree still exists; **Branch B** when it was removed (typical after [Post-merge workspace cleanup](#post-merge-workspace-cleanup)).
 
 **Preconditions:**
 
 1. `targetPlanPath` or `targetPlanSlug` resolves (same PR plan anchor as the ship chain).
 2. **`HOSTING_ROOT`** resolves per [Worktree bootstrap (mandatory)](#worktree-bootstrap-mandatory).
-3. Prior session worktree may already be removed — that is **expected** after merge cleanup.
 
-**Procedure (next turn after handback pick):**
+**Branch selection (next turn after handback pick):**
+
+| Branch | When | Procedure |
+|--------|------|-----------|
+| **A — same worktree** | **`WORKTREE_ROOT`** or **`outputs.worktreePath`** is set **and** the directory exists on disk | [Branch A — same worktree](#branch-a--same-worktree) |
+| **B — new worktree** | Session worktree path missing or not on disk | [Branch B — new worktree](#branch-b--new-worktree) |
+
+#### Branch A — same worktree
+
+1. **Audit note** — Append one dated line under the plan **`## Follow-ups`** (or §7 deploy note when Follow-ups is absent): *Deploy verification — return to implementation (same worktree)* with the active deploy step or defect summary from chat.
+2. Set **`outputs.shipPhase: implementing`**, **`outputs.rowStatus: active`**, and **`outputs.worktreePath`** to the existing absolute path. Clear stale **`prState`** / merge-only outputs that no longer apply when resuming mid-ship (keep **`targetPlanPath`** / slug).
+3. Resume [Spawned implementation lane](#spawned-implementation-lane) on the **existing** **`WORKTREE_ROOT`** — same plan §§ **5–8** scope unless the developer narrows the fix in chat.
+4. **Forbidden:** Running [Generic flow](#generic-flow-single-repo) setup or creating a second worktree when Branch A applies; treating deploy checklist closure as complete when **`returnToImplementation`** was set mid-walk.
+
+#### Branch B — new worktree
 
 1. **Audit note** — Append one dated line under the plan **`## Follow-ups`** (or §7 deploy note when Follow-ups is absent): *Deploy verification — return to implementation (new worktree)* with the active deploy step or defect summary from chat.
 2. **Worktree name** — `fix/<short-description>` per **20_efficient-pr-shipping.mdc** § *Worktree naming* (hosting-repo worktree branch).
 3. Run [Generic flow](#generic-flow-single-repo) steps **1–4** from **`HOSTING_ROOT`** (center **`worktree-setup.sh`**, sidecar, MCP attach, bootstrap hint).
 4. Set **`outputs.shipPhase: implementing`**, **`outputs.rowStatus: active`**, clear stale **`prState`** / merge-only outputs that no longer apply to the new fix pass when starting a post-merge fix (keep **`targetPlanPath`** / slug).
 5. Resume [Spawned implementation lane](#spawned-implementation-lane) on the **new** **`WORKTREE_ROOT`** — same plan §§ **5–8** scope unless the developer narrows the fix in chat.
-6. **Forbidden:** Re-opening the old session worktree path; center setup on a blocking-dirty primary (exit **10**); skipping MCP attach; treating deploy checklist closure as complete when **`returnToImplementation`** was set mid-walk.
+6. **Forbidden:** Re-opening the old session worktree path after cleanup removed it; center setup on a blocking-dirty primary (exit **10**); skipping MCP attach.
 
 **After the fix ships:** Re-enter the [ship chain](#ship-chain-after-implementation-coding-session-lane) from [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) — Before deploy / After deploy walks apply to the **new** PR cycle as usual.
 
@@ -2399,7 +2425,7 @@ When reconcile dry-run surfaces **flagged** rows requiring judgement (or own pla
 |-----------|---------------|-----------------------------|
 | `confirm-all-remaining` | Confirm — perform all listed steps | Run every inventory step in order without further modals (except hard stops / errors) |
 | `next-step-only` | Approve next step only — [first step name] | Run inventory step 1 only |
-| `return-to-implementation-new-worktree` | Return to implementation — new worktree | [Return to implementation from deploy walk (new worktree)](#return-to-implementation-from-deploy-walk-new-worktree) — skip tail inventory |
+| `return-to-implementation-new-worktree` | [Return-to-implementation option label](#return-to-implementation-option-label-binding) | [Return to implementation from deploy walk (new worktree)](#return-to-implementation-from-deploy-walk-new-worktree) — skip tail inventory |
 | `defer-tail` | Defer remaining ship work | Keep `continuationStatus: active`; no tail steps |
 | `more-details` | More details for option _ | Elaborate; re-open this gate |
 

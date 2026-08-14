@@ -231,7 +231,7 @@ When **`worktreePath`** is set on inline context (typical on **`coding-session`*
 
 When **`worktreePath`** is missing but agent-executable steps need a cwd, surface one line: *No worktree in inline context — resolve **`worktreePath`** before running in-tree commands* — do not guess cwd from chat.
 
-After merge cleanup the session worktree may be gone — After deploy walks often have no **`worktreePath`**; do not invent a path. [Return to implementation from deploy walk](#return-to-implementation-from-deploy-walk-inline-handback) creates a **new** worktree when the developer picks **`return-to-implementation-new-worktree`**.
+After merge cleanup the session worktree may be gone — After deploy walks often have no **`worktreePath`**; do not invent a path. [Return to implementation from deploy walk](#return-to-implementation-from-deploy-walk-inline-handback) hands back to parent **`coding-session`** (same worktree when path exists; new worktree when gone) when the developer picks **`return-to-implementation-new-worktree`**.
 
 ## Deploy developer-await modal options (binding)
 
@@ -241,7 +241,7 @@ Every **AskQuestion** / **`mission_control_present_structured_choice`** gate whi
 |-----------|---------------|
 | *(gate-specific)* | Step done / skip / block / closure / present-next — per [Manual step await gate](#manual-step-await-gate-binding) |
 | `all-manual-steps-done` | All remaining manual steps passed — one take |
-| `return-to-implementation-new-worktree` | Return to implementation — new worktree |
+| `return-to-implementation-new-worktree` | Label per [Return-to-implementation option label](../coding-session/SKILL.md#return-to-implementation-option-label-binding) — when **`worktreePath`** is set, use **Continue implementation on the same worktree** |
 | `more-details` | More details for option _ |
 
 **Dual verification modes (binding):** Deploy verification must support **both** paths on every manual-step gate in the active sub-section (`### Before deploy`, `### After deploy`, or any §7 deploy checklist the walk covers):
@@ -260,7 +260,7 @@ Every **AskQuestion** / **`mission_control_present_structured_choice`** gate whi
 
 **Forbidden:** **`all-manual-steps-done`** when the developer has not attested verification — do not infer from silence. **Forbidden:** removing step-by-step presentation when the developer picks **`present-next-manual-step`** or has not attested batch completion.
 
-**`return-to-implementation-new-worktree`** — developer found a product defect during deploy verification (including after the PR merged). Set **`outputs.returnToImplementation: true`** in **`## Completion (inline)`** and stop the walk. Parent **`coding-session`** runs [Return to implementation from deploy walk](../coding-session/SKILL.md#return-to-implementation-from-deploy-walk-new-worktree) on the **next** turn — **do not** edit product code from this skill.
+**`return-to-implementation-new-worktree`** — developer found a product defect during deploy verification (including after the PR merged). Set **`outputs.returnToImplementation: true`** in **`## Completion (inline)`** and stop the walk. Parent **`coding-session`** runs [Return to implementation from deploy walk](../coding-session/SKILL.md#return-to-implementation-from-deploy-walk-new-worktree) on the **next** turn (**Branch A — same worktree** when session path exists; **Branch B — new worktree** when gone) — **do not** edit product code from this skill.
 
 ### Manual step await gate (binding)
 
@@ -275,7 +275,7 @@ USER_CHECKPOINT — confirm manual deploy step verification or pick next walk ac
 | `deploy-step-n-block` | Block step N — with reason | **`deploy-walk <N> block: <reason>`** |
 | `present-next-manual-step` | Present next manual step — one by one | **`deploy-walk present <N+1>`** when N+1 is manual; if N+1 is agent-executable, run [Autonomous agent-executable pass](#autonomous-agent-executable-pass) first |
 | `all-manual-steps-done` | All remaining manual steps passed — one take | [§ `deploy-walk all-manual-done`](#deploy-walk-all-manual-done--batch-flip-remaining-manual-steps) |
-| `return-to-implementation-new-worktree` | Return to implementation — new worktree | Set **`outputs.returnToImplementation: true`**; hand back to **`coding-session`** |
+| `return-to-implementation-new-worktree` | Label per [Return-to-implementation option label](../coding-session/SKILL.md#return-to-implementation-option-label-binding) | Set **`outputs.returnToImplementation: true`**; hand back to **`coding-session`** |
 | `more-details` | More details for option _ | Elaborate; re-open gate |
 
 - **`defaultOptionId: deploy-step-n-done`** when the developer is reviewing the currently presented manual step with no blockers surfaced.
@@ -357,7 +357,7 @@ When Checkpoint auto-advance does **not** apply (non-Checkpoint dispatch, or any
 | `approve-deploy-closure` | Approve deploy checklist closure | Flip `**Status:** deployed → done`; run [Frontmatter capstone](#frontmatter-capstone--deploy-test-plan-verified-pending--done) mutation |
 | `review-deploy-checklist` | Review deploy checklist first | Re-read §7; no status flip |
 | `leave-status-deployed` | Leave status deployed | Keep `**Status:** deployed`; capstone stays `pending` |
-| `return-to-implementation-new-worktree` | Return to implementation — new worktree | Set **`outputs.returnToImplementation: true`**; hand back to **`coding-session`** — no `done` flip |
+| `return-to-implementation-new-worktree` | Label per [Return-to-implementation option label](../coding-session/SKILL.md#return-to-implementation-option-label-binding) | Set **`outputs.returnToImplementation: true`**; hand back to **`coding-session`** — no `done` flip |
 | `more-details` | More details for option _ | Elaborate; re-open this gate |
 
 Only **`approve-deploy-closure`** authorizes the Status `deployed → done` flip and **`deploy-test-plan-verified`** `pending → done` mutation. **`return-to-implementation-new-worktree`** sets **`outputs.returnToImplementation: true`** — hand back to **`coding-session`**; do **not** flip to `done`.
@@ -870,7 +870,7 @@ When run inline on **`coding-session`**, report these fields in prose via **`## 
 - `outputs.shipPhase` — `deploy-walk` while checklist in progress; update when blocked or done
 - `outputs.rowStatus` — `open` while steps remain; `closed` when `deployStatus` and `deployTodoStatus` are both `done`; `blocked` when a deploy step is blocked
 - `outputs.blockedReason` — when `rowStatus` is `blocked` (name the blocked step)
-- `outputs.returnToImplementation` — **`true`** when the developer chose **`return-to-implementation-new-worktree`** at a deploy gate; parent **`coding-session`** opens a new worktree (see [Return to implementation from deploy walk](#return-to-implementation-from-deploy-walk-inline-handback))
+- `outputs.returnToImplementation` — **`true`** when the developer chose **`return-to-implementation-new-worktree`** at a deploy gate; parent **`coding-session`** runs return-to-implementation procedure (see [Return to implementation from deploy walk](#return-to-implementation-from-deploy-walk-inline-handback))
 - `outputs.requiresShipTail` — **`true`** when `upstreamSkill` is **`coding-session`**, scope is post-merge **After deploy** (not `before-deploy-only`), and **`deployStatus: done`** with **`deployTodoStatus: done`** — parent owns [Post–After deploy remainder inventory](../coding-session/SKILL.md#post-after-deploy-remainder-inventory); this skill does **not** emit **`prShipComplete`**
 
 ## Return to implementation from deploy walk (inline handback)
@@ -879,7 +879,7 @@ When the developer selects **`return-to-implementation-new-worktree`** at any [D
 
 1. **Do not** flip deploy checklist boxes or Status to `done` as part of this pick.
 2. Set **`outputs.returnToImplementation: true`**, keep **`deployStatus`** / sub-section state as-is (document the active step index in **`outputs.remainingTasks`** when useful).
-3. Report via **`## Completion (inline)`** — parent **`coding-session`** runs [Return to implementation from deploy walk](../coding-session/SKILL.md#return-to-implementation-from-deploy-walk-new-worktree) on the **next** turn.
+3. Report via **`## Completion (inline)`** — parent **`coding-session`** runs [Return to implementation from deploy walk](../coding-session/SKILL.md#return-to-implementation-from-deploy-walk-new-worktree) on the **next** turn (**Branch A** when session worktree exists; **Branch B** when gone).
 4. **Forbidden:** product edits, **`git commit`**, or new worktree creation from **`deploy-walk`** — parent owns worktree lifecycle.
 
 Stop when a **manual** step is presented and awaiting developer input, when the walk is **blocked**, when Before-deploy scope is satisfied (`before-deploy-only`), or when full post-merge walk reaches `done`. You **may** process multiple **agent-executable** steps in one turn before stopping. Do not auto-invoke other skills; do not commit hosting-repo git from this procedure.
