@@ -1,13 +1,21 @@
 ---
 name: brainstorm-research
 description: >-
-  Optional free-form research session on a spawned child lane. Produces a
-  brainstorm report under `.sedea/operations/.../docs/` for downstream PRD,
-  Ad-Hoc PRD, quick-fix planning, or debug handover. Invoked from Software Development mission
-  intake when the developer selects brainstorm-first.
+  Optional analysis-first research session on a spawned child lane. Tracks developer
+  requests (questions and tasks), runs DB queries, scripts, log/CSV analysis, and web
+  search, maintains an interim request log, then writes a final brainstorm report under
+  `.sedea/operations/.../docs/` when the developer approves. Invoked from Software
+  Development mission intake when the developer selects brainstorm-first.
 designation:
-  allowed: Research, synthesize, and write brainstorm report under operations docs; approval gate
-  forbidden: Application code; git ship; spawn downstream planning agents from this lane
+  allowed: >-
+    Analysis-first research (DB queries, temp scripts, CSV/data files, log analysis,
+    web search, codebase/docs reads); request-ledger tracking; interim request-log
+    writes under operations docs; final report write on approval; dual structured-choice
+    gates
+  forbidden: >-
+    Skip substantive analysis to synthesize conclusions; write final report while any
+    request is open; application code in hosting repos; git ship; spawn downstream
+    planning agents from this lane
 inputs:
   invokerMissionSlug:
     type: string
@@ -72,7 +80,7 @@ Per [`.sedea/centers/sedea/docs/lane-manifest-contract.md`](.sedea/centers/sedea
 | `.sedea/centers/software-development/rules/31_dispatch-scope.mdc` | Dispatch scope + explicit docs paths |
 | `.sedea/centers/software-development/missions/plan-and-deliver/skills/README.md` | Spawn preflight |
 
-**Intent:** **Brainstorm research agent** runs a free-form exploration with the developer, writes a structured report, and closes with **approve report** (hand off to Squad Leader for auto-chained downstream spawn) or **abandon dispatch** (direction not viable).
+**Intent:** **Brainstorm research agent** runs an **analysis-first** session with the developer. It tracks every developer **request** (questions **or** imperative tasks such as *count how many …*, *make a CSV with …*, *query the database for …*), executes analysis via tools, maintains an interim **request log** (no conclusions), proposes next steps grounded in the **intake task**, and writes the **final report** (conclusions + handoff) only after all requests are **`done`** and the developer approves. A **post-write revision gate** runs before terminal handoff to the Squad Leader.
 
 **This skill never** emits **`mission_control_spawn_agent`** for **`author-prd`**, **`ad-hoc-prd`**, **`quick-fix-plan`**, or **`debug-and-fix`** — the **invoking Squad Leader** auto-spawns the downstream agent after terminal approval per the invoker mission **`plan.mdc`** §2.5.
 
@@ -99,6 +107,32 @@ Per [`.sedea/centers/sedea/docs/lane-manifest-contract.md`](.sedea/centers/sedea
 
 If **`invokerMissionSlug`** is missing or **`operationsDocsDirectory`** does not resolve, stop with `status: "partial"`, `outputs.missingFields` populated — do not write files.
 
+## Analysis toolkit (binding)
+
+The lane exists to **perform analysis** before synthesizing conclusions. Use tools as the research question requires:
+
+| Kind | Examples |
+|------|----------|
+| **Database** | Write and execute read-only queries; summarize row counts and aggregates |
+| **Data files** | Temp scripts to parse CSV, JSON, logs, or exports; produce counts or derived files |
+| **Logs** | Search and analyze application or system logs for patterns, errors, volumes |
+| **Web** | Search the internet for documentation, benchmarks, or external facts |
+| **Codebase / docs** | Read, grep, and trace code paths; cite paths in outcomes |
+
+**Forbidden:** jump to synthesis, recommendations, or final report write **without** running substantive analysis when the intake task or open requests require it. **Forbidden:** treat chat-only speculation as fulfillment of a task-form request that requires tool execution.
+
+## Request ledger (binding)
+
+Track every developer **request** for the session — not only question-form phrasing.
+
+| Field | Rule |
+|-------|------|
+| **Request item** | One row: request text + **`open`** or **`done`** + outcome note (count, file path, query result, summary) |
+| **Seed** | Step **1** seeds the ledger from **`researchPrompt`**, **`openingSeeds`**, and intake chat |
+| **Append** | New developer messages on **`continue-analyzing`** or free-form chat append new rows as **`open`** |
+| **Complete** | Mark **`done`** only after analysis ran and the outcome note is recorded |
+| **Gate rule** | **Forbidden:** offer **`approve-write-report`** while any request is **`open`** |
+
 ## Checkpoint turn UX (skill-local)
 
 ### Software Development center edit destination gate (binding)
@@ -108,7 +142,7 @@ When this skill would write under **`.sedea/centers/software-development/`**, op
 
 Under Checkpoint trust (`trustLevel: checkpoint`), auto-advance scripted happy-path steps; emit structured choice only at **USER_CHECKPOINT** markers in this section, implicit external-wait surfaces, or exception paths. **No cross-skill inheritance** — gate defaults here apply only to **`brainstorm-research`**; invoking missions (**`plan-and-deliver`**, **`single-phase`**, **`quick-fix`**, **`debug-and-fix`**) document their own Squad Leader §2.5 **#external-wait** and failure/partial USER_CHECKPOINT gates — see each mission **`plan.mdc`** §2.5.
 
-**Real-dispatch test loop (binding):** After merge, run one full **`brainstorm-research`** spawn on a Checkpoint dispatch through step **4** report approval and collect a developer verdict before the parent phase advances the next cross-mission skill PR — per **Planning protocol skills UX** § *Single-concern strategy*.
+**Real-dispatch test loop (binding):** After merge, run one full **`brainstorm-research`** spawn on a Checkpoint dispatch through the **analysis gate**, final report write, **post-write revision gate**, and terminal approval — collect a developer verdict before the parent phase advances the next cross-mission skill PR — per **Planning protocol skills UX** § *Single-concern strategy*.
 
 Marker syntax: [`.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md`](.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md).
 
@@ -116,66 +150,93 @@ Marker syntax: [`.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md`](.s
 
 Under Checkpoint trust, **happy-path protocol steps auto-advance without a turn-end modal**. Emit **`mission_control_present_structured_choice`** or **AskQuestion** only at **USER_CHECKPOINT** markers in this skill, **implicit external-wait** surfaces, or **exception** paths.
 
-**Developer-input** (continuation requires the **developer** to pick a modal option on **this lane**) is **not** external-wait. Step **4** report approval is **developer-input USER_CHECKPOINT** — **must** close the turn with structured choice; **Forbidden:** prose-only idle handoff (for example tell-me-when / review-and-reply / pick-in-chat substitutes for the modal).
+**Developer-input** gates (**analysis gate**, **post-write revision gate**) **must** close the turn with structured choice — **Forbidden:** prose-only idle handoff (for example tell-me-when / review-and-reply / pick-in-chat substitutes for the modal).
 
-**Active research (steps 1–3)** is **not** external-wait and **not** a turn-end gate by itself — the agent **Acts** (tools, synthesis, report write) until step **4** presents the report. **Forbidden:** prose-only turn endings that substitute a modal at step **4** with *I'll wait for your research direction* when the protocol step can still advance without a developer pick.
+**Active analysis (steps 1–2)** is **not** external-wait — the agent **Acts** (tools, ledger updates, interim file writes) until step **3** presents the analysis gate.
 
 | Step | Checkpoint behavior | Gate |
 |------|---------------------|------|
-| **1** — Open session | Auto-advance — free-form research chat until report-worthy material | exception: missing required spawn `inputs` → `partial` |
-| **2** — Synthesize | Auto-advance when drafting from conversation | — |
-| **3** — Write report | Auto-advance on successful write under docs write root | exception: write failure → `partial` |
-| **4** — Present for approval | **Gate** — **first developer-pick gate on this lane** | Report approval (below) |
-| **5** — On Approve report | Auto-advance to **`mission_control_refocus_parent_lane`** + terminal MCP result | — |
-| **6** — On Abandon dispatch | Auto-advance to refocus + terminal MCP result | — |
-| **Continue brainstorming** at step **4** | Auto-advance back to steps **1–3** on this lane | no gate until step **4** re-presents |
+| **1** — Intake anchor | Auto-advance — seed request ledger from spawn inputs | exception: missing required spawn `inputs` → `partial` |
+| **2** — Analysis loop | Auto-advance — execute open requests; update interim file | exception: unrecoverable tool failure → note in ledger, stay `open` |
+| **3** — Analysis gate | **Gate** — first developer-pick gate | [Analysis gate](#analysis-gate-binding) |
+| **4** — On continue-analyzing | Auto-advance back to step **2** | no gate until step **3** re-presents |
+| **5** — On approve-write-report | Auto-advance — verify all requests **`done`**; write final report | exception: open requests remain → re-present step **3** |
+| **6** — Post-write revision gate | **Gate** | [Post-write revision gate](#post-write-revision-gate-binding) |
+| **7** — On revise-report | Auto-advance — edit report; re-present step **6** | — |
+| **8** — On approve-report-send | Auto-advance to refocus + terminal MCP result | — |
+| **9** — On Abandon dispatch | Auto-advance to refocus + terminal MCP result | — |
 
-### Report approval gate (binding)
+### Analysis gate (binding)
 
-USER_CHECKPOINT — continue brainstorming, approve report, or abandon dispatch on this lane. defaultOptionId: continue-brainstorming
+USER_CHECKPOINT — continue analyzing, approve final report write, or abandon dispatch on this lane. defaultOptionId: continue-analyzing
 
-**Spawned lane — MCP structured choice (binding):** On spawned **`brainstorm-research`** lanes, **in order to use the AskQuestion modal**, call **`mission_control_present_structured_choice`** (recap in **`displayMarkdown`**; options in **`askQuestion`**) per **`../README.md`** § *Recap, structured choice, act* and **`.sedea/centers/sedea/rules/2_ask-question-instructions.mdc`**.
+**Spawned lane — MCP structured choice (binding):** Call **`mission_control_present_structured_choice`** (recap in **`displayMarkdown`**; options in **`askQuestion`**) per **`../README.md`** § *Recap, structured choice, act* and **`.sedea/centers/sedea/rules/2_ask-question-instructions.mdc`**.
+
+Recap **must** include: intake task anchor, request ledger table (open/done), and **proposed next steps** for open requests tied to the intake task.
 
 | Option id | Label |
 |-----------|--------|
-| `continue-brainstorming` | Continue brainstorming — explore more sources or questions |
-| `approve-report` | Approve report — send to Squad Leader |
+| `continue-analyzing` | Continue analyzing — run more analysis or fulfill open requests |
+| `approve-write-report` | Approve — all requests done, write final report |
 | `abandon-dispatch` | Abandon dispatch — direction not viable |
 | `more-details` | More details for option _ |
 
-**Forbidden at step 4:** listing **`approve-report`** as the first mission-specific option or using **`defaultOptionId: approve-report`** — terminal handoff requires an explicit Approve pick after research continuation is offered first; prose-only recap with bullet menus; tell-me-when / review-and-reply handoff; ending without **`mission_control_present_structured_choice`** / **AskQuestion** on spawned lanes.
+**Forbidden at analysis gate:** listing **`approve-write-report`** as the first mission-specific option or using **`defaultOptionId: approve-write-report`**; offering **`approve-write-report`** while any request is **`open`**; prose-only recap with bullet menus; ending without structured choice on spawned lanes.
+
+### Post-write revision gate (binding)
+
+USER_CHECKPOINT — revise report, approve and send to Squad Leader, or abandon dispatch on this lane. defaultOptionId: revise-report
+
+| Option id | Label |
+|-----------|--------|
+| `revise-report` | Revise report — update conclusions before handoff |
+| `approve-report-send` | Approve report — send to Squad Leader |
+| `abandon-dispatch` | Abandon dispatch — direction not viable |
+| `more-details` | More details for option _ |
+
+**Forbidden at post-write gate:** listing **`approve-report-send`** as the first mission-specific option or using **`defaultOptionId: approve-report-send`**; skipping this gate after the first final report write; ending without structured choice on spawned lanes.
 
 ## Research session (steps)
 
-1. **Open the session** — Restate `researchTopic`, `researchPrompt`, and `openingSeeds` when present. Ask what the developer wants to explore; follow free-form chat until enough material exists for a report (no fixed turn count).
+1. **Intake anchor** — Restate `researchTopic`, `researchPrompt`, and `openingSeeds` when present. State the **intake task** this session serves. Seed the **request ledger** from intake text and any developer messages so far (questions **or** tasks).
 
-   - **Next-step resolution:** Auto-advance through active research — no `USER_CHECKPOINT` on this step under Checkpoint trust.
+   - **Next-step resolution:** Auto-advance to step **2**.
 
-2. **Synthesize** — Draft report sections from the conversation (see **Report file shape** below). Use tools (read codebase, search docs) when helpful; cite paths in **Sources consulted**.
+2. **Analysis loop** — For each **`open`** request, run analysis per **Analysis toolkit**. Record outcomes in the ledger; mark **`done`** when fulfilled. Update the interim request-log file (see **Interim request log shape**). Propose **next steps** mentally for step **3** recap.
 
-   - **Next-step resolution:** Auto-advance to step **3** — no `USER_CHECKPOINT` on this step.
+   - **Relevant Links (post-write):** After a successful create or material revise write of the interim file, call MCP **`mission_control_update_relevant_documents`** with the absolute path (`kind: other`) on this lane — same turn preferred. **Skip** when already registered this session with no content change.
 
-3. **Write report** — Resolve docs write root per **31_dispatch-scope.mdc** § *Docs write root resolution*; save under that directory as `brainstorm_<slug>_<8hex>.brainstorm-report.md` (kebab slug from title; regenerate hex on collision once).
+   - **Next-step resolution:** Auto-advance to step **3** when at least one analysis pass completed or all seeded requests are addressed — no gate on this step.
 
-   - **Relevant Links (post-write):** After a successful create or material revise write, call MCP **`mission_control_update_relevant_documents`** with the absolute report path (`kind: other`) on this lane — same turn preferred. **Skip** when already registered this session with no content change. Does **not** replace terminal `brainstormReportPath` / `brainstormReportRef`. See **`../README.md`** § *Relevant Links — post-write registration*.
+3. **Analysis gate** — Recap intake task, request ledger, and **proposed next steps** in **`displayMarkdown`**. Open [Analysis gate](#analysis-gate-binding) via **`mission_control_present_structured_choice`** or **AskQuestion** — **same turn**, not prose-only.
 
-   - **Next-step resolution:** Auto-advance to step **4** after successful write — no `USER_CHECKPOINT` on this step.
+   - **Next-step resolution:** **Gate** — developer pick required before steps **4–9**.
 
-4. **Present for approval** — Recap report path and §5 Handoff summary excerpt in **`displayMarkdown`** when using **`mission_control_present_structured_choice`**. Open [Report approval gate](#report-approval-gate-binding) via **`mission_control_present_structured_choice`** or **AskQuestion** — **same turn**, not prose-only.
+4. **On Continue analyzing** — Append any new developer requests from chat to the ledger as **`open`**. Return to step **2**.
 
-   - **Next-step resolution:** **Gate** — developer pick required before steps **5** / **6**.
+   - **Next-step resolution:** Auto-advance through analysis work — no gate until step **3** re-presents.
 
-5. **On Approve report** — Set `developerApprovedReport: true`, `abandonMission: false`, `continuationStatus: "terminal"`, `continuationOwner: "squad-leader"`. Call **`mission_control_refocus_parent_lane`** immediately before the MCP result call (see **`../README.md`** § *Parent refocus on terminal (`mission_control_refocus_parent_lane`)*). Populate **`downstreamHandoffSummary`** (concise prose for next spawn **`initiatingPrompt`**) and **`downstreamSpawnTarget`** per invoker (see **Downstream mapping**).
+5. **On Approve write report** — Verify every request is **`done`**. If any remain **`open`**, re-present step **3** with explanation — **do not** write the final report. When all are **`done`**, synthesize conclusions and write the final report under the docs write root as `brainstorm_<slug>_<8hex>.brainstorm-report.md` (kebab slug from title; regenerate hex on collision once).
 
-   - **Next-step resolution:** Auto-advance to terminal MCP result — no additional `USER_CHECKPOINT` on this step.
+   - **Relevant Links (post-write):** After a successful final report write, call MCP **`mission_control_update_relevant_documents`** with the absolute report path (`kind: other`).
 
-6. **On Abandon dispatch** — Set `developerApprovedReport: false`, `abandonMission: true`, `continuationStatus: "terminal"`, `continuationOwner: "squad-leader"`. Call **`mission_control_refocus_parent_lane`** then MCP result call with `outputs.abandonReason` when the developer stated one.
+   - **Next-step resolution:** Auto-advance to step **6**.
 
-   - **Next-step resolution:** Auto-advance to terminal MCP result — no additional `USER_CHECKPOINT` on this step.
+6. **Post-write revision gate** — Recap report path and §5 Handoff summary excerpt in **`displayMarkdown`**. Open [Post-write revision gate](#post-write-revision-gate-binding) — **same turn**, not prose-only.
 
-**On Continue brainstorming** — Continue steps **1–3** on this lane (more sources, questions, or report revision); return to step **4** when the report is updated.
+   - **Next-step resolution:** **Gate** — developer pick required before terminal handoff.
 
-   - **Next-step resolution:** Auto-advance through revision work — no gate until step **4** re-presents.
+7. **On Revise report** — Edit the final report per developer feedback; return to step **6**.
+
+   - **Next-step resolution:** Auto-advance through edits — gate at step **6** after update.
+
+8. **On Approve report send** — Set `developerApprovedReport: true`, `abandonMission: false`, `continuationStatus: "terminal"`, `continuationOwner: "squad-leader"`. Call **`mission_control_refocus_parent_lane`** immediately before the MCP result call. Populate **`downstreamHandoffSummary`** and **`downstreamSpawnTarget`** per **Downstream mapping**.
+
+   - **Next-step resolution:** Auto-advance to terminal MCP result.
+
+9. **On Abandon dispatch** (either gate) — Set `developerApprovedReport: false`, `abandonMission: true`, `continuationStatus: "terminal"`, `continuationOwner: "squad-leader"`. Call **`mission_control_refocus_parent_lane`** then MCP result with `outputs.abandonReason` when stated.
+
+   - **Next-step resolution:** Auto-advance to terminal MCP result.
 
 ## Downstream mapping (binding)
 
@@ -196,14 +257,14 @@ USER_CHECKPOINT — continue brainstorming, approve report, or abandon dispatch 
 | R2 | **Forbidden args absent** — no **`correlationId`**, **`dispatchId`**, **`slotId`**, or other host-resolved keys |
 | R3 | Populate **`outputs`** from the required field list below |
 | R4 | Re-emit updated MCP result after user-requested follow-up on this lane (same spawn session; host resolves **`correlationId`**) |
-| R5 | **`mission_control_refocus_parent_lane`** — **Required** on Approve / Abandon terminal per procedure steps 5–6; **forbidden** while **`continuationStatus: active`** |
+| R5 | **`mission_control_refocus_parent_lane`** — **Required** on Approve / Abandon terminal per procedure steps 8–9; **forbidden** while **`continuationStatus: active`** |
 
 ### MCP parent refocus (`mission_control_refocus_parent_lane`)
 
 | Signal on this terminal | Refocus? |
 |-------------------------|----------|
-| **`continuationStatus: active`** (research / pre-approval) | **Forbidden** |
-| **Approve report** / **Abandon dispatch** (**`continuationStatus: terminal`**) | **Required** |
+| **`continuationStatus: active`** (analysis / pre-approval) | **Forbidden** |
+| **Approve report send** / **Abandon dispatch** (**`continuationStatus: terminal`**) | **Required** |
 
 Call **`mission_control_refocus_parent_lane`** (optional `{ "reason": "brainstorm-research-complete" }` — no host-resolved identity keys) **immediately before** **`mission_control_send_agent_result`** when **Required** above. See **`../README.md`** § *Parent refocus on terminal*.
 
@@ -215,10 +276,12 @@ Required `outputs` fields:
 
 - `outputs.brainstormReportPath`
 - `outputs.brainstormReportRef` — `@`-prefixed path for handoff
+- `outputs.brainstormRequestsPath` — absolute path to interim request log when written
+- `outputs.brainstormRequestsRef` — `@`-prefixed path to interim request log when written
 - `outputs.reportTitle`
 - `outputs.operationsDocsDirectory`
 - `outputs.invokerMissionSlug`
-- `outputs.developerApprovedReport` — `true` only on **Approve report**
+- `outputs.developerApprovedReport` — `true` only on **Approve report send**
 - `outputs.abandonMission` — `true` only on **Abandon dispatch**
 - `outputs.abandonReason` — optional string when abandoning
 - `outputs.downstreamSpawnTarget` — see **Downstream mapping**
@@ -230,20 +293,43 @@ Required `outputs` fields:
 
 **Continuation:**
 
-- During active research before report write or approval: `continuationOwner: "brainstorm-research-agent"`, `continuationStatus: "active"`, `developerApprovedReport: false`, `abandonMission: false`.
+- During active analysis before final report approval: `continuationOwner: "brainstorm-research-agent"`, `continuationStatus: "active"`, `developerApprovedReport: false`, `abandonMission: false`.
 - On terminal approve or abandon: `continuationOwner: "squad-leader"`, `continuationStatus: "terminal"`.
 
 **Forbidden:** `developerApprovedReport: true` with empty `downstreamHandoffSummary`. **Forbidden:** spawning downstream agents from this lane.
 
 Stop after the MCP result call (see **`../README.md`** § *Terminal stop (normative)*).
 
-## Report file shape (template)
+## Interim request log shape (template)
+
+Save under the docs write root as `brainstorm_<slug>_<8hex>.brainstorm-requests.md` (same slug/hex family as the final report when possible). **Request log only — no conclusions.**
+
+```markdown
+# Request log — <title>
+
+**Intake task:** <anchor from researchPrompt / openingSeeds / intake chat>
+**Invoker mission:** `<invokerMissionSlug>`
+
+| # | Request | Status | Outcome |
+|---|---------|--------|---------|
+| 1 | count how many rows in … | done | 1,842 rows; query saved in Sources |
+| 2 | make a CSV of top 10 … | open | — |
+
+## Sources consulted
+
+<Paths, queries, URLs, temp script paths, artifact paths>
+```
+
+## Final report file shape (template)
+
+Written only on step **5** after all requests are **`done`** and the developer picks **`approve-write-report`**, then revised through step **6–7** as needed.
 
 ```markdown
 # <Title>
 
 **Invoker mission:** `<invokerMissionSlug>`
 **Downstream target:** `<downstreamSpawnTarget>`
+**Request log:** `<path to brainstorm-requests.md>`
 
 ## 1. Research question
 
@@ -251,7 +337,7 @@ Stop after the MCP result call (see **`../README.md`** § *Terminal stop (normat
 
 ## 2. Findings
 
-<Key observations, options considered, constraints>
+<Key observations grounded in analysis outcomes from the request ledger>
 
 ## 3. Recommendation
 
@@ -267,7 +353,7 @@ Stop after the MCP result call (see **`../README.md`** § *Terminal stop (normat
 
 ## Sources consulted
 
-<Paths, URLs, or tools used>
+<Paths, URLs, queries, temp scripts, and data artifacts used>
 ```
 
 ## Out of scope
