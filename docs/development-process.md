@@ -73,6 +73,20 @@ Subsections below are **indexes** — load linked rules, skills, or on-demand do
 | Display metadata / stale tabs | Rule **50**; [`mission-control-display-metadata-host-spec.md`](mission-control-display-metadata-host-spec.md) |
 | **Planning mode templates** | **[`planning-mode-templates.md`](planning-mode-templates.md)** — Master / Phase / per-PR templates, PR sizing, depth-first traversal |
 
+### Brainstorm research (optional pre-intake)
+
+Spawned when the developer selects **`brainstorm-first`** at mission intake (§2.5 on **`plan-and-deliver`**, **`single-phase`**, **`quick-fix`**, or **`debug-and-fix`**). Normative procedure: **`brainstorm-research/SKILL.md`**.
+
+| Principle | Detail |
+|-----------|--------|
+| **Analysis-first** | The lane runs DB queries, temp scripts (CSV/data files), log analysis, web search, and codebase/docs reads **before** synthesizing conclusions — not chat-only speculation. |
+| **Request ledger** | Tracks every developer **request** (questions **or** imperative tasks such as *count …*, *make a CSV …*). Each item is **`open`** or **`done`** with an outcome note. |
+| **Interim artifact** | **`*.brainstorm-requests.md`** under scope **`operationsDocsDirectory`** — request log **only** (no conclusions). Updated during the analysis loop. |
+| **Analysis gate** | First structured-choice gate: **`continue-analyzing`** (default) · **`approve-write-report`** (all requests **`done`**) · **`abandon-dispatch`**. Recap includes proposed next steps tied to the intake task. |
+| **Final report** | **`*.brainstorm-report.md`** written only after all requests are **`done`** and the developer approves write. Contains conclusions, recommendation, and handoff summary. |
+| **Post-write revision gate** | After the final report write: **`revise-report`** (default) · **`approve-report-send`** · **`abandon-dispatch`** — one revision pass before terminal handoff to the Squad Leader. |
+| **Downstream** | Unchanged — invoker Squad Leader auto-chains **`author-prd`**, **`ad-hoc-prd`**, **`quick-fix-plan`**, or debug intake per invoker **`plan.mdc`** §2.5. |
+
 #### Center-repo PR base (binding)
 
 When opening a PR for **center-repo content** (rules, docs, missions, skills tracked in a **center git repository**):
