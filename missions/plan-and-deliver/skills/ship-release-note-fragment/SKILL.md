@@ -22,7 +22,7 @@ inputs:
     required: true
   hostingFragmentPath:
     type: string
-    description: Absolute path to approved fragment on primary clone
+    description: Absolute path to approved fragment under hosting WORKTREE_ROOT
     required: true
   hostingFragmentRelPath:
     type: string
@@ -41,7 +41,7 @@ inputs:
 
 # Ship release-note fragment
 
-**Inline from capture (primary).** [`capture-release-note`](../capture-release-note/SKILL.md) Step **6** reads and runs this skill **in-session** after approve + write. **Do not** spawn a child agent for this skill on the capture happy path.
+**Inline from capture (worktree-first).** [`capture-release-note`](../capture-release-note/SKILL.md) Step **6** reads and runs this skill **in-session** after approve + worktree write. **Do not** spawn a child agent for this skill on the capture happy path.
 
 **Lane requirement (no separate warm-up).** This skill has **no** frontmatter **`warmUpRules`** / **`laneRules`** by design — invoker lane already loaded ship rules.
 
@@ -89,11 +89,17 @@ Under Checkpoint trust, **auto-advance the full clean chain in the same turn** �
 
 From **`repoPath`** / **`HOSTING_ROOT`**, run center **`worktree-setup.sh`** per [`.sedea/centers/sedea/rules/7_stacked-pr-worktree-naming.mdc`](.sedea/centers/sedea/rules/7_stacked-pr-worktree-naming.mdc) (docs-only fragment ship — use a short **`improve/`** or **`docs/`** worktree name). When hint **`nextAction: attach-required`**, MCP **`sedea_add_worktree_folder`**.
 
-- **Next-step resolution:** Auto-advance to Step **3**.
+| Outcome | Action |
+|---------|--------|
+| **`worktree-setup.sh` success** | Auto-advance Step **3** |
+| Exit **10** dirty primary | Return **`fragmentShipStatus: failed`** to invoker with `errors[].message` listing blocking paths — **forbidden:** silent manual `git worktree add` |
+| Other bootstrap / attach failure | Return failure fields; invoker proceeds to Step **7** terminal |
+
+- **Next-step resolution:** Auto-advance to Step **3** on success only.
 
 ### 3. Stage named fragment path(s)
 
-1. Ensure **`hostingFragmentRelPath`** exists under **`WORKTREE_ROOT`** — copy from **`hostingFragmentPath`** when the file was written on the primary clone only.
+1. Confirm **`hostingFragmentRelPath`** exists under **`WORKTREE_ROOT`** at **`hostingFragmentPath`**. **Legacy exception only:** when invoker documents a pre-worktree-primary path, copy once into the worktree — **not** the capture happy path after worktree-first Step **5**.
 2. Stage **named paths only** — the hosting fragment path, and **`centerFragmentPath`** only when set and that path is inside this repo checkout.
 3. **Forbidden:** staging product code or unrelated docs.
 
@@ -144,4 +150,5 @@ Not required for the capture happy path. If ever spawned alone: emit the same fi
 | Spawn coding-session for fragment ship | This skill owns fragment ship |
 | Expand beyond fragment paths | Named paths only |
 | Terminal success without merge proof | Verify path on `origin/main` |
-| Inline create-pr from Squad Leader | Capture lane runs this skill after write |
+| Inline create-pr from Squad Leader | Capture lane runs this skill after worktree write |
+| Manual `git worktree add` after exit **10** without exception gate | Fail closed — return failure to invoker |
