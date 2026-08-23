@@ -2,8 +2,8 @@
 name: capture-release-note
 description: >-
   Once-per-dispatch lane: generate a release-note fragment from dispatch commits,
-  get developer structured approval, write hosting docs/release-notes/unreleased/
-  (optional center unreleased mirror), run ship-release-note-fragment inline to land
+  get developer structured approval, set up hosting worktree, write fragment under
+  WORKTREE_ROOT/docs/release-notes/unreleased/ (optional center unreleased mirror), run ship-release-note-fragment inline to land
   a hosting fragment PR onto origin/main, or skip when internal functionality needs
   no note; terminal releaseNoteStatus success only with merge proof for the dissolve gate.
 designation:
@@ -64,7 +64,7 @@ warmUpRules:
 
 **Owns:** generate → structured approve/revise **or** skip-internal → write unreleased fragment(s) + Relevant Links (when approved) → run **`ship-release-note-fragment`** **inline** to land a hosting fragment PR that merges the fragment onto **`origin/main`** → verify **merge proof** → terminal **`mission_control_send_agent_result`** with **`releaseNoteStatus`** (`success` with merge proof \| `skipped`) so the Squad Leader dissolve gate can clear. On skip-internal: no write, no fragment PR.
 
-**Out of scope:** overlay enablement; bump/sentinel consolidation; GitHub Release publish; Master Plan / phase planning; dispatch resolution; catch-up of pre-gap local `??` unreleased files; hosting submodule pin (ship lane after center merge — not this skill).
+**Out of scope:** overlay enablement; bump/sentinel consolidation; GitHub Release publish; Master Plan / phase planning; dispatch resolution; pre-gap unrelated `??` unreleased files on primary that this run did not author (Step **7** owns primary hygiene for fragments **this run** writes); hosting submodule pin (ship lane after center merge — not this skill).
 
 
 ## Release note content policy (binding)
@@ -136,7 +136,8 @@ flowchart TD
   C --> D[Draft fragment markdown]
   D --> E[USER_CHECKPOINT approve or revise]
   E -->|revise| D
-  E -->|approve| F[Write hosting unreleased]
+  E -->|approve| W[Worktree setup + attach]
+  W --> F[Write hosting unreleased under WORKTREE_ROOT]
   F --> R[Relevant Links register]
   R --> G{writeCenterUnreleased?}
   G -->|yes| H[Write Software Development center unreleased]
@@ -144,7 +145,8 @@ flowchart TD
   H --> R2[Register RD Relevant Links]
   R2 --> S
   S --> M{Merge proof on origin/main?}
-  M -->|yes| I[Terminal success + merge proof]
+  M -->|yes| P[Primary hygiene on HOSTING_ROOT]
+  P --> I[Terminal success + merge proof]
   M -->|no| J[Terminal non-success]
   E -->|skip-internal| K[Terminal skipped notify parent]
   E -->|abort| J
@@ -166,9 +168,9 @@ Fragment approval remains a developer-input **USER_CHECKPOINT**, not external-wa
 | **2** — Collect commits | Auto-advance | exception: no commits → `failure` (leader should not have spawned) |
 | **3** — Draft fragment | Auto-advance | — |
 | **4** — Approve / revise / skip-internal | **Gate** — USER_CHECKPOINT | approve → write; revise → redraft; skip-internal → Step **7** skipped terminal; abort → non-success |
-| **5** — Write unreleased path(s) + Relevant Links | Auto-advance after approve | exception: write failure → `failure`; Relevant Links MCP failure → log + continue (do not fail capture); **skip** when Step **4** chose skip-internal |
+| **5** — Worktree setup + write unreleased path(s) + Relevant Links | Auto-advance after approve | exception: worktree-setup exit **10** or write failure → `failure`; Relevant Links MCP failure → log + continue (do not fail capture); **skip** when Step **4** chose skip-internal |
 | **6** — Inline ship-release-note-fragment | Auto-advance full clean ship chain on this lane | exception: ship failure → `failure`; **skip** when Step **4** chose skip-internal |
-| **7** — Merge proof + terminal MCP result | Auto-advance | success only with merge proof (or skipped internal) — both notify Squad Leader |
+| **7** — Merge proof + primary hygiene + terminal MCP result | Auto-advance | success only with merge proof + primary hygiene (or skipped internal) — both notify Squad Leader |
 
 ## Session orientation table (binding)
 
@@ -177,7 +179,7 @@ Fragment approval remains a developer-input **USER_CHECKPOINT**, not external-wa
 | Field | Value |
 |-------|-------|
 | Plan | — (dissolve-gate skill; no PR plan anchor) |
-| Worktree | — |
+| Worktree | `<WORKTREE_ROOT>` after Step **5** setup (docs-only hosting worktree) |
 | Branch | — |
 | Dispatch | `<dispatchId>` from lane identity |
 | Fragment draft | `<absolute draft path or "(in recap)">` |
@@ -248,7 +250,7 @@ Call **`mission_control_present_structured_choice`** (`modalTitle`: *Release not
 
 | Option id | Label |
 |-----------|--------|
-| `approve-fragment` | Approve — write unreleased fragment |
+| `approve-fragment` | Approve — write, ship, and merge fragment |
 | `revise-fragment` | Revise — I'll give feedback |
 | `skip-internal-not-required` | Internal functionality — release note is not required |
 | `abort-capture` | Abort release-note capture |
@@ -259,43 +261,45 @@ Call **`mission_control_present_structured_choice`** (`modalTitle`: *Release not
 
 | Choice | Action |
 |--------|--------|
-| `approve-fragment` | Proceed to Step **5** with the draft as approved text |
+| `approve-fragment` | Proceed to Step **5** with the draft as approved text (Steps **5–7** and inline ship are non-interactive) |
 | `revise-fragment` | Collect feedback (chat / Other); redraft Step **3**; re-open this gate — **do not** write yet |
 | `skip-internal-not-required` | **Do not** write unreleased files. Proceed to Step **7** with **`releaseNoteStatus: skipped`** — notify Squad Leader (parent) via terminal result (+ **`mission_control_refocus_parent_lane`** when a parent exists) |
 | `abort-capture` | Terminal **`aborted`** with `outputs.releaseNoteStatus: failed` |
 
 **Forbidden:** writing unreleased files before `approve-fragment`; inventing skip outside this gate’s **`skip-internal-not-required`** option; auto-write without this gate; treating skip-internal as **`failed`** (that hard-blocks dissolve).
 
-### 5. Write unreleased fragment(s)
+### 5. Worktree setup + write unreleased fragment(s)
 
-**After** `approve-fragment`:
+**After** `approve-fragment` — **worktree before first byte** (binding):
 
-1. Ensure directory **`HOSTING_ROOT/docs/release-notes/unreleased/`** exists.
-2. Choose a stable filename:
+1. From **`HOSTING_ROOT`**, run center **`worktree-setup.sh`** (docs-only fragment ship — short **`docs/`** or **`improve/`** worktree name per rule **7**). When hint **`nextAction: attach-required`**, MCP **`sedea_add_worktree_folder`**. Record absolute **`WORKTREE_ROOT`** for this capture pass.
+2. When **`worktree-setup.sh`** returns exit **10** (`resolve-dirty-primary`): **stop** — do **not** write on primary; do **not** manually `git worktree add` without an exception gate. Set `outputs.fragmentShipStatus: failed` with `errors[].message` naming blocking dirty paths; proceed to Step **7** terminal **`failure`**.
+3. Ensure directory **`WORKTREE_ROOT/docs/release-notes/unreleased/`** exists.
+4. Choose a stable filename:
    - Prefer `YYYY-MM-DD-<kebab-dispatch-title-or-short-id>.md`
    - If the file exists, append `-2`, `-3`, … rather than overwrite.
-3. **Write** the approved markdown to that hosting path (primary clone **`HOSTING_ROOT`** — unreleased notes are hosting tracked docs under `docs/`, not `.sedea/operations/`).
-4. **Relevant Links (first write — binding):** On the **same turn** as the first successful hosting write for this skill run, call MCP **`mission_control_update_relevant_documents`** with the absolute hosting fragment path so Mission Control Relevant Links lists the new file. Prefer `{ path, kind: "other", label }` (label = fragment basename or short dispatch title). **Do not** call this before the write succeeds. Host dedupes — safe if the path was already registered.
-5. When `writeCenterUnreleased: true` and `centerRoot` is set:
+5. **Write** the approved markdown **only** under **`WORKTREE_ROOT/docs/release-notes/unreleased/`** — **forbidden:** creating or modifying the fragment on **`HOSTING_ROOT`** primary working tree.
+6. **Relevant Links (first write — binding):** On the **same turn** as the first successful hosting write for this skill run, call MCP **`mission_control_update_relevant_documents`** with the absolute **worktree** fragment path so Mission Control Relevant Links lists the new file. Prefer `{ path, kind: "other", label }` (label = fragment basename or short dispatch title). **Do not** call this before the write succeeds. Host dedupes — safe if the path was already registered.
+7. When `writeCenterUnreleased: true` and `centerRoot` is set:
    - Ensure **`centerRoot/docs/release-notes/unreleased/`** exists.
    - Write the same (or center-scoped) fragment with a matching filename under that directory.
    - On that first successful center write, also call **`mission_control_update_relevant_documents`** for the absolute center fragment path (`kind: "other"`).
-6. Record absolute paths in `outputs.hostingFragmentPath` and optional `outputs.centerFragmentPath`. Set `outputs.relevantDocumentsRegistered: true` when the hosting Relevant Links call was attempted after a successful write (even if the stdio MCP ack is transcript-only).
+8. Record absolute paths in `outputs.hostingFragmentPath` (absolute path **under worktree**), `outputs.hostingFragmentRelPath` (repo-relative under hosting), and optional `outputs.centerFragmentPath`. Set `outputs.relevantDocumentsRegistered: true` when the hosting Relevant Links call was attempted after a successful write (even if the stdio MCP ack is transcript-only).
 
-**Forbidden:** writing under `WORKTREE_ROOT/.sedea/operations/`; inventing a second fragment after success on the same dispatch; skipping hosting write when approve succeeded; writing under **`.sedea/centers/sedea/`** or **`sedea-builtin-center`**; registering Relevant Links for a path that was not written this run; treating Relevant Links registration failure as a reason to skip the hosting write; treating Step **5** write alone as terminal **`releaseNoteStatus: success`** (merge proof is Step **7**).
+**Forbidden:** writing under `WORKTREE_ROOT/.sedea/operations/`; inventing a second fragment after success on the same dispatch; skipping hosting write when approve succeeded; writing under **`.sedea/centers/sedea/`** or **`sedea-builtin-center`**; registering Relevant Links for a path that was not written this run; treating Relevant Links registration failure as a reason to skip the hosting write; treating Step **5** write alone as terminal **`releaseNoteStatus: success`** (merge proof is Step **7**); **primary-clone `HOSTING_ROOT` write** before worktree setup.
 
 - **Next-step resolution:** Auto-advance to Step **6** (fragment PR handoff). **Do not** emit terminal success after write alone.
 
 ### 6. Inline ship-release-note-fragment
 
-**After** Step **5** succeeds (hosting fragment file exists on **`HOSTING_ROOT`**):
+**After** Step **5** succeeds (hosting fragment file exists under **`WORKTREE_ROOT`**, not primary):
 
-1. Record `outputs.hostingFragmentPath` and the **repo-relative** path under hosting (for example `docs/release-notes/unreleased/YYYY-MM-DD-….md`).
+1. Record `outputs.hostingFragmentPath` (absolute path under **worktree**) and `outputs.hostingFragmentRelPath` (repo-relative path under hosting, for example `docs/release-notes/unreleased/YYYY-MM-DD-….md`).
 2. Set `outputs.fragmentShipStatus: pending`.
 3. **Read** and execute [`.sedea/centers/software-development/missions/plan-and-deliver/skills/ship-release-note-fragment/SKILL.md`](../ship-release-note-fragment/SKILL.md) **inline** (same agent session — **no** **`mission_control_spawn_agent`**) with:
    - **`repoPath`:** absolute **`HOSTING_ROOT`**
    - **`baseRef`:** `origin/main` (or resolved hosting integration ref)
-   - **`hostingFragmentPath`:** absolute path from Step **5** (required)
+   - **`hostingFragmentPath`:** absolute path from Step **5** under **worktree** (required)
    - **`hostingFragmentRelPath`:** repo-relative path under hosting (required for merge-proof checks)
    - **`centerFragmentPath`:** optional absolute center unreleased path when written in Step **5**
 4. On inline Completion with **`fragmentShipStatus: merged`** and merge-proof fields: proceed to Step **7** merge-proof verification on **this** lane.
@@ -305,7 +309,7 @@ Call **`mission_control_present_structured_choice`** (`modalTitle`: *Release not
 
 - **Next-step resolution:** After inline ship completes (or fails), auto-advance to Step **7**.
 
-### 7. Merge proof + terminal result
+### 7. Merge proof + primary hygiene + terminal result
 
 **Merge proof (binding — required for `releaseNoteStatus: success`):**
 
@@ -318,10 +322,15 @@ Accept **any one** of:
 
 **Does not count as merge proof:** file exists only on the primary clone working tree; `??` porcelain; Relevant Links registration alone; child **`releaseNoteStatus`** / write success without path-on-main evidence.
 
-1. When Step **4** chose **`skip-internal-not-required`:** skip merge proof; emit terminal **`skipped`** as below.
-2. Otherwise verify merge proof for `outputs.hostingFragmentPath` (repo-relative). Set `outputs.mergeProofVerified: true` and `outputs.mergeProofPath` on success; on failure set `outputs.mergeProofVerified: false` and **`releaseNoteStatus: failed`**.
-3. Call **`mission_control_refocus_parent_lane`** with a short reason when a resolvable parent exists (required after **`skip-internal-not-required`**; recommended after merge-proven success).
-4. Emit **exactly one** terminal **`mission_control_send_agent_result`**:
+1. When Step **4** chose **`skip-internal-not-required`:** skip merge proof and primary hygiene; emit terminal **`skipped`** as below.
+2. Otherwise verify merge proof for `outputs.hostingFragmentRelPath` (repo-relative). Set `outputs.mergeProofVerified: true` and `outputs.mergeProofPath` on success; on failure set `outputs.mergeProofVerified: false` and **`releaseNoteStatus: failed`**.
+3. When **`outputs.mergeProofVerified: true`** — **primary hygiene (binding):**
+   - From **`HOSTING_ROOT`**: `git fetch origin main`
+   - When primary **`HEAD`** lags **`origin/main`**: fast-forward with `git pull origin main` when primary is clean for unrelated paths; when pull is blocked by unrelated dirty state, note in terminal **`summary`** and set `status: partial` if merge proof holds but hygiene could not complete — do not leave stale `??` at `mergeProofPath` unreported
+   - When porcelain shows **`??`** at **`mergeProofPath`** while **`origin/main`** already tracks that rel path: remove the untracked duplicate on primary (Path A — this edit pass authored the fragment via worktree ship)
+   - Confirm primary has no new `??` or staged change at the fragment path from this run
+4. Call **`mission_control_refocus_parent_lane`** with a short reason when a resolvable parent exists (required after **`skip-internal-not-required`**; recommended after merge-proven success).
+5. Emit **exactly one** terminal **`mission_control_send_agent_result`**:
 
 | Field | Value on merge-proven happy path | Value on skip-internal |
 |-------|----------------------------------|------------------------|
@@ -358,7 +367,7 @@ Call MCP **`mission_control_send_agent_result`** exactly once at skill terminal 
 | `mergeProofVerified` | boolean | `true` when fragment path proven on `origin/main` |
 | `mergeProofPath` | string | Repo-relative path proven on integration tip |
 | `fragmentShipStatus` | string | `pending` \| `merged` \| `failed` — inline ship-release-note-fragment |
-| `hostingFragmentPath` | string | Absolute path under hosting unreleased |
+| `hostingFragmentPath` | string | Absolute path under hosting worktree unreleased (worktree-first after Step **5**) |
 | `centerFragmentPath` | string | Optional absolute Software Development center unreleased path |
 | `fragmentFilename` | string | Basename |
 | `relevantDocumentsRegistered` | boolean | Hosting fragment registered via **`mission_control_update_relevant_documents`** after first write |
@@ -385,5 +394,7 @@ Call MCP **`mission_control_send_agent_result`** exactly once at skill terminal 
 | Fail capture because Relevant Links MCP ack is transcript-only | Registration is best-effort for panel UX; fragment write + merge proof + **`releaseNoteStatus`** still govern dissolve |
 | Land skill under builtin-center / `.sedea/centers/sedea/skills/` | software-development plan-and-deliver path only |
 | Pin-promotion bullets in release notes | Apply **Release note content policy**; use **skip-internal** when commits are pin-only |
+| Primary HOSTING_ROOT write before worktree | Step **5** worktree-first only — write under **`WORKTREE_ROOT`** |
+| Leave primary `??` duplicate after merge proof | Step **7** primary hygiene — remove stale untracked when path is on `origin/main` |
 | Edit overlay / bump scripts here | Out of scope — later phases |
 | Prose-only idle at approve gate | Always MCP structured choice |

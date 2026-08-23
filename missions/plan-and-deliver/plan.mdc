@@ -851,7 +851,9 @@ Before calling MCP **`mission_control_propose_dispatch_resolution`** when the de
 
 **Owner:** Squad Leader on this R&D delivery mission (also inherited by wrapper missions that cross-ref this section). **Check-only** for fragment promotion — the leader verifies merge proof / skip; it does **not** run **`create-pr`**, fragment commit, or **`promote-center-submodule-pin`**.
 
-**Developer consent (binding — once per dispatch):** The sole developer gate for unreleased fragment text **and** fragment promotion is **`capture-release-note`** Step **4** **`approve-fragment`** (or structured skip via **`skip-internal-not-required`**). After **`approve-fragment`**, **`capture-release-note`** Step **6** runs [`ship-release-note-fragment`](skills/ship-release-note-fragment/SKILL.md) **inline** on the capture lane — worktree → commit → PR → merge → cleanup **without** further developer gates on the clean path. Leader **`success`** still requires **merge proof** on **`origin/main`** (table below) — local write or write-only **`success`** alone does **not** clear the hard-block.
+**Developer consent (binding — once per dispatch):** The sole developer gate for unreleased fragment text **and** fragment promotion is **`capture-release-note`** Step **4** **`approve-fragment`** (or structured skip via **`skip-internal-not-required`**). After **`approve-fragment`**, **`capture-release-note`** Step **6** runs [`ship-release-note-fragment`](skills/ship-release-note-fragment/SKILL.md) **inline** on the capture lane — worktree → write → commit → PR → merge → cleanup **without** further developer gates on the clean path. Leader **`success`** still requires **merge proof** on **`origin/main`** (table below) — local write or write-only **`success`** alone does **not** clear the hard-block.
+
+**Pin promotion (binding — not capture lane):** When this dispatch also needs hosting gitlink adoption after a **center-repo** merge, the Squad Leader runs **`promote-submodule-pin`** inline on the leader or ship lane **after** center merge — **not** from **`capture-release-note`**. Sequence when both apply: (1) capture lane lands docs fragment PR → leader verifies merge proof; (2) separate ship/pin step promotes submodule when gitlink ≠ center `defaultBranch` tip.
 
 **Overlay source of truth:** Unfenced **`releaseVersions`** in the active hosting repo **`.cursor/rules/dot-sedea.mdc`**. On-value is exactly **`release-versions`**. Consumers **must not** redefine the key. Absent or any other value → treat as **off**.
 
@@ -923,7 +925,7 @@ USER_CHECKPOINT — release-note skill pending or failed; run or retry only (no 
 - Ad-hoc skip-and-resolve / “close without notes” options on the **leader** hard-block modal (developer skip is **only** via capture-release-note **`skip-internal-not-required`**).
 - Re-spawning after `releaseNoteStatus: success` or `skipped` (once-per-dispatch).
 - Soft-warn instead of hard-block when the gate applies.
-- Squad Leader **`create-pr`**, fragment commit/push, or **`promote-center-submodule-pin`** from §§1–7 / dissolve-gate procedure — fragment PR and pin are coding-session / ship-lane owned.
+- Squad Leader **`create-pr`**, fragment commit/push, or **`promote-center-submodule-pin`** from §§1–7 / dissolve-gate procedure — fragment PR is capture-lane owned; pin promotion is **`promote-submodule-pin`** / ship lane only.
 
 **Skip (no spawn, no hard-block):** flag off **or** no commits landed → `releaseNoteStatus: not-required`; proceed with existing ship / pre-resolution gates only.
 
