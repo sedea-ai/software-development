@@ -91,6 +91,36 @@ If Mission Control opened a session whose only intent is **`create-pr`** / *open
 
 **Required instead:** [`.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md`](.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md) § *Script invocation* — call `center-pull-promote-pin.sh`, `hosting-gitlink-pull-promote-pin.sh`, or `batch-promote-submodule-pins.sh` **before** or **after** the implementation PR per the ship chain — never via **`create-pr`**. Promote scripts create the hosting worktree with **`worktree-setup.sh --pin-only`**. **Forbidden:** default **`worktree-setup.sh`** or **`create-pr`** for pin PRs.
 
+## Gitlink-only hard skip (binding)
+
+**Before [Gate](#gate) step 1**, run the diff detector from **`coding-session`** [Gitlink-only ship router (binding)](../coding-session/SKILL.md#gitlink-only-ship-router-binding) on the committed diff in **`worktreePath`** vs **`baseRef`**.
+
+When classification is **`gitlink-only-only`**:
+
+1. **Must not load** execution steps below ([Gate](#gate), push, **`gh pr create`**, [Pre-gh authorization gate](#pre-gh-authorization-gate-binding)).
+2. Return immediately to parent **`coding-session`** with:
+   - `continuationStatus: skipped-pin-path`
+   - `outputs.pinPromotionPath: true`
+   - `outputs.hostingDiffClassification: gitlink-only-only`
+3. Parent **must** route to Path A terminal — **forbidden** retry via **`create-pr`**.
+
+**FORBIDDEN — create-pr skill entry on pin path (binding):**
+
+1. **Forbidden:** loading [Gate](#gate) when diff is gitlink-only-only.
+2. **Forbidden:** **`gh pr create`** for pin promotion PRs.
+3. **Forbidden:** [Push authorization gate](#push-authorization-gate-binding) on pin-only path.
+4. **Forbidden:** [Pre-gh authorization gate](#pre-gh-authorization-gate-binding) on pin-only path.
+5. **Forbidden:** [Checkpoint — auto-advance `authorize-create-pr`](#checkpoint--auto-advance-authorize-create-pr-binding) on pin-only path.
+6. **Forbidden:** parent re-invoke after **`skipped-pin-path`** without mixed diff.
+7. **Forbidden:** treating submodule pointer bump as implementation PR scope.
+8. **Forbidden:** post-create-pr handoff after pin-only **`gh pr create`** in error.
+9. **Forbidden:** bypassing diff detector because **`prePrReviewRecommendation: go`**.
+10. **Forbidden:** **`approve-merge-pr`** pick routing from this skill on pin path.
+11. **Forbidden:** PR prompt fallback for gitlink-only-only promotion.
+12. **Forbidden:** session orientation table implying developer must open hosting pin PR for review.
+13. **Forbidden:** any **`gh`** mutate when hard skip applies.
+14. **Forbidden:** partial execution of [Gate](#gate) steps before hard skip return.
+
 **Worktree removal ownership (binding).** **Do not remove worktrees you do not own.** Opening a PR does **not** grant cleanup on other worktrees. **`git worktree remove`**, **`git worktree prune`**, and **`sedea_remove_worktree_folder`** apply **only** to **this pass’s** **`WORKTREE_ROOT`** when rule **0** § *Worktree ownership* and rule **20** § *Worktree removal ownership (binding)* preconditions hold. **`git worktree list` is read-only** when ownership is unclear — **stop; do not remove**.
 
 ## Structured choice (Mission Control)
@@ -308,7 +338,9 @@ Merge these fields into **`coding-session`** `outputs` via **`## Completion (inl
 - `blockedReason` — when `rowStatus: blocked`
 - `prState` — `open` | `merged` | `closed` | `unknown` when known
 - `reviewState` — when queried on this pass
-- `continuationStatus` — `active` when PR open or prompt emitted; `partial` when blocked
+- `continuationStatus` — `active` when PR open or prompt emitted; `partial` when blocked; **`skipped-pin-path`** when [Gitlink-only hard skip (binding)](#gitlink-only-hard-skip-binding) applies (no PR created — parent owns Path A)
+- `pinPromotionPath` — `true` when hard skip returns to parent
+- `hostingDiffClassification` — from diff detector when hard skip runs
 
 Set `continuationStatus`:
 
@@ -333,6 +365,7 @@ Set `continuationStatus`:
 | Outcome | `shipPhase` | Key `outputs` |
 |---------|-------------|---------------|
 | PR created | `pr-open` | `targetPlanPath`, `prUrl`, `prNumber` |
+| Hard skip (gitlink-only-only) | `implementing` or prior phase | `pinPromotionPath: true`, `continuationStatus: skipped-pin-path` |
 | Blocked / deferred | `implementing` or `blocked` | `targetPlanPath`, `remainingTasks`, `blockedReason` |
 
 ## Completion (inline)

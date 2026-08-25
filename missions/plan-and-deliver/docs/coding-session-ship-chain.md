@@ -67,7 +67,9 @@ flowchart TB
 
   BDW -->|spawn| PPR
   PPR -->|result go| SMG
-  SMG -->|source merged · pin aligned| CPR
+  SMG -->|router: mixed| CPR
+  SMG -->|gitlink-only-only| PINPATH["Path A — pin terminal"]:::inline
+  PINPATH --> PMC
 ```
 
 Pre-ship setup on this lane (not shown): implement → [Repo rules reconciliation](../skills/coding-session/SKILL.md#repo-rules-reconciliation-binding) → pre-review verification (step **8**) → [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy). Center **`worktree-setup.sh`** runs before implement (bootstrap inside setup).
@@ -79,8 +81,9 @@ Pre-ship setup on this lane (not shown): implement → [Repo rules reconciliatio
 | 2 | [Before deploy deploy-walk handoff](coding-session-ship-chain.md#before-deploy-deploy-walk-handoff) | inline | **Yes** — after cut-point **Act** (commit when needed, then inline walk) | **No** (manual §7 step only) |
 | 3 | [Auto-spawn pre-pr-review](coding-session-ship-chain.md#auto-spawn-pre-pr-review) + [Pre-PR review handoff](coding-session-ship-chain.md#pre-pr-review-handoff) | spawn | **Yes** — Before deploy resolved or skipped | **Spawn turn:** **No** modal — spawn alone (rule **4**); **next turn:** Yield / #external-wait resume modal |
 | 3b | [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) | inline procedure | **No** — after **`pre-pr-review`** **go**; may amend hosting gitlink in **`WORKTREE_ROOT`** via script-backed **`promote-submodule-pin`** | **Checkpoint:** **No** on clean path — auto-advance source verify + inline promote; modal on source-not-on-main or promote hard stop |
-| 4 | [Inline create-pr (auto on clean go)](#inline-create-pr-auto-on-clean-go) or [Create-PR handoff after go](#create-pr-handoff-after-go) | inline | After submodule gate passes (or N/A — no gitlink in scope) | **Checkpoint:** **No** — auto create-pr / **`approve-followups-create-pr`**; **non-Checkpoint:** modal when **`hasProposedFollowUps`** or **`proceed-create-pr`** |
-| 5 | [Post-create-pr handoff gate](#post-create-pr-handoff-gate) | gate | **No** | **Yes** — **Checkpoint** and non-Checkpoint; **forbidden:** prose-only PR URL / *Next: inline pr-review* without modal |
+| 3c | [Gitlink-only ship router](#gitlink-only-ship-router) | inline procedure | **No** — after submodule merge gate step 2 | **Checkpoint:** **No** on clean path — Path A auto-advance; **forbidden** step 4 when gitlink-only-only |
+| 4 | [Inline create-pr (auto on clean go)](#inline-create-pr-auto-on-clean-go) or [Create-PR handoff after go](#create-pr-handoff-after-go) | inline | Path B only — router selects mixed-or-implementation | **Checkpoint:** **No** — auto create-pr; **skipped on Path A** |
+| 5 | [Post-create-pr handoff gate](#post-create-pr-handoff-gate) | gate | **No** | Path B only — **forbidden on Path A (`pinPromotionPath: true`)** |
 | 6 | Inline **`pr-review`** (see skill path in **`plan.mdc`** §8) | inline | **No** — after PR exists | **Checkpoint:** **Yes** at disposition gate (PR review stop); **non-Checkpoint:** triage disposition modal |
 | 7 | [Agent-delegated PR approve and merge](#agent-delegated-pr-approve-and-merge) | procedure | **No** — after clean **`pr-review`** or direct **`approve-merge-pr`** inspect when delegation authorized | **Checkpoint:** **No** when **`mergeDelegationReady`** — auto **`approve-merge-pr`**; modal on blockers only |
 | 8 | [Post-merge workspace cleanup](#post-merge-workspace-cleanup) | procedure | **No** — after **`prState: merged`**, before After deploy | **No** — auto **`--apply`** when authorized; modal on failure/unclear ownership only; Checkpoint: [Post-merge Checkpoint chain](#post-merge-checkpoint-chain-binding) |
@@ -611,15 +614,13 @@ One informational line when auto-advancing (for example: *Submodule merge gate p
 
 USER_CHECKPOINT — submodule source not on **`defaultBranch`**, inline promote hard stop, or scope ambiguous.
 
-**Workflow invariant (binding):** Every hosting-repo ship chain merges **source-repo PR(s) first**, then runs **script-backed** **`promote-submodule-pin`** on hosting gitlink(s), then **`create-pr`** for the **implementation** PR. **`create-pr`** is **not** for pin promotion. **Forbidden:** manual-merge-only handoff; **forbidden:** presenting this gate without **`approve-merge-pr`** when an open mergeable source PR blocks the chain.
-
 Call **`mission_control_present_structured_choice`** when source is not on **`defaultBranch`**, promote fails, or scope is ambiguous. Recap must list each affected source repo, open PR URL/number (when present), intended SHA, remote **`defaultBranch`** tip, inspect summary (`mergeable`, CI rollup), and blocker. Cross-ref [rule **6** § *PR approve-merge structured choice*](.sedea/centers/sedea/rules/6_git-commit-push-gate.mdc) and § *Merge inspect procedure*. **Forbidden:** opening hosting **`create-pr`** while this gate is **`required`** and incomplete; hand-waving N/A for built-in **`sedea`**.
 
-Set **`defaultOptionId: approve-merge-pr`** when rule **6** inspect shows **`mergeable: MERGEABLE`** for the blocking source-repo PR and no blocking review/CI per inspect JSON.
+Set **`defaultOptionId: approve-merge-pr`** when rule **6** inspect shows **`mergeable: MERGEABLE`** for the blocking **source-repo** PR and no blocking review/CI per inspect JSON.
 
 | Option id | Label (brief) | Agent action |
 |-----------|---------------|--------------|
-| `approve-merge-pr` | Approve and Merge PR | Rule **6** § *Merge inspect procedure* (`gh pr view` — `state`, `mergeable`, `mergeStateStatus`, `reviewDecision`, `statusCheckRollup`, `url`) then [Merge procedure](#merge-procedure) when mergeable — for **each open source-repo PR in scope** (center submodule repo **and** product **`app`** repo when its gitlink applies). After merge confirmed on **`defaultBranch`**, re-run source-on-main verify + script-backed **`promote-submodule-pin`** for affected **`centerSlug`**(s), then re-enter gate or auto-advance when complete. **Forbidden:** skip inspect; **forbidden:** prose telling developer to merge on GitHub instead of this pick. |
+| `approve-merge-pr` | Approve and Merge source repo PR | Rule **6** § *Merge inspect procedure* — **source repo only**; then re-run promote + [Gitlink-only ship router](#gitlink-only-ship-router) |
 | `retry-promote-pin` | Retry inline promote-submodule-pin | Re-run skill for failed **`centerSlug`** |
 | `defer-ship` | Defer hosting PR | Keep `continuationStatus: active`; no **`create-pr`** |
 
@@ -627,14 +628,48 @@ Set **`defaultOptionId: approve-merge-pr`** when rule **6** inspect shows **`mer
 
 - When **`gh pr view`** on a blocking source-repo PR shows **`mergeable: MERGEABLE`**, **forbidden** manual-merge-only gates.
 - Inspect is **part of** the **`approve-merge-pr`** pick — not a separate modal row.
-- When multiple source repos block (center submodule + **`app`**), recap lists each PR; one gate cycle per blocking repo when sequential merge is required.
-- Calibration: AIR #27 / #28 — `incident_submodule_merge_gate_no_delegate_merge_*`
+- **`approve-merge-pr`** label context is **Source repo merge gate** — **forbidden** for hosting gitlink pin PRs.
 
-**Honest attestation hook (binding):** Do **not** mark deploy steps complete or report submodule integration success when **`promote-submodule-pin`** was skipped, failed, or conflated with N/A. Record actual outcomes in `outputs.promoteSubmodulePinOutcomes` and pass them to inline **`deploy-walk`** — After deploy attestation uses **`verify-submodule-ship-attestation.mjs`** (strict SHA + outcome cross-check).
+**Honest attestation hook (binding):** Do **not** mark deploy steps complete or report submodule integration success when **`promote-submodule-pin`** was skipped, failed, or conflated with N/A. Record actual outcomes in `outputs.promoteSubmodulePinOutcomes` and pass them to inline **`deploy-walk`**.
+
+**Workflow invariant (binding — split paths):** See [`coding-session/SKILL.md`](../skills/coding-session/SKILL.md) § *Submodule merge gate* — Path A (gitlink-only-only) vs Path B (mixed-or-implementation). **Source-repo merge gate:** **`approve-merge-pr`** applies to **source-repo PRs only** — **forbidden** for hosting gitlink pin PR merge disposition.
+
+### Gitlink-only ship router
+
+Normative owner: [`coding-session/SKILL.md`](../skills/coding-session/SKILL.md) § *Gitlink-only ship router (binding)*. Run **after** submodule merge gate step 2, **before** step 4 **`create-pr`**.
+
+#### Diff detector predicate (shared contract)
+
+From **`WORKTREE_ROOT`**, inspect committed diff vs **`origin/main`**:
+
+| Classification | Condition |
+|----------------|-----------|
+| **`gitlink-only-only`** | All changed paths are submodule gitlinks — no non-submodule files |
+| **`mixed-or-implementation`** | At least one non-gitlink-only path |
+| **`not-applicable`** | No submodule gitlink in diff |
+
+Record `outputs.hostingDiffClassification`. **Path A** when **`gitlink-only-only`**: inline **`promote-submodule-pin`**, set `outputs.pinPromotionPath: true`, auto-advance post-merge tail — **forbidden** step 4 **`create-pr`** and **forbidden** post-create-pr gate. **Path B** otherwise: unchanged step 4 → step 5 flow.
+
+**FORBIDDEN — ship-chain step 4 on pin path (binding):**
+
+1. **Forbidden:** unconditional step 4 **`create-pr`** without router inspect.
+2. **Forbidden:** step 5 post-create-pr after Path A pin terminal.
+3. **Forbidden:** mermaid flow assuming **`SMG → CPR`** always.
+4. **Forbidden:** "always post-create-pr after create-pr" without gitlink-only carve-out.
+5. **Forbidden:** **`create-pr`** when classifier returns gitlink-only-only.
+6. **Forbidden:** skipping step 3c router on gitlink scope.
+7. **Forbidden:** Path A and Path B in same pass.
+8. **Forbidden:** **`gh pr create`** for pin-only diff.
+9. **Forbidden:** batch ship per-PR gate for pin-only rows.
+10. **Forbidden:** **`pr-review`** before Path A completes.
+11. **Forbidden:** treating promote success as step 4 authorization.
+12. **Forbidden:** prose PR URL handoff without **`pinPromotionPath`** check.
 
 ### Inline create-pr (auto on clean go)
 
-When **`pre-pr-review`** returns `recommendation: "go"` **and** **`actionablePrePrFindings`** is **false** **and NOT `hasProposedFollowUps`** **and** [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) is **`complete`** or **`not-applicable`** — **no Create-PR modal**. On the **next** turn after the reviewer result (not the same turn as the result):
+**Router precondition (binding):** Step 3c **must** pass with Path B before this section. When **`outputs.pinPromotionPath: true`**, **forbidden** enter this section.
+
+When **`pre-pr-review`** returns `recommendation: "go"` **and** **`actionablePrePrFindings`** is **false** **and NOT `hasProposedFollowUps`** **and** [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) is **`complete`** or **`not-applicable`** **and** router selects Path B — **no Create-PR modal**. On the **next** turn after the reviewer result (not the same turn as the result):
 
 1. One-line recap: reviewer **`go`**, no Must/Should/blockers, no proposed follow-ups, optional non-actionable flags noted — **pre-PR gate cleared**; push + PR may proceed.
 2. When the branch is not on the remote, run **`git push`** per rule **20** § *Commit and push cadence* **before** inline **`create-pr`** — this is the **default** first push after **`prePrReviewCleared`**, not a cut-point modal option.
