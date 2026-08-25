@@ -91,6 +91,33 @@ If Mission Control opened a session whose only intent is **`create-pr`** / *open
 
 **Required instead:** [`.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md`](.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md) § *Script invocation* — call `center-pull-promote-pin.sh`, `hosting-gitlink-pull-promote-pin.sh`, or `batch-promote-submodule-pins.sh` **before** or **after** the implementation PR per the ship chain — never via **`create-pr`**. Promote scripts create the hosting worktree with **`worktree-setup.sh --pin-only`**. **Forbidden:** default **`worktree-setup.sh`** or **`create-pr`** for pin PRs.
 
+## Gitlink-only hard skip (binding)
+
+At skill entry — **before** [Gate](#gate) or any execution step — when invoked inline from **`coding-session`**:
+
+1. Inspect the committed hosting diff from inline context (`worktreePath` vs `baseRef` / `origin/main`).
+2. When the diff is **gitlink-only-only** (submodule pointer changes only; **no** non-submodule tracked files):
+   - Return immediately with **`continuationStatus: skipped-pin-path`**, **`outputs.pinPromotionPath: true`**.
+   - **Forbidden:** loading gates below, **`gh pr create`**, or any procedure in this skill.
+3. Parent **must** route to [Gitlink-only ship router](../coding-session/SKILL.md#gitlink-only-ship-router-binding) — **forbidden** retry via **`create-pr`**.
+
+**Mutual exclusion:** When **`skipped-pin-path`** is returned, parent **must not** open [Post-create-pr handoff gate](../coding-session/SKILL.md#post-create-pr-handoff-gate) on the pin success path.
+
+#### FORBIDDEN when diff is gitlink-only-only (binding)
+
+1. **Forbidden:** executing this skill's [Gate](#gate) or push/PR steps.
+2. **Forbidden:** `gh pr create` on hosting pin diff.
+3. **Forbidden:** parent treating **`skipped-pin-path`** as PR-opened for post-create-pr stop **1**.
+4. **Forbidden:** deferring to Pre-gh modal on pin-only path.
+5. **Forbidden:** opening hosting PR whose sole diff is submodule pointer(s).
+6. **Forbidden:** invoking this skill without diff inspection at entry.
+7. **Forbidden:** returning **`continuationStatus: success`** with a hosting pin PR URL on gitlink-only-only diff.
+8. **Forbidden:** manual gitlink commit on session worktree as substitute for promote script.
+9. **Forbidden:** loading execution when parent **`outputs.pinPromotionPath`** is already **`true`**.
+10. **Forbidden:** spawn of **`create-pr`** child lane for pin promotion.
+11. **Forbidden:** prose-only "PR created" handoff without router check.
+12. **Forbidden:** bypassing [Gitlink-only ship router](../coding-session/SKILL.md#gitlink-only-ship-router-binding) after **`skipped-pin-path`**.
+
 **Worktree removal ownership (binding).** **Do not remove worktrees you do not own.** Opening a PR does **not** grant cleanup on other worktrees. **`git worktree remove`**, **`git worktree prune`**, and **`sedea_remove_worktree_folder`** apply **only** to **this pass’s** **`WORKTREE_ROOT`** when rule **0** § *Worktree ownership* and rule **20** § *Worktree removal ownership (binding)* preconditions hold. **`git worktree list` is read-only** when ownership is unclear — **stop; do not remove**.
 
 ## Structured choice (Mission Control)
