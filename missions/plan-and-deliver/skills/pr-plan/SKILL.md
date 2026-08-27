@@ -57,7 +57,12 @@ inputs:
     required: false
   skipPrPlanHandoffModal:
     type: boolean
-    description: When true (pr-breakdown approve-list auto-chain), skip §5c modal after §§1–4; report inline completion with prPlanHandoffSkipped.
+    description: When true (pr-breakdown approve-list auto-chain, or debug-and-fix code-promotion cascade), skip §5c modal after §§1–4; auto-run §5d when debugExitConfirmed; report inline completion with prPlanHandoffSkipped when §5d is not auto-run.
+    required: false
+    default: false
+  debugExitConfirmed:
+    type: boolean
+    description: When true with upstreamSkill debug-and-fix, debug child step 7 code-promotion confirmation satisfies §5c layer-1 consent — auto-run §5d after §5a.
     required: false
     default: false
 laneRules:
@@ -247,7 +252,7 @@ Under Checkpoint trust, **happy-path protocol steps auto-advance without a turn-
 | Missing target / ambiguous parent row (standalone spawned) | Step **1** exception — structured choice per **30_planning-target-resolution** |
 | Parent plan-change notify UserSend (standalone spawned lane) | [Plan-change notification receive (child lane)](#plan-change-notification-receive-child-lane) |
 
-**Implicit external-wait** (host may deliver **`mission_control_send_agent_result`** from spawned **`coding-session`** without a developer modal pick on **that** turn): §5d spawn in flight → §5e child summary. **Forbidden:** classifying §5c handoff approval as external-wait — layer 1 consent requires the §5c modal (unless **`skipPrPlanHandoffModal: true`** auto-chain).
+**Implicit external-wait** (host may deliver **`mission_control_send_agent_result`** from spawned **`coding-session`** without a developer modal pick on **that** turn): §5d spawn in flight → §5e child summary. **Forbidden:** classifying §5c handoff approval as external-wait — layer 1 consent requires the §5c modal (unless **`skipPrPlanHandoffModal: true`** auto-chain, including **`debugExitConfirmed: true`** debug code-promotion cascade).
 
 | Step | Checkpoint behavior | Gate |
 |------|---------------------|------|
@@ -257,12 +262,14 @@ Under Checkpoint trust, **happy-path protocol steps auto-advance without a turn-
 | **3** — Read parent / match PR row | Auto-advance when row match succeeds | exception: ambiguous row / no match |
 | **4** — Draft §§1–4 | Auto-advance through write and **4f** echo | **Gate** when Step **5-open-items** applies (multiple gaps) |
 | **5a–5b** — Readiness + planning completeness | Auto-advance when checks pass | — |
-| **§5c** — Implementation handoff | **Gate** when §§1–4 drafted and §5a passes — **first developer-pick gate in this calibration PR** | Start coding session (below) |
+| **§5c** — Implementation handoff | **Gate** when §§1–4 drafted and §5a passes — **first developer-pick gate in this calibration PR** | Start coding session (below) — **auto-advance to §5d** when **`skipPrPlanHandoffModal: true`** **and** **`upstreamSkill: debug-and-fix`** **and** **`debugExitConfirmed: true`** |
 | **§5d** — Spawn **`coding-session`** | Auto-advance act-after-select; **waiting** on child lane until §5e | external-wait — child terminal delivery; no prose-only *waiting for child* |
 | **§5e** — Child summary | Auto-advance merge; re-offer §5c on failure paths | exception: **`prShipComplete: true`** defer paths |
 | **Plan-change notification receive** | **Gate** — developer-input USER_CHECKPOINT after mandatory re-read | [Plan-change notification receive (child lane)](#plan-change-notification-receive-child-lane) — **not** external-wait |
 
 **Skip §5c (binding):** When **`skipPrPlanHandoffModal: true`** (inline **`pr-breakdown`** **`approve-list`** auto-chain), after §5a passes run **`## Completion (inline)`** with **`prPlanHandoffSkipped: true`** — **do not** open §5c on **this** inline turn. **Not** a regression for this calibration.
+
+**Skip §5c on debug code-promotion cascade (binding):** When **`skipPrPlanHandoffModal: true`** **and** **`upstreamSkill: debug-and-fix`** **and** **`debugExitConfirmed: true`**, after §5a passes **auto-run §5d** without opening §5c; set **`implementationHandoffStatus: spawned-coding-session`**. State one informational line: *Debug code-promotion confirmed on debug lane — auto-starting coding session.* **Forbidden:** opening §5c; treating debug cascade as defer/revise without explicit exception; reporting **`prPlanHandoffSkipped: true`** without emitting §5d when §5a passes.
 
 ## Step 1 — Identify the target plan and verify it's a PR plan stub
 
@@ -531,7 +538,9 @@ However:
 
 **`autoContinue` (frontmatter / spawn `inputs`):** Does **not** authorize skipping Step **5**, §5c, or auto-spawning **`coding-session`**. After §§1–4 are written, **always** run §5a → §5c on this lane (inline under **`new-plan`** or standalone). **`autoContinue: true`** only means readiness may be reported in **`outputs`** — implementation handoff still requires §5c **Start coding session** (or explicit **`defer`**) before §5d.
 
-**Skip §5c on PR-breakdown auto-chain (binding):** When **`skipPrPlanHandoffModal: true`** (inline context from **`new-plan`** after **`pr-breakdown`** **`approve-list`** auto-expand of PR index **1**), after §5a passes run **`## Completion (inline)`** to the invoker with **`implementationHandoffStatus: not-offered`**, **`prPlanHandoffSkipped: true`**, and populated §§1–4 fields — **do not** open §5c on **this** inline **`pr-plan`** turn.
+**Skip §5c on PR-breakdown auto-chain (binding):** When **`skipPrPlanHandoffModal: true`** (inline context from **`new-plan`** after **`pr-breakdown`** **`approve-list`** auto-expand of PR index **1**) **without** **`debugExitConfirmed: true`**, after §5a passes run **`## Completion (inline)`** to the invoker with **`implementationHandoffStatus: not-offered`**, **`prPlanHandoffSkipped: true`**, and populated §§1–4 fields — **do not** open §5c on **this** inline **`pr-plan`** turn.
+
+**Skip §5c on debug code-promotion cascade (binding):** When **`skipPrPlanHandoffModal: true`** **and** **`upstreamSkill: debug-and-fix`** **and** **`debugExitConfirmed: true`**, after §5a passes **auto-run §5d** — **do not** open §5c. Set **`planningHandoffApproved: true`** and **`implementationHandoffStatus: spawned-coding-session`** after §5d emit.
 
 **`skipPrPlanHandoffModal` skips §5c on the inline pr-plan turn only** — it does **not** forbid **`mission_control_spawn_agent`** for **`coding-session`** from the invoker lane afterward.
 
@@ -550,7 +559,7 @@ When inline under **`phase-planner`**, include **`invokerRole: phase-planner-age
 
 Set **`implementationHandoffStatus: "offered"`** when §5c modal is emitted; **`deferred`** when the developer picks **`defer`**; **`spawned-coding-session`** after §5d.
 
-- **Next-step resolution:** Auto-advance to §5c structured choice after §5a readiness passes and §5b completeness note — no `USER_CHECKPOINT` on substeps **5a–5b** or step **4** draft writes.
+- **Next-step resolution:** Auto-advance to §5c structured choice after §5a readiness passes and §5b completeness note — **or auto-advance to §5d** when **`skipPrPlanHandoffModal: true`** **and** **`upstreamSkill: debug-and-fix`** **and** **`debugExitConfirmed: true`** — no `USER_CHECKPOINT` on substeps **5a–5b** or step **4** draft writes.
 
 ### Step 5-open-items — Open-item modal contract
 
@@ -620,9 +629,9 @@ Required options (brief `label`; put detail in `prompt` when needed):
 
 **Inline under `new-plan`:** After §5c or §5d, report **`## Completion (inline)`** to the invoker — do **not** emit **`mission_control_send_agent_result`**. The **`new-plan`** lane merges ledger fields and aggregates **`coding-session`** child results per **`new-plan/SKILL.md`** step **5b**.
 
-### 5d — Spawn `coding-session` (after `start-coding-session`)
+### 5d — Spawn `coding-session` (after `start-coding-session` or debug cascade)
 
-Run only when the developer chose **`start-coding-session`** and §5a readiness passes. When §5a fails, stay on §5c — explain blockers in `remainingTasks` and do **not** spawn (§5c bullet above).
+Run when the developer chose **`start-coding-session`** and §5a readiness passes, **or** when **`skipPrPlanHandoffModal: true`** **and** **`upstreamSkill: debug-and-fix`** **and** **`debugExitConfirmed: true`** and §5a readiness passes. When §5a fails, stay on §5c — explain blockers in `remainingTasks` and do **not** spawn (§5c bullet above).
 
 1. **Resolve paths** (all absolute; never documentation placeholders):
  - `targetPlanPath` — absolute path to the target `.plan.md` on this lane.
@@ -635,8 +644,8 @@ Run only when the developer chose **`start-coding-session`** and §5a readiness 
  - `planningHandoffMode: sections-1-4-complete`
  - `sections5to8Status: TBD-by-design — child owns substantive fill; do not treat as pr-plan failure`
  - `expectedPlanCompleteness: incomplete-until-coding-session-fills-5-8 — auto-authorize worktree when EXPECTED_SECTIONS_5_8_TBD; no second approval modal`
- - `planningHandoffApproved: true` when `readyForImplementation: true` (layer 1 consent from §5c **Start coding session**)
- - Checkpoint trust: child lane follows **`coding-session/SKILL.md`** § *Checkpoint turn UX* — auto-advance happy path; **`USER_CHECKPOINT`** at worktree-open (when not auto-authorized), ship cut-point (exception), post-create-pr, pre-PR feedback, and pre-merge gates
+ - `planningHandoffApproved: true` when `readyForImplementation: true` (layer 1 consent from §5c **Start coding session**, or from debug child **`debugExitConfirmed: true`** cascade)
+ - Checkpoint trust: child lane follows **`coding-session/SKILL.md`** § *Checkpoint turn UX* — auto-advance happy path including **Debug code-promotion ship profile** when **`upstreamSkill: debug-and-fix`**; **`USER_CHECKPOINT`** at worktree-open (when not auto-authorized), ship cut-point (exception), post-create-pr, pre-PR feedback, and pre-merge gates (exception paths only on debug cascade clean path)
 3. **Emit exactly one** child-spawn line (valid JSON on the same line; new UUID per spawn):
 
  - Cross-check **`../README.md`** § *Universal spawn preflight* (including display-metadata rows **8–10**).
