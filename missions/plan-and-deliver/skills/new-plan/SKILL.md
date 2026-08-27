@@ -227,9 +227,10 @@ When `requestedPopulatorSkill` is **`pr-plan`**, run that skill **inline on this
 | `parentIndex` | `index` from spawn inputs |
 | `parentAgentRole` | `"new-plan-agent"` |
 | `ledgerParent` | `ledgerParent` from spawn inputs when present |
-| `upstreamSkill` | `"new-plan"` |
+| `upstreamSkill` | `"new-plan"` — forward spawn **`inputs.upstreamSkill`** when present (for example **`debug-and-fix`**) into inline **`pr-plan`** context |
 | `parentRowSingleConcern` | From **`pr-breakdown`** inline handoff when present — PR description seed for item **N** |
-| `skipPrPlanHandoffModal` | `true` when `autoChainFirstPr: true` from **`pr-breakdown`** **`approve-list`** auto-expand; otherwise omit or `false` |
+| `skipPrPlanHandoffModal` | `true` when `autoChainFirstPr: true` from **`pr-breakdown`** **`approve-list`** auto-expand; **`true`** when spawn **`inputs.debugExitConfirmed: true`** with **`upstreamSkill: debug-and-fix`**; otherwise omit or `false` |
+| `debugExitConfirmed` | `true` when spawn **`inputs.debugExitConfirmed: true`** (Squad Leader §5 debug code-promotion cascade) — forward to inline **`pr-plan`** |
 
 When `requestedPopulatorSkill` is **`phase-planner`**, run § *Populator registry lookup — phase-planner* before step **4** spawn. When lookup finds an existing slug → **`mission_control_notify_child_lanes`** per **`../README.md`** § *Spawn vs notify* and report **`## Completion (inline)`** to invoker — **forbidden** duplicate spawn. When no slug → emit **`mission_control_spawn_agent`** per step **4**.
 
