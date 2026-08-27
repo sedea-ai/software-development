@@ -821,8 +821,8 @@ USER_CHECKPOINT — choose whether to plan a new feature flag when delivery PR c
 
 **Lifecycle contract (binding when the developer picks yes):**
 
-1. **Default off for installs** — packaged / end-user builds hide the new functionality (registry packaged default **off**; do not expose breaking UI/behavior without an explicit enable).
-2. **Developer workstation on** — the developer turns the flag **on** for their own development host (`sedea.features.<flagId>` override or develop default) so they can build and dogfood.
+1. **Default OFF everywhere** — registry **`developDefault: false`** **and** **`packagedBuildDefault: false`** (hide unfinished functionality on develop hosts, packaged builds, and end-user installs).
+2. **Developer opt-in** — the developer explicitly sets `sedea.features.<flagId>: true` when ready to dogfood (**not** registry ON by default).
 3. **Ship = remove the flag** — when the feature is fully developed and ready for all users, **remove** the flag (registry entry + guards) so the behavior is **on by default** for everyone who installs the new version — do **not** leave a permanent off-switch as the long-term control.
 
 **Align with hosting contract:** When the target repo includes `.cursor/rules/feature-flags-contract.mdc` (or equivalent), follow that registry / `sedea.features.*` / lifecycle wording for implementation bullets. This step is **planning policy** — it does not edit the registry.
@@ -831,11 +831,11 @@ USER_CHECKPOINT — choose whether to plan a new feature flag when delivery PR c
 
 | Option id | Label |
 |-----------|-------|
-| `plan-new-feature-flag` | Yes — plan a new feature flag (default off; dev on; remove at ship) — **recommended** when **K > 1** |
+| `plan-new-feature-flag` | Yes — plan a new feature flag (default OFF everywhere; developer opts in when ready; remove at ship) — **recommended** when **K > 1** |
 | `no-feature-flag` | No — ship without a new feature flag |
 | `defer-flag-decision` | Defer — decide later before implementation |
 
-**On `plan-new-feature-flag`:** Carry `newFeatureFlag: true`. **Revise** § 4 Architectural design to note the flag gate surface. **Revise** § 5 Changes with concrete bullets: registry id (proposed kebab-case), Settings key `sedea.features.<id>`, packaged default **off**, develop/workstation enable path, and a **removal** change when the feature graduates. Prefer a short `### Feature flag` subsection under § 5. When PR plans already exist, add matching flag bullets to those plans’ Changes as needed.
+**On `plan-new-feature-flag`:** Carry `newFeatureFlag: true`. **Revise** § 4 Architectural design to note the flag gate surface. **Revise** § 5 Changes with concrete bullets: registry id (proposed kebab-case), Settings key `sedea.features.<id>`, **`developDefault: false`** and **`packagedBuildDefault: false`**, explicit Settings opt-in path for dogfooding, and a **removal** change when the feature graduates. Prefer a short `### Feature flag` subsection under § 5. When PR plans already exist, add matching flag bullets to those plans’ Changes as needed.
 
 **On `no-feature-flag`:** Carry `newFeatureFlag: false`; leave §§ 1–5 without flag scaffolding (no flag revise).
 
