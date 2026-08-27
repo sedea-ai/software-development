@@ -516,6 +516,16 @@ After Mission Control reload or window restart on **this** spawned **`coding-ses
 
 See **`pr-plan/SKILL.md`** § *Handoff to coding-session*.
 
+### Debug code-promotion spawn detection
+
+Treat this run as a **debug code-promotion spawn** when **all** hold:
+
+- `inputs.upstreamSkill === "debug-and-fix"`,
+- `inputs.developerApprovedImplementation === true` (or layer 2 satisfied via [Auto-authorize implementation (pr-plan spawn)](#auto-authorize-implementation-pr-plan-spawn)),
+- inherited worktree reuse per [Inherited worktree ownership](#inherited-worktree-ownership-upstream-handoff-binding) (absolute **`inputs.worktreePath`** from debug session).
+
+When true, after implementation is ready for ship, follow [Debug code-promotion ship profile (Checkpoint — binding)](#debug-code-promotion-ship-profile-checkpoint--binding) on the clean path — **forbidden** manual Before deploy await gates that re-run debug-session verification.
+
 ### pr-plan spawn handoff detection
 
 Treat this run as a **pr-plan spawn handoff** when **either**:
@@ -619,7 +629,7 @@ Under Checkpoint trust, **happy-path protocol steps may auto-advance when this l
 
 **Checkpoint auto-advance does not apply** when a row in § *Every developer-await turn* names a gate and no clean auto-advance criterion in the Checkpoint table passes — including **manual After deploy** presentation: auto-advance stops **at** presentation; the **same turn** must emit **`deploy-walk`** Manual step await gate.
 
-**Checkpoint three-stop model exception (binding):** [Batch ship (Checkpoint — binding)](#batch-ship-checkpoint--binding) **does not** open stops **1–2** when **`openPrBatch.length > 1`** — **`approve-ship-batch`** is the consolidated consent surface; stop **3** (manual deploy) unchanged. Release-note fragment ship is owned by **`ship-release-note-fragment`** (inline from **`capture-release-note`**) — not this skill.
+**Checkpoint three-stop model exception (binding):** [Debug code-promotion ship profile](#debug-code-promotion-ship-profile-checkpoint--binding) **does not** open stops **1–2** or manual **Before deploy** await for debug-verified scenarios on the clean path — debug child **`code-promotion`** confirmation plus **`pr-plan`** §5d spawn are the consent surfaces. [Batch ship (Checkpoint — binding)](#batch-ship-checkpoint--binding) **does not** open stops **1–2** when **`openPrBatch.length > 1`** — **`approve-ship-batch`** is the consolidated consent surface; stop **3** (manual deploy) unchanged except debug profile Before deploy skip above. Release-note fragment ship is owned by **`ship-release-note-fragment`** (inline from **`capture-release-note`**) — not this skill.
 
 | Step | Checkpoint behavior | Gate |
 |------|---------------------|------|
@@ -726,6 +736,26 @@ Otherwise:
 **Multi-repo:** run the script **once** on the shared plan before the worktree-open gate or auto-authorize path.
 
 - **Next-step resolution:** Auto-advance to [Auto-authorize implementation (pr-plan spawn)](#auto-authorize-implementation-pr-plan-spawn) or [Worktree-open gate](#worktree-open-gate) after recording `planCompleteness` — no `USER_CHECKPOINT` on this step.
+
+## Debug code-promotion ship profile (Checkpoint — binding)
+
+Plan-anchored ship for **`debug-and-fix`** code promotion on an **inherited debug worktree** after the fix was verified in-session. Applies when [Debug code-promotion spawn detection](#debug-code-promotion-spawn-detection) applies and implementation is ready for developer review (or cut-point criteria pass with fix already applied in worktree).
+
+**Parent consent surfaces (binding):** debug child step **7** **`code-promotion`** confirmation (Squad Leader auto-routes per **`debug-and-fix/plan.mdc`** §3 resume) **plus** **`pr-plan`** §5d spawn with **`planningHandoffApproved: true`** — this profile **does not** re-open **`pr-plan` §5c**, manual **Before deploy** await gates for scenarios already verified in the debug session, [Post-create-pr handoff gate](#post-create-pr-handoff-gate) stop **1**, or inline **`pr-review`** disposition when Checkpoint auto-advance criteria pass.
+
+**Same-turn auto-advance chain (clean path — Act without turn-end modal between steps):**
+
+1. [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) — **Checkpoint auto-advance** when fix already in worktree and clean criteria pass (commit when needed).
+2. Inline Before deploy **`deploy-walk`** — **agent-executable steps only** per PR plan §7 seed from **`debug-and-fix/plan.mdc`** §5; **skip** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) for manual scenarios verified in debug session.
+3. [Auto-spawn pre-pr-review](#auto-spawn-pre-pr-review) + [Pre-PR review handoff](#pre-pr-review-handoff) — automated / standing pre-review bar only.
+4. Inline **`create-pr`** on clean **`go`** — [Checkpoint — auto-advance `authorize-create-pr`](../create-pr/SKILL.md#checkpoint--auto-advance-authorize-create-pr-binding).
+5. Inline **`pr-review`** — Checkpoint auto-disposition when criteria pass; **`fix-ci-only`** same-turn loop when required CI fails.
+6. When **`mergeDelegationReady`**, [Pre-merge authorization gate](#pre-merge-authorization-gate) auto-advances **`approve-merge-pr`** per rule **6** merge inspect — **forbidden** to merge without delegation readiness or policy block.
+7. [Post-merge workspace cleanup](#post-merge-workspace-cleanup) when merged; [After deploy deploy-walk handoff](#after-deploy-deploy-walk-handoff) for **`### After deploy`** retests seeded from debug session — manual After deploy steps **may** still gate post-merge per plan §7.
+
+**Skipped on clean path (binding):** [Worktree-open gate](#worktree-open-gate) when [Auto-authorize implementation (pr-plan spawn)](#auto-authorize-implementation-pr-plan-spawn) applies; manual **Before deploy** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) for debug-verified scenarios; [Post-create-pr handoff gate](#post-create-pr-handoff-gate) stop **1** on Path B when profile applies; inline **`pr-review`** disposition modal when Checkpoint auto-advance applies; [Review feedback approval gate](#review-feedback-approval-gate) on clean **`go`** with Must/Should only.
+
+**Exceptions (developer-input or failure gates still apply):** ship cut-point clean criteria fail; bootstrap / attach failure; **`pre-pr-review`** actionable findings requiring defer/revise; CI remediation loop exhaustion; merge blocked after inspect; After deploy manual steps post-merge; submodule / hosting-pin gates when gitlink scope applies.
 
 ## Batch ship (Checkpoint — binding)
 
