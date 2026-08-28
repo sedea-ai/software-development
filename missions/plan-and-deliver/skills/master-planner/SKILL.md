@@ -39,6 +39,12 @@ inputs:
     description: Optional related document entries with role and link/path.
     required: false
     default: []
+  plansBasePath:
+    type: string
+    description: >-
+      Optional absolute handover path to a dispatch-scoped plans write folder.
+      When omitted, resolve from target/parent plan paths or flat plans root fallback.
+    required: false
 laneRules:
   - ".sedea/centers/sedea/rules/2_ask-question-instructions.mdc"
   - ".sedea/centers/software-development/rules/30_planning-target-resolution.mdc"
@@ -460,11 +466,35 @@ Do **not** offer roadmap-topic roots, `plans/roadmap-topics/`, or Hub **`top_lev
 
 ### 5b — Pick the slug + filename
 
+Resolve the plans write directory per **Resolve plans write directory (binding)** (below) before choosing the slug.
+
 - **Display name** for `name:` frontmatter: the PRD title (line 1 between the quotes).
 - **Slug base**: lowercase the title, replace spaces with `_` (or `-` to match sibling convention in the target folder).
 - **Slug suffix**: 8-char random hex (`crypto.randomBytes(4).toString('hex')` equivalent).
-- **Filename**: `<plans>/<slug>.plan.md` under the active dispatch-scoped plans directory — **always** the flat `plans/` folder; `parent: null` does **not** change the path.
-- **Sidecar**: `<same-dir>/<slug>.state.yaml` with `parent: <resolved-parent-slug-or-null>`.
+- **Filename**: `<writeDir>/<slug>.plan.md` — use the resolved write directory from **`plan-state resolve-plans-write-dir`**; `parent: null` does **not** force flat root when nested handover applies.
+- **Sidecar**: `<writeDir>/<slug>.state.yaml` with `parent: <resolved-parent-slug-or-null>`.
+
+### Resolve plans write directory (binding)
+
+Before step **5b** (and before any Master Plan file write):
+
+1. Collect optional **`inputs.plansBasePath`**, resolved parent plan path, and any explicit **`targetPlanPath`** from session context.
+2. From **`HOSTING_ROOT`**:
+
+```bash
+cd "$HOSTING_ROOT"
+.sedea/centers/sedea/scripts/run-sedea-node.sh \
+  .sedea/centers/software-development/missions/plan-and-deliver/scripts/plan-state.mjs \
+  resolve-plans-write-dir --json \
+  ${PLANS_BASE_PATH:+--plans-base-path "$PLANS_BASE_PATH"} \
+  ${TARGET_PLAN_PATH:+--target-plan-path "$TARGET_PLAN_PATH"} \
+  ${PARENT_PLAN_PATH:+--parent-plan-path "$PARENT_PLAN_PATH"}
+```
+
+3. Use JSON **`writeDir`** for Master Plan scaffold paths. Pass **`--plans-base-path`** to **`init-sidecar`** when JSON **`plansBasePath`** is non-null.
+4. When inline **`new-plan`** or spawns pass plan-writing children, forward resolved **`plansBasePath`** in spawn **`inputs`** when nested handover applies.
+
+- **Next-step resolution:** Auto-advance to step **5c** write once **`writeDir`** resolves — no `USER_CHECKPOINT` on happy path.
 
 ### 5c — Write the plan file (Master Plan template body)
 

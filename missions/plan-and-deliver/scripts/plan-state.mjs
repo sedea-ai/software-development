@@ -14,6 +14,10 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseDocument, Document, YAMLMap, YAMLSeq, isMap, isSeq } from 'yaml';
 import { applyPlansMonthBucketOnFirstWrite } from './plan-sidecar-month-bucket.mjs';
+import {
+  deriveFlatPlansRootFromPath,
+  resolvePlansWriteDir,
+} from './plan-resolve-plans-write-dir.mjs';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -537,6 +541,58 @@ async function cmdInitSidecar(flags) {
   log(
     `init-sidecar: wrote ${statePath}${bucket ? ` (plansMonthBucket: ${bucket})` : ' (flat-root — no plansMonthBucket)'}`,
   );
+}
+
+// ---------- subcommand: resolve-plans-write-dir ----------
+
+// `resolve-plans-write-dir [--plans-base-path <abs>] [--target-plan-path <abs>]
+//   [--parent-plan-path <abs>] [--flat-plans-root <abs>] [--json]`
+// Resolve the absolute directory for plan file writes (handover path or flat fallback).
+async function cmdResolvePlansWriteDir(flags) {
+  const asJson = flags.json === true;
+  const explicitFlat =
+    typeof flags['flat-plans-root'] === 'string' ? path.resolve(flags['flat-plans-root']) : null;
+
+  let flatPlansRoot = explicitFlat;
+  if (!flatPlansRoot) {
+    await ensureSedeaContext();
+    flatPlansRoot = SEDEA_PLAN_DIRS?.[0] ?? null;
+  }
+
+  const targetPlanPath =
+    typeof flags['target-plan-path'] === 'string' ? path.resolve(flags['target-plan-path']) : null;
+  const parentPlanPath =
+    typeof flags['parent-plan-path'] === 'string' ? path.resolve(flags['parent-plan-path']) : null;
+  const plansBasePath =
+    typeof flags['plans-base-path'] === 'string' ? path.resolve(flags['plans-base-path']) : null;
+
+  const resolved = resolvePlansWriteDir({
+    plansBasePath,
+    targetPlanPath,
+    parentPlanPath,
+    flatPlansRoot,
+  });
+
+  if (!resolved.writeDir) {
+    die('resolve-plans-write-dir: could not resolve a plans write directory from inputs');
+  }
+
+  const payload = {
+    writeDir: resolved.writeDir,
+    source: resolved.source,
+    plansBasePath: resolved.plansBasePath,
+    flatPlansRoot: deriveFlatPlansRootFromPath(resolved.writeDir),
+  };
+
+  if (asJson) {
+    process.stdout.write(`${JSON.stringify(payload)}\n`);
+    return;
+  }
+
+  log(`writeDir: ${payload.writeDir}`);
+  log(`source: ${payload.source}`);
+  if (payload.plansBasePath) log(`plansBasePath: ${payload.plansBasePath}`);
+  if (payload.flatPlansRoot) log(`flatPlansRoot: ${payload.flatPlansRoot}`);
 }
 
 // ---------- subcommand: set-session ----------
@@ -2038,6 +2094,12 @@ Subcommands:
       Create a new sidecar stub with parent, optional plansMonthBucket (first-write
       derivation), and empty worktrees/prs. Refuses when the sidecar already exists.
 
+  resolve-plans-write-dir [--plans-base-path <abs>] [--target-plan-path <abs>]
+      [--parent-plan-path <abs>] [--flat-plans-root <abs>] [--json]
+      Resolve absolute plans write directory for core planner skills. Priority:
+      explicit plansBasePath handover, target plan dirname, parent plan dirname,
+      then flat plans root (first registered scope dir or --flat-plans-root).
+
   set-session --slug <slug> --focus <abs>
       Set sidecar session.focusPath; promotes sidecar status to started when
       the plan is active and status is missing or not_started.
@@ -2135,6 +2197,9 @@ async function main() {
       break;
     case 'init-sidecar':
       await cmdInitSidecar(flags);
+      break;
+    case 'resolve-plans-write-dir':
+      await cmdResolvePlansWriteDir(flags);
       break;
     case 'set-session':
       await cmdSetSession(flags);

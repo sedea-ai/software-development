@@ -47,6 +47,12 @@ inputs:
     description: When true, run the next decomposition branch inline after population if parent hint and assessment agree.
     required: false
     default: true
+  plansBasePath:
+    type: string
+    description: >-
+      Optional absolute handover path to a dispatch-scoped plans write folder.
+      When omitted, resolve from target/parent plan paths or flat plans root fallback.
+    required: false
 laneRules:
   - ".sedea/centers/sedea/rules/2_ask-question-instructions.mdc"
   - ".sedea/centers/software-development/rules/30_planning-target-resolution.mdc"
@@ -64,6 +70,28 @@ This skill drives the **second-tier** planning move under Sedea's New Feature De
 The agent has enough context after step 3 to draft §§ 1–4 and the assessment — inferable from the parent plan's architectural design + change list + this phase's row in the parent's `Delivery phases` numbered list. The assessment supplies **kinds of change**, **PR count band**, **sequencing / coupling**, a **routing recommendation**, and **confidence** so the next **`delivery-phases`** / **`pr-breakdown`** path can be selected without guessing. Filling the dual-title **numbered list** is owned by those protocol branches; § 6 (Caveats) often only emerges once § 5 reveals constraints.
 
 The procedure below is a hard contract — do **not** skip steps, re-order them, or start drafting before the target plan is verified as a phase plan stub. Skipping a step is the difference between a clean phase plan and one that drifts from the documented process.
+
+## Resolve plans write directory (binding)
+
+Honor optional **`inputs.plansBasePath`** on every plan write and on spawn handover to downstream plan skills:
+
+1. Collect **`inputs.plansBasePath`**, **`inputs.targetPlanPath`**, and **`inputs.parentPlanPath`** when present.
+2. From **`HOSTING_ROOT`**:
+
+```bash
+cd "$HOSTING_ROOT"
+.sedea/centers/sedea/scripts/run-sedea-node.sh \
+  .sedea/centers/software-development/missions/plan-and-deliver/scripts/plan-state.mjs \
+  resolve-plans-write-dir --json \
+  ${PLANS_BASE_PATH:+--plans-base-path "$PLANS_BASE_PATH"} \
+  ${TARGET_PLAN_PATH:+--target-plan-path "$TARGET_PLAN_PATH"} \
+  ${PARENT_PLAN_PATH:+--parent-plan-path "$PARENT_PLAN_PATH"}
+```
+
+3. Treat JSON **`writeDir`** as authoritative for new plan paths on this lane. When spawning **`new-plan`**, **`coding-session`**, or nested **`phase-planner`**, include **`plansBasePath`** in spawn **`inputs`** when JSON **`plansBasePath`** is non-null — **forbidden** re-deriving flat-root paths when nested handover is active.
+4. Material edits to an existing **`targetPlanPath`** stay in that file's directory — do not relocate plans when handover resolves nested vs flat.
+
+- **Next-step resolution:** Auto-advance to step **1** target verification once resolve completes — no `USER_CHECKPOINT` on happy path.
 
 ## Software Development center edit destination gate (binding)
 

@@ -58,6 +58,13 @@ inputs:
     type: string
     description: When delivery-phases-agent or pr-breakdown-agent, report Completion (inline) to the invoker instead of mission_control_send_agent_result.
     required: false
+  plansBasePath:
+    type: string
+    description: >-
+      Optional absolute handover path to a dispatch-scoped plans write folder
+      (`plans/` flat root or `plans/YYYY-MM/<dispatch-slug>/`). When omitted,
+      resolve from parent/target plan paths or flat plans root fallback.
+    required: false
 laneRules:
   - ".sedea/centers/sedea/rules/2_ask-question-instructions.mdc"
   - ".sedea/centers/software-development/rules/30_planning-target-resolution.mdc"
@@ -70,9 +77,32 @@ warmUpRules:
 
 # New plan
 
-Scaffold a standalone `.plan.md` and `.state.yaml` under the **dispatch-scoped plans union** (flat `.../plans/` directory from spawn handover or resolved parent plan path — see **Slug and filename**). On first write, frontmatter must be valid YAML and match the shape Sedea tooling expects (see **Write the plan template** and naming guidance in `.sedea/centers/software-development/docs/development-process.md` plus `.sedea/centers/software-development/rules/10_plan-naming-convention.mdc`).
+Scaffold a standalone `.plan.md` and `.state.yaml` under the **resolved plans write directory** (see **Resolve plans write directory (binding)**). On first write, frontmatter must be valid YAML and match the shape Sedea tooling expects (see **Write the plan template** and naming guidance in `.sedea/centers/software-development/docs/development-process.md` plus `.sedea/centers/software-development/rules/10_plan-naming-convention.mdc`).
 
 **Resolution contract:** read `.sedea/centers/software-development/rules/30_planning-target-resolution.mdc` and follow it for target selection and snapshots. Resolve parents using **§ Parent derivation** below (explicit session/message → `plan-state resolve` → recent chat references).
+
+## Resolve plans write directory (binding)
+
+Before scaffolding, resolve the absolute directory for **both** `.plan.md` and `.state.yaml` writes:
+
+1. Collect optional **`inputs.plansBasePath`**, anchored **`parentPlanPath`**, and any explicit target path from session context.
+2. From **`HOSTING_ROOT`**:
+
+```bash
+cd "$HOSTING_ROOT"
+.sedea/centers/sedea/scripts/run-sedea-node.sh \
+  .sedea/centers/software-development/missions/plan-and-deliver/scripts/plan-state.mjs \
+  resolve-plans-write-dir --json \
+  ${PLANS_BASE_PATH:+--plans-base-path "$PLANS_BASE_PATH"} \
+  ${PARENT_PLAN_PATH:+--parent-plan-path "$PARENT_PLAN_PATH"}
+```
+
+3. Parse JSON **`writeDir`** — use it for all new plan file paths in this turn. Record **`plansBasePath`** from JSON when present (nested handover); omit when flat-root only.
+4. **Forbidden:** constructing `.sedea/operations/` path segments from user-id, mtime heuristics, or parallel tab inference — handover + resolve script only.
+
+**Fallback:** when spawn omits **`plansBasePath`**, the script falls back to parent plan dirname, then the scope flat **`plans/`** root — flat-root behavior unchanged.
+
+- **Next-step resolution:** Auto-advance to parent derivation / slug steps once **`writeDir`** resolves — no `USER_CHECKPOINT` on happy path.
 
 ## Warm-up manifest (spawned)
 
@@ -344,9 +374,9 @@ Example recap line when no open items:
 - **Title prefix (indexed spawn):** prepend `<N>. ` to **display title** in `name:` and H1; item 10 uses filename `A_...` but title prefix `10. `. Apply this prefix only for indexed digit-only **N**; omit for other spawns.
 - **Slug base (indexed):** from raw bolded title only (normalized). **Slug base (non-indexed):** from user name, lowercased, spaces → `_` or `-`, match sibling conventions.
 - **Suffix:** append 8 hex chars (e.g. `crypto.randomBytes(4).toString('hex')`) for uniqueness.
-- **Paths:** under the dispatch-scoped flat `plans/` directory (same folder for `.plan.md` and `.state.yaml`). Indexed: `<C>_<slugBase>_<hex>.plan.md` / `.state.yaml`; otherwise `<slugBase>_<hex>.plan.md` / `.state.yaml`.
+- **Paths:** under the resolved **`writeDir`** from **Resolve plans write directory (binding)** (same folder for `.plan.md` and `.state.yaml`). Indexed: `<C>_<slugBase>_<hex>.plan.md` / `.state.yaml`; otherwise `<slugBase>_<hex>.plan.md` / `.state.yaml`.
 
-All new plans are sibling files in the flat `plans/` directory for the active dispatch scope. **Root delivery plan** means `parent: null` in the sidecar — same flat `plans/` path as child plans; never scaffold under `roadmap-topics/`.
+New plan files are sibling files in the resolved write directory for the active dispatch scope. **Root delivery plan** means `parent: null` in the sidecar — same write directory as child plans; never scaffold under `roadmap-topics/`.
 
 ### Handling 10–35 children
 
@@ -403,7 +433,7 @@ worktrees: []
 prs: []
 ```
 
-Always write the sidecar. Prefer **`plan-state.mjs init-sidecar --plan-path <abs> --parent <slug|null>`** so **`plansMonthBucket`** is derived on first write (nested layout only; flat-root omits the field). Manual **`Write`** is allowed when **`init-sidecar`** is unavailable — omit **`plansMonthBucket`** on flat-root stubs; nested handover may pass **`--plans-base-path`**.
+Always write the sidecar. Prefer **`plan-state.mjs init-sidecar --plan-path <abs> --parent <slug|null>`** so **`plansMonthBucket`** is derived on first write (nested layout only; flat-root omits the field). When JSON **`plansBasePath`** is set (nested handover), pass **`--plans-base-path <abs>`** even if the `.plan.md` path is still under flat root during transition. Manual **`Write`** is allowed when **`init-sidecar`** is unavailable — omit **`plansMonthBucket`** on flat-root stubs; nested handover may pass **`--plans-base-path`**.
 
 `parent:` required; use YAML `null` unquoted for a **root delivery plan** or an explicit parent slug. Header comment matches `plan-state.mjs` output style.
 
