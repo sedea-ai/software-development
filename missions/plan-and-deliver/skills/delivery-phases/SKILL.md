@@ -265,6 +265,8 @@ The dev-process **§ 6 / § 5 contents rule** defines the shape. Each numbered i
 
 Optional: one short intro paragraph under the heading before the list when the decomposition needs framing; skip when the list is self-explanatory.
 
+**Feature-flag graduation phase (when `newFeatureFlag: true` and N > 1):** After drafting feature phases, **append** a final numbered row **Feature flag graduation** — scope: remove registry entry + consumer guards; feature available to all users without Settings flip. Set decomposition decision **`PR breakdown`** (single graduation PR). **`### Sequencing`** on the parent Master Plan (when present elsewhere) must place this phase **last**, sequential after prior phases. **Authority:** [`.sedea/centers/software-development/rules/15_feature-flag-delivery.mdc`](../../../../rules/15_feature-flag-delivery.mdc).
+
 ### 5c — Write to the parent plan
 
 Use `StrReplace` to mutate **only** the dual-title section:

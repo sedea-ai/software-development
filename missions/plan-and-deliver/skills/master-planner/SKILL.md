@@ -806,6 +806,8 @@ Execute **only** what the user selected in **AskQuestion** (or the matching **`o
 
 Ask whether this feature should ship behind a **new feature flag** so end-user workstations stay on current behavior until the feature is ready — **only after** phase/PR breakdown makes delivery size known. **Forbidden:** asking before §§ 1–5 draft; asking when delivery is a **single PR**.
 
+**Policy authority:** [`.sedea/centers/software-development/rules/15_feature-flag-delivery.mdc`](../../../../rules/15_feature-flag-delivery.mdc) — flags hide **unfinished feature work** only (**not** app configuration); always **boolean**.
+
 **When to run (first time `newFeatureFlag` is unset on this Master Plan lane):**
 
 | After inline skill merge | Count | Action |
@@ -821,9 +823,12 @@ USER_CHECKPOINT — choose whether to plan a new feature flag when delivery PR c
 
 **Lifecycle contract (binding when the developer picks yes):**
 
-1. **Default OFF everywhere** — registry **`developDefault: false`** **and** **`packagedBuildDefault: false`** (hide unfinished functionality on develop hosts, packaged builds, and end-user installs).
-2. **Developer opt-in** — the developer explicitly sets `sedea.features.<flagId>: true` when ready to dogfood (**not** registry ON by default).
-3. **Ship = remove the flag** — when the feature is fully developed and ready for all users, **remove** the flag (registry entry + guards) so the behavior is **on by default** for everyone who installs the new version — do **not** leave a permanent off-switch as the long-term control.
+1. **Not app config** — boolean flag hides unfinished UX only.
+2. **Intro PR (first)** — separate PR **before** feature code: registry + Settings; **`developDefault: false`**, **`packagedBuildDefault: false`**; developer opt-in via Settings for dogfooding.
+3. **Feature PRs (middle)** — existing approved breakdown rows; flag-gated code reads the registry.
+4. **Graduation PR (last)** — remove registry + guards; feature **on by default** for all installs (no permanent off-switch).
+5. **Multi-phase (N > 1):** append final **Feature flag graduation** phase to the approved **`Delivery phases`** list (sequential after prior phases).
+6. **Early enable (explicit only):** on `enable-flag-early`, document which PR/phase flips default **ON** before graduation.
 
 **Align with hosting contract:** When the target repo includes `.cursor/rules/feature-flags-contract.mdc` (or equivalent), follow that registry / `sedea.features.*` / lifecycle wording for implementation bullets. This step is **planning policy** — it does not edit the registry.
 
@@ -831,11 +836,14 @@ USER_CHECKPOINT — choose whether to plan a new feature flag when delivery PR c
 
 | Option id | Label |
 |-----------|-------|
-| `plan-new-feature-flag` | Yes — plan a new feature flag (default OFF everywhere; developer opts in when ready; remove at ship) — **recommended** when **K > 1** |
+| `plan-new-feature-flag` | Yes — plan intro + graduation PRs/phases (default OFF → graduate at ship) — **recommended** when **K > 1** |
 | `no-feature-flag` | No — ship without a new feature flag |
+| `enable-flag-early` | Yes — and enable default ON before graduation (name PR/phase in Other) |
 | `defer-flag-decision` | Defer — decide later before implementation |
 
-**On `plan-new-feature-flag`:** Carry `newFeatureFlag: true`. **Revise** § 4 Architectural design to note the flag gate surface. **Revise** § 5 Changes with concrete bullets: registry id (proposed kebab-case), Settings key `sedea.features.<id>`, **`developDefault: false`** and **`packagedBuildDefault: false`**, explicit Settings opt-in path for dogfooding, and a **removal** change when the feature graduates. Prefer a short `### Feature flag` subsection under § 5. When PR plans already exist, add matching flag bullets to those plans’ Changes as needed.
+**On `plan-new-feature-flag`:** Carry `newFeatureFlag: true`, `featureFlagIntroRequired: true`, `featureFlagGraduationRequired: true`. **Revise** § 4 Architectural design to note the flag gate surface. **Revise** § 5 Changes with concrete bullets: registry id (proposed kebab-case), Settings key `sedea.features.<id>`, **`developDefault: false`** and **`packagedBuildDefault: false`**, explicit Settings opt-in path for dogfooding, and a **removal** change when the feature graduates. Prefer a short `### Feature flag` subsection under § 5. **Revise** approved **`### PR list`** / **`### Sequencing`** on the target plan: **prepend** intro PR, **append** graduation PR, re-number (see **`pr-breakdown`** § *Feature-flag PR scaffolding*). When **`delivery-phases`** list exists with **N > 1**, **append** **Feature flag graduation** phase per rule **15**. When PR plans already exist, add matching flag bullets to those plans’ Changes as needed.
+
+**On `enable-flag-early`:** Same as `plan-new-feature-flag`, plus document the named PR/phase that flips default **ON** early in Master Plan § 5 and affected PR plan Caveats.
 
 **On `no-feature-flag`:** Carry `newFeatureFlag: false`; leave §§ 1–5 without flag scaffolding (no flag revise).
 

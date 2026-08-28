@@ -1,0 +1,54 @@
+---
+description: >-
+  Feature-flag delivery policy for multi-PR planning — purpose, boolean lifecycle,
+  intro/graduation PR and phase scaffolding, and early-enable exceptions.
+alwaysApply: false
+---
+
+# Feature-flag delivery (Software Development center)
+
+**On-demand rule.** Load when **`master-planner`**, **`pr-breakdown`**, **`delivery-phases`**, **`phase-planner`**, or mission plans reference feature-flag planning.
+
+## Purpose (binding)
+
+A feature flag hides **unfinished feature work** from end users until the feature is ready.
+
+| Allowed | Forbidden |
+|---------|-----------|
+| Gate incomplete UX behind a boolean until graduation | App configuration, environment toggles, kill switches unrelated to feature readiness |
+| Temporary developer opt-in via Settings for dogfooding | Permanent product settings disguised as flags |
+
+**Type:** Always **boolean** (`sedea.features.<flagId>`).
+
+## When to ask (binding)
+
+| Delivery shape | Action |
+|----------------|--------|
+| **PR count K = 1** | No new flag — auto `newFeatureFlag: false`; no AskQuestion |
+| **PR count K > 1** or multi-phase **N > 1** | Ask via **`master-planner`** Step **7c.5** — recommend yes when hiding unfinished UX |
+
+**Trigger unchanged:** more than one PR in total ⇒ ask whether a flag is required.
+
+## When the developer chooses yes
+
+Scaffold delivery in this order:
+
+| Stage | Concern |
+|-------|---------|
+| **Intro (first PR or before feature code)** | Add registry entry + Settings key; **`developDefault: false`**, **`packagedBuildDefault: false`**. End users see current behavior; developers opt in via Settings for dogfooding. |
+| **Feature work (middle)** | Existing breakdown PRs or phases; all flag-gated code reads the registry. |
+| **Graduation (last PR or last phase)** | Remove registry entry + consumer guards; behavior **on by default** for all installs (hard-wire or lifecycle `removed`). |
+
+**Multi-phase delivery:** append a final **Feature flag graduation** phase at the end of the approved phase list (same graduation concern as the last PR above).
+
+**Early enable (explicit only):** on developer request, a named prior PR or phase may flip defaults to **ON** before graduation — document in plan Changes and PR Caveats; do not infer from prose alone.
+
+## Implementation alignment
+
+When the target repo includes **`.cursor/rules/feature-flags-contract.mdc`** (or equivalent), follow that registry / `sedea.features.*` / lifecycle wording for implementation bullets. **This center rule is planning policy** — it does not edit the runtime registry.
+
+## Related
+
+- **`master-planner/SKILL.md`** Step **7c.5** — gate and plan revision
+- **`pr-breakdown/SKILL.md`** — intro/graduation PR rows in **`### PR list`**
+- **`delivery-phases/SKILL.md`** — graduation phase row when **N > 1**

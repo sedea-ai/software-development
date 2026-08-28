@@ -353,7 +353,7 @@ Read the target plan’s earlier sections:
 Pick PR boundaries that respect Strategy #6 (single concern per deliverable) and Strategy #4 (small chunks, fast to production):
 
 - A PR is the **smallest deliverable unit** of this plan — one concern, one purpose, one reason to change. If two concerns are tempting to bundle, split them.
-- PRs are ordered when there is a real sequencing constraint (schema migration before consumers; feature flag before code that reads it; contract change before UI that consumes it). Otherwise they can run in parallel.
+- PRs are ordered when there is a real sequencing constraint (schema migration before consumers; **feature-flag intro PR before gated code**; graduation PR last when rule **15** applies; contract change before UI that consumes it). Otherwise they can run in parallel.
 - Aim for **2–5 PRs** in a typical multi-PR pass. **Exactly one PR** is a **first-class** outcome — use **step 5s** or **`pr_breakdown_single`**; do **not** treat it as an error. More than ~6 PRs usually means the plan should have stayed at **`Delivery phases`** first — **flag** when you proceed anyway.
 - Each PR must be **shippable on its own** (Strategy #4): merging it should leave the system in a working state. Flag non-obvious reliance on flags, additive schema, or compat layers per PR.
 - **Size each candidate PR by test-case count, not by lines** (canonical: **`planning-mode-templates.md`** § *PR sizing — test cases and kinds of changes*). For each PR under consideration, estimate **test cases** it introduces or meaningfully changes — unit + integration / snapshot + exploratory recordings, each enumerated case counted once. Buckets: **≤ 10** simple, **11–20** mid-sized, **21+** heavy (same thresholds as rule **20** § *Keep PRs small and focused*). Heavy is a signal to **investigate** splitting — not automatically wrong. Do not split within one **kind** of change (instance batching). Raw changed-line count is **not** a size signal.
@@ -408,6 +408,22 @@ If the section is **partially drafted**, replace only still-`_TBD_` sub-sections
 Do **not** modify any other section in the same call.
 
 After writing, read the file back and confirm the section reads as intended.
+
+### Feature-flag PR scaffolding (when `newFeatureFlag: true`)
+
+**Authority:** [`.sedea/centers/software-development/rules/15_feature-flag-delivery.mdc`](../../../../rules/15_feature-flag-delivery.mdc).
+
+When inline context carries **`newFeatureFlag: true`** (from **`master-planner`** Step **7c.5** or a plan revision after list approval), ensure **`### PR list`** and **`### Sequencing`** include:
+
+| Position | PR concern |
+|----------|------------|
+| **First** | **Introduce feature flag** — registry entry + Settings key; defaults **OFF** everywhere |
+| **Middle** | Original feature PR rows (unchanged single-concern seeds) |
+| **Last** | **Graduate feature flag** — remove registry + guards; feature **on by default** |
+
+Update **`### Sequencing`:** Stage 1 **(sequential):** intro PR → feature stage(s) → final graduation **(sequential)**. Re-number **`### PR list`** items; preserve verbatim **Single concern** seeds for middle rows when revising an approved list.
+
+**Single-PR path (K = 1):** do **not** add intro/graduation rows — rule **15** forbids a new flag when **K = 1**.
 
 ### 5d — Notify draft (recap)
 
