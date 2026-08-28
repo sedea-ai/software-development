@@ -13,6 +13,7 @@ import * as path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseDocument, Document, YAMLMap, YAMLSeq, isMap, isSeq } from 'yaml';
+import { applyPlansMonthBucketOnFirstWrite } from './plan-sidecar-month-bucket.mjs';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -118,12 +119,40 @@ async function buildPlanDirs(repoRoot) {
   const scopes = await listOperationsScopeSegments(repoRoot);
   for (const scope of scopes) {
     const plansDir = path.join(ops, scope, 'plans');
-    const subs = [plansDir, path.join(plansDir, 'roadmap-topics')];
-    for (const d of subs) {
-      if (await dirExists(d)) dirs.push(d);
-    }
+    await collectPlanSearchDirs(plansDir, dirs);
   }
   return dirs;
+}
+
+/** Register flat `plans/`, roadmap-topics, and nested `plans/YYYY-MM/<dispatch-slug>/` dirs. */
+async function collectPlanSearchDirs(plansDir, dirs) {
+  if (!(await dirExists(plansDir))) return;
+  dirs.push(plansDir);
+  const roadmap = path.join(plansDir, 'roadmap-topics');
+  if (await dirExists(roadmap)) dirs.push(roadmap);
+
+  let entries;
+  try {
+    entries = await fs.readdir(plansDir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name === 'roadmap-topics') continue;
+    if (!/^\d{4}-\d{2}$/.test(entry.name)) continue;
+    const monthDir = path.join(plansDir, entry.name);
+    let dispatchEntries;
+    try {
+      dispatchEntries = await fs.readdir(monthDir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const dispatchEntry of dispatchEntries) {
+      if (dispatchEntry.isDirectory()) {
+        dirs.push(path.join(monthDir, dispatchEntry.name));
+      }
+    }
+  }
 }
 
 async function ensureSedeaContext() {
@@ -285,6 +314,7 @@ async function loadSidecarDoc(planPath) {
   }
   ensureKey(doc, 'worktrees', new YAMLSeq());
   ensureKey(doc, 'prs', new YAMLSeq());
+  applyPlansMonthBucketOnFirstWrite(doc, planPath);
   return { doc, statePath, slug, existed };
 }
 
@@ -342,7 +372,11 @@ async function readSidecarPlain(planPath) {
   const statusRaw = typeof raw.status === 'string' ? raw.status : null;
   const status =
     statusRaw && PLAN_BOARD_STATUSES.has(statusRaw) ? statusRaw : null;
-  return { statePath, data: { worktrees, prs, session, parent, archived, status } };
+  const plansMonthBucket =
+    typeof raw.plansMonthBucket === 'string' && /^\d{4}-\d{2}$/.test(raw.plansMonthBucket)
+      ? raw.plansMonthBucket
+      : null;
+  return { statePath, data: { worktrees, prs, session, parent, archived, status, plansMonthBucket } };
 }
 
 // Sidecar archive bucket: sidecar `archived` is authoritative (rule 8).
@@ -467,6 +501,42 @@ async function cmdSetWorktrees(flags) {
   doc.set('worktrees', seq);
   await saveSidecar(statePath, doc);
   log(`worktrees set on ${statePath} (${entries.length} entr${entries.length === 1 ? 'y' : 'ies'})`);
+}
+
+// ---------- subcommand: init-sidecar ----------
+
+// `init-sidecar --plan-path <abs> --parent <slug|null> [--plans-base-path <abs>]`
+// Create a new sidecar stub at first plan write with parent, optional
+// plansMonthBucket (derived), and empty worktrees/prs lists.
+async function cmdInitSidecar(flags) {
+  const planPath = path.resolve(requireString(flags, 'plan-path'));
+  if (!path.isAbsolute(planPath)) die('init-sidecar: --plan-path must be absolute');
+  if (!(await fileExists(planPath))) die(`init-sidecar: plan file not found: ${planPath}`);
+
+  const statePath = sidecarPathFor(planPath);
+  if (await fileExists(statePath)) die(`init-sidecar: sidecar already exists: ${statePath}`);
+
+  if (flags.parent === undefined) die('init-sidecar: --parent is required (use null for root plans)');
+  const parent =
+    flags.parent === 'null' || flags.parent === null
+      ? null
+      : requireString(flags, 'parent');
+  const plansBasePath =
+    typeof flags['plans-base-path'] === 'string' ? path.resolve(flags['plans-base-path']) : null;
+
+  const slug = path.basename(planPath).replace(/\.plan\.md$/i, '');
+  const doc = new Document({});
+  doc.commentBefore = ` Sidecar for operations plan runtime. Plan: ${slug}.plan.md`;
+  doc.contents = new YAMLMap();
+  doc.set('parent', parent);
+  applyPlansMonthBucketOnFirstWrite(doc, planPath, { plansBasePath });
+  ensureKey(doc, 'worktrees', new YAMLSeq());
+  ensureKey(doc, 'prs', new YAMLSeq());
+  await saveSidecar(statePath, doc);
+  const bucket = doc.get('plansMonthBucket');
+  log(
+    `init-sidecar: wrote ${statePath}${bucket ? ` (plansMonthBucket: ${bucket})` : ' (flat-root — no plansMonthBucket)'}`,
+  );
 }
 
 // ---------- subcommand: set-session ----------
@@ -1964,6 +2034,10 @@ Subcommands:
   set-worktrees --slug <slug> --json '[{"repo":"user-auth","path":"/abs"}]'
       Replace sidecar worktrees[] wholesale.
 
+  init-sidecar --plan-path <abs> --parent <slug|null> [--plans-base-path <abs>]
+      Create a new sidecar stub with parent, optional plansMonthBucket (first-write
+      derivation), and empty worktrees/prs. Refuses when the sidecar already exists.
+
   set-session --slug <slug> --focus <abs>
       Set sidecar session.focusPath; promotes sidecar status to started when
       the plan is active and status is missing or not_started.
@@ -2058,6 +2132,9 @@ async function main() {
       break;
     case 'set-worktrees':
       await cmdSetWorktrees(flags);
+      break;
+    case 'init-sidecar':
+      await cmdInitSidecar(flags);
       break;
     case 'set-session':
       await cmdSetSession(flags);

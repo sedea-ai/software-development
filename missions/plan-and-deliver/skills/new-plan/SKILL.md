@@ -403,7 +403,9 @@ worktrees: []
 prs: []
 ```
 
-Always write the sidecar. `parent:` required; use YAML `null` unquoted for a **root delivery plan** or an explicit parent slug. Header comment matches `plan-state.mjs` output style.
+Always write the sidecar. Prefer **`plan-state.mjs init-sidecar --plan-path <abs> --parent <slug|null>`** so **`plansMonthBucket`** is derived on first write (nested layout only; flat-root omits the field). Manual **`Write`** is allowed when **`init-sidecar`** is unavailable — omit **`plansMonthBucket`** on flat-root stubs; nested handover may pass **`--plans-base-path`**.
+
+`parent:` required; use YAML `null` unquoted for a **root delivery plan** or an explicit parent slug. Header comment matches `plan-state.mjs` output style.
 
 ## After writing
 
