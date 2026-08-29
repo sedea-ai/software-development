@@ -50,6 +50,12 @@ inputs:
     type: string
     description: Optional upstream route detail for PR breakdown, single or multi.
     required: false
+  plansBasePath:
+    type: string
+    description: >-
+      Optional absolute handover path to a dispatch-scoped plans write folder.
+      When omitted, resolve from target/parent plan paths or flat plans root fallback.
+    required: false
 laneRules:
   - ".sedea/centers/sedea/rules/2_ask-question-instructions.mdc"
   - ".sedea/centers/software-development/rules/30_planning-target-resolution.mdc"
@@ -65,6 +71,27 @@ warmUpRules:
 This skill drives **mode #3** (set-level **PR breakdown**) under Sedea's New Feature Development Process. **Input:** a target **Master Plan** or **Phase plan** whose dual-title section (`Delivery phases | PR breakdown`) is undecided or is already **`PR breakdown`**. **Output:** that section drafted as **`### Single-concern strategy`**, **`### Sequencing`**, and **`### PR list`** (numbered child PRs). Each row is expanded **depth-first** per **`### Sequencing`** ship gates via **`new-plan`** (indexed — **inline** when this skill runs under **`master-planner`**), then **`pr-plan`** **inline** on that lane (see [`new-plan/SKILL.md`](../new-plan/SKILL.md) populator handoff).
 
 The procedure below is a hard contract — do **not** skip steps, re-order them, or start drafting before stage is verified.
+
+## Resolve plans write directory (binding)
+
+Honor optional **`inputs.plansBasePath`** on every spawn handoff to downstream plan skills:
+
+1. Collect **`inputs.plansBasePath`**, **`inputs.targetPlanPath`**, and parent plan path from session context when present.
+2. From **`HOSTING_ROOT`**:
+
+```bash
+cd "$HOSTING_ROOT"
+.sedea/centers/sedea/scripts/run-sedea-node.sh \
+  .sedea/centers/software-development/missions/plan-and-deliver/scripts/plan-state.mjs \
+  resolve-plans-write-dir --json \
+  ${PLANS_BASE_PATH:+--plans-base-path "$PLANS_BASE_PATH"} \
+  ${TARGET_PLAN_PATH:+--target-plan-path "$TARGET_PLAN_PATH"} \
+  ${PARENT_PLAN_PATH:+--parent-plan-path "$PARENT_PLAN_PATH"}
+```
+
+3. Record resolved **`plansBasePath`** from JSON when non-null. When inline **`new-plan`** or standalone **`mission_control_spawn_agent`** for **`new-plan`** runs, include **`plansBasePath`** in handoff **`inputs`** when JSON **`plansBasePath`** is non-null — **forbidden** re-deriving flat-root paths when nested handover is active.
+
+- **Next-step resolution:** Auto-advance to step **1** target verification once resolve completes — no `USER_CHECKPOINT` on happy path.
 
 ## Warm-up manifest (spawned)
 
@@ -214,10 +241,11 @@ When **`parentAgentRole`** is **`master-plan-agent`** or **`phase-planner-agent`
 | `decompositionKind` | `"pr-breakdown"` |
 | `autoChainFirstPr` | `true` only when **`approve-list`** auto-expand runs on this lane (see §6 act-after-select); otherwise omit or `false` |
 | `parentRowSingleConcern` | Full text of item **N** **Single concern** sub-bullet under **`### PR list`** (PR description seed — parse from parent `.plan.md` before handoff) |
+| `plansBasePath` | Resolved JSON **`plansBasePath`** when non-null — omit when flat-root only |
 
 **Parse `parentRowSingleConcern`:** Read the parent plan’s **`### PR list`** block; for ordered item **N**, take the nested **Single concern.** sub-bullet body (label may read `Single concern` or `Single concern.`). Trim leading/trailing whitespace only — do not paraphrase. That string is the PR description seed for inline **`pr-plan`** §1.
 
-**Standalone spawned** path: emit **`mission_control_spawn_agent`** per row instead (see step 6 act-after-select).
+**Standalone spawned** path: emit **`mission_control_spawn_agent`** per row instead (see step 6 act-after-select). Include **`plansBasePath`** in spawn **`inputs`** when resolved JSON **`plansBasePath`** is non-null.
 
 ## Step 1 — Identify the target plan and verify stage
 
