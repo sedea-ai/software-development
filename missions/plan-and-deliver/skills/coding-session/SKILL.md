@@ -739,7 +739,22 @@ When inline **`deploy-walk`** sets **`deployStatus: done`** and **`deployTodoSta
 | Deploy done + merged + hosting pins complete + reconcile complete | `prShipComplete: true`, `hostingPinCompleteStatus: complete` or `not-applicable`, `shipPhase: done`, `rowStatus: closed`, `parentPlanPath`, `parentPlanSlug`, `parentIndex` when spawn supplied them |
 | Deploy done only (tail pending) | `shipPhase: deploy-verified`, `continuationStatus: active` — **not** terminal |
 
-**Calibration references:** `incident_pr_ship_complete_tail_skipped_2026-08-02.agent-incident-report.md` (post-after-deploy tail skipped — **`prShipComplete`** never set); `incident_hosting_pin_promotion_treated_optional_2026-08-03.agent-incident-report.md` (**`prShipComplete`** while hosting **`main`** gitlinks stale — optional pin framing).
+**Calibration references:** `incident_pr_ship_complete_tail_skipped_2026-08-02.agent-incident-report.md` (post-after-deploy tail skipped — **`prShipComplete`** never set); `incident_hosting_pin_promotion_treated_optional_2026-08-03.agent-incident-report.md` (**`prShipComplete`** while hosting **`main`** gitlinks stale — optional pin framing); `before-deploy-vitest-substitute-skipped-deploy-walk_2026-08-30.agent-incident-report.md` (vitest substituted for Before deploy manual **`deploy-walk`** gates — **`pre-pr-review`** spawned early).
+
+### Post-merge cleanup terminal emit guard (binding)
+
+When **`outputs.prState: merged`** and [Post-merge workspace cleanup](#post-merge-workspace-cleanup) ownership preconditions pass for **this pass's** **`WORKTREE_ROOT`**, the agent **must not** call **`mission_control_send_agent_result`** with **`status: success`** or **`prShipComplete: true`** while **`postMergeCleanupStatus`** is unset/pending and the owned worktree path still exists on disk.
+
+**Required (Checkpoint clean path):** Run detect → MCP detach → center **`worktree-cleanup.sh --apply`** per [Post-merge Checkpoint chain](#post-merge-checkpoint-chain-binding) **before** terminal emit — unless cleanup is documented skip/defer with **`continuationStatus: active`**.
+
+**Forbidden terminal shapes:**
+
+| Shape | Why |
+|-------|-----|
+| **`prShipComplete: true`** while session **`WORKTREE_ROOT`** still mounted after merge | Parent / host sees ship complete with stale worktree |
+| **`status: success`** + **`shipPhase: done`** when cleanup authorized but not attempted | Agents must not close the lane at will before owned cleanup |
+
+**Cross-ref:** [Completion (spawned)](#completion-spawned) MCP result preflight **R6**.
 
 ## Pre-worktree validation (plan completeness)
 
@@ -1590,7 +1605,11 @@ Run from [Act after ship cut-point pick](#act-after-ship-cut-point-pick) when th
 When `targetPlanPath` resolves to a PR plan:
 
 1. **Read** §7 **`### Before deploy`**. If empty, only *None — …*, or every item is `[x]`, note in one line and continue to [Auto-spawn pre-pr-review](#auto-spawn-pre-pr-review).
-2. When any **`[ ]`** Before-deploy items remain, load `.sedea/centers/software-development/missions/plan-and-deliver/skills/deploy-walk/SKILL.md` and run it **inline on this lane** — **do not** emit **`mission_control_spawn_agent`** for **`deploy-walk`**.
+2. When any **`[ ]`** Before-deploy items remain, load `.sedea/centers/software-development/missions/plan-and-deliver/skills/deploy-walk/SKILL.md` and run it **inline on this lane** — **do not** emit **`mission_control_spawn_agent`** for **`deploy-walk`**. **Mandatory** — set **`beforeDeployStatus: complete`** only when the inline walk completes or is documented skip; **forbidden** substitute unit/integration test output for the entire walk.
+
+**Hard gate (binding):** Vitest / **`npm test`** pass **≠** Before deploy complete. When the cut-point pick authorizes Before deploy, **same turn** must at minimum bootstrap inline walk and present the first **manual** step (or complete agent-executable pass then present manual gate). **Forbidden:** narrating *Before deploy complete via tests* and jumping to **`pre-pr-review`**.
+
+**Checkbox flip guard (binding):** **Forbidden** flipping manual Before deploy **`[ ]` → `[x]`** without either (a) developer pick on **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) (`deploy-step-n-done` / `all-manual-steps-done`) or (b) documented skip with reason. Vitest stdout is evidence for **agent-executable** steps only.
 
 **Inline context:**
 
@@ -1637,7 +1656,7 @@ This skill spawns **`pre-pr-review`** only **after** [Ship chain after implement
 Before spawning **`pre-pr-review`**:
 
 1. [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) completed — developer approved implementation via combined modal or equivalent; [Commit execution](#commit-execution-internal) completed when the tree was dirty — at least one commit in the worktree when there were changes to land.
-2. [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) completed or skipped — **do not** spawn **`pre-pr-review`** while unchecked Before-deploy items remain without inline walk/skip documentation.
+2. [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) completed or skipped — **`outputs.beforeDeployStatus`** must be **`complete`** or **`skipped`**. **Forbidden** spawn **`pre-pr-review`** while unchecked Before-deploy items remain without inline walk/skip documentation or while **`beforeDeployStatus`** is unset/pending.
 3. `git status --short` in the worktree is empty. Uncommitted edits are invisible to the committed review diff, so do not spawn the reviewer while dirty.
 4. `git log --oneline <baseRef>..HEAD` shows at least one commit.
 5. `git diff <baseRef>...HEAD` is non-empty.
@@ -3034,6 +3053,7 @@ Required `outputs` per **## Implementation handoff result**, **Mission Control s
 | R3 | Populate **`outputs`** from **## Implementation handoff result** and §8 sync fields |
 | R4 | Re-emit updated MCP result after user-requested follow-up on this lane (same spawn session; host resolves **`correlationId`**) |
 | R5 | **`mission_control_refocus_parent_lane`** — when **Required** per § *MCP parent refocus* below; **omit** on detached / parentless entry |
+| R6 | **Post-merge cleanup terminal emit guard** — when **`prState: merged`** and [Post-merge workspace cleanup](#post-merge-workspace-cleanup) ownership preconditions pass, **`postMergeCleanupStatus`** must be **`success`**, **`skipped_no_stale`**, or documented defer before **`prShipComplete: true`** / success terminal |
 
 ### MCP parent refocus (`mission_control_refocus_parent_lane`)
 
