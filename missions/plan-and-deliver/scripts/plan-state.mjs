@@ -129,7 +129,7 @@ async function buildPlanDirs(repoRoot) {
 }
 
 /** Register flat `plans/`, roadmap-topics, and nested `plans/YYYY-MM/<dispatch-slug>/` dirs. */
-async function collectPlanSearchDirs(plansDir, dirs) {
+export async function collectPlanSearchDirs(plansDir, dirs) {
   if (!(await dirExists(plansDir))) return;
   dirs.push(plansDir);
   const roadmap = path.join(plansDir, 'roadmap-topics');
@@ -161,10 +161,21 @@ async function collectPlanSearchDirs(plansDir, dirs) {
 
 async function ensureSedeaContext() {
   if (SEDEA_REPO_ROOT) return;
-  const repoRoot = findSedeaRepoRoot(SCRIPT_DIR);
+  const envRoot = process.env.PLAN_STATE_HOSTING_ROOT;
+  const repoRoot =
+    typeof envRoot === 'string' && envRoot.length > 0
+      ? path.resolve(envRoot)
+      : findSedeaRepoRoot(SCRIPT_DIR);
   if (!repoRoot) die('plan-state: could not find .sedea (walk up from script path failed)');
   SEDEA_REPO_ROOT = repoRoot;
   SEDEA_PLAN_DIRS = await buildPlanDirs(repoRoot);
+}
+
+/** @internal Test hook — reset module-scoped plan discovery cache between isolated runs. */
+export function resetPlanStateContextForTests() {
+  SEDEA_REPO_ROOT = null;
+  SEDEA_PLAN_DIRS = null;
+  _hostingOrgRepoCache = null;
 }
 
 function parseGithubRemote(url) {
@@ -261,7 +272,7 @@ function sidecarPathFor(planPath) {
   return path.join(path.dirname(planPath), `${slug}.state.yaml`);
 }
 
-async function findPlanBySlug(slug) {
+export async function findPlanBySlug(slug) {
   await ensureSedeaContext();
   for (const dir of SEDEA_PLAN_DIRS) {
     const candidate = path.join(dir, `${slug}.plan.md`);
@@ -274,7 +285,7 @@ async function findPlanBySlug(slug) {
   return null;
 }
 
-async function listAllPlans() {
+export async function listAllPlans() {
   await ensureSedeaContext();
   const out = [];
   for (const dir of SEDEA_PLAN_DIRS) {
@@ -2251,6 +2262,12 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  die(err && err.stack ? err.stack : String(err));
-});
+const isMain =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+
+if (isMain) {
+  main().catch((err) => {
+    die(err && err.stack ? err.stack : String(err));
+  });
+}
