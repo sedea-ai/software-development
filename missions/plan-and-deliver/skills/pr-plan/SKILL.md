@@ -514,6 +514,7 @@ Set `readyForImplementation: true` only when all are true:
 - `## 4. Reasoning` has **Why this approach** populated.
 - Parent `### PR list` row is matched and the parent `Plan:` link points to this target plan.
 - Frontmatter includes `deploy-test-plan-verified`.
+- **Gitlink promotion scope (5a-gitlink-scope):** When §3 change-scope, parent row, or upstream Master Plan **`### Gitlink promotion scope`** implies gitlink checkout work, read upstream PRD / Master Plan for **Gitlink promotion scope**. When missing or `_TBD_`, set `readyForImplementation: false`, add blocking `remainingTasks`, and set `outputs.gitlinkPromotionScopeStatus: required`. When resolved, set `outputs.gitlinkPromotionScopeStatus: resolved` and record decision on PR plan §8 *Ship notes* when material. When no gitlink checkout in scope, set `outputs.gitlinkPromotionScopeStatus: not-applicable`.
 
 Set `readyForImplementation: false` when any of those checks fail. Add each missing item to `remainingTasks`.
 
@@ -559,11 +560,26 @@ When inline under **`phase-planner`**, include **`invokerRole: phase-planner-age
 
 Set **`implementationHandoffStatus: "offered"`** when §5c modal is emitted; **`deferred`** when the developer picks **`defer`**; **`spawned-coding-session`** after §5d.
 
-- **Next-step resolution:** Auto-advance to §5c structured choice after §5a readiness passes and §5b completeness note — **or auto-advance to §5d** when **`skipPrPlanHandoffModal: true`** **and** **`upstreamSkill: debug-and-fix`** **and** **`debugExitConfirmed: true`** — no `USER_CHECKPOINT` on substeps **5a–5b** or step **4** draft writes.
+- **Next-step resolution:** Auto-advance to §5c-pre when `outputs.gitlinkPromotionScopeStatus: required`; otherwise auto-advance to §5c structured choice after §5a readiness passes and §5b completeness note — **or auto-advance to §5d** when **`skipPrPlanHandoffModal: true`** **and** **`upstreamSkill: debug-and-fix`** **and** **`debugExitConfirmed: true`** — no `USER_CHECKPOINT` on substeps **5a–5b** or step **4** draft writes.
+
+### §5c-pre — Gitlink promotion scope (binding)
+
+When **`outputs.gitlinkPromotionScopeStatus: required`**, open structured choice **before** standard §5c handoff:
+
+USER_CHECKPOINT — record gitlink promotion scope before implementation handoff.
+
+| Option id | Label |
+|-----------|--------|
+| `gitlink-in-scope` | In scope — include hosting gitlink promotion in this PR ship chain |
+| `gitlink-follow-up` | Follow-up — document deferred promotion on PR plan §8 |
+| `gitlink-excluded` | Excluded — explicit out-of-scope with rationale |
+| `more-details` | More details for option _ |
+
+On pick: write decision to PR plan §8 *Ship notes* (and §3 bullet when material); re-run §5a; set `outputs.gitlinkPromotionScopeStatus: resolved`; then proceed to §5c. When decision is **`follow-up`** or **`excluded`**, §8 must include explicit gitlink-promotion note — **forbidden** empty §8 on gitlink checkout PRs.
 
 ### Step 5-open-items — Open-item modal contract
 
-Apply the shared planning open-item contract from `../README.md` § *Planning open-item modal contract* to every **pr-plan** gate that can surface multiple unresolved items before implementation handoff: §5a readiness blockers, blocked or untrusted parent `Plan:` links, unmapped parent change bullets, thin **Considered & rejected**, ambiguous row match, optional §5–8 pre-fill sketch choices, and non-blocking follow-up flags from step **4f**.
+Apply the shared planning open-item contract from `../README.md` § *Planning open-item modal contract* to every **pr-plan** gate that can surface multiple unresolved items before implementation handoff: §5a readiness blockers, missing gitlink promotion scope (§5c-pre), blocked or untrusted parent `Plan:` links, unmapped parent change bullets, thin **Considered & rejected**, ambiguous row match, optional §5–8 pre-fill sketch choices, and non-blocking follow-up flags from step **4f**.
 
 **When open items exist** — use **one modal with multiple `questions[]` entries**:
 

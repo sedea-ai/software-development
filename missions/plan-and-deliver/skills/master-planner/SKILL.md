@@ -653,6 +653,18 @@ Group bullets by area of the codebase if it helps scannability (e.g. **DB:**, **
 
 **Immediately after** the last change bullet (still inside `## 5. Changes`), append **`### Decomposition assessment`** — mandatory in the same turn as the rest of § 5. Use the same bullet dimensions as **`phase-planner`** (`.sedea/centers/software-development/missions/plan-and-deliver/skills/phase-planner/SKILL.md`) § *4g — `### Decomposition assessment`*: **Kinds of change (count)**, **PR count band** (`single` | `few (2–5)` | `many (6+)`), **Sequencing / coupling**, **Routing recommendation** (`Delivery phases` | `PR breakdown` multi-PR | `PR breakdown` single-PR) with a short **why**, **Confidence** (`high` | `med` | `low`). Ground this in §§ 4–5 and the PRD. The assessment is evidence for the §6 **AskQuestion** route (inline **`delivery-phases`** / **`pr-breakdown`**); it does **not** replace §6 drafting by those skills.
 
+When upstream PRD or seed indicates a **gitlink checkout** ship target, append **`### Gitlink promotion scope`** immediately after **`### Decomposition assessment`** (still under `## 5. Changes`):
+
+```markdown
+### Gitlink promotion scope
+
+- **Decision:** <in-scope | follow-up | excluded | not-applicable> (from upstream PRD **Gitlink promotion scope** line)
+- **Ship target path(s):** <repo-relative gitlink checkout path(s)>
+- **Planner flag:** When `follow-up` or `excluded`, add non-blocking `remainingTasks` naming the decision — downstream **`pr-plan`** and **`coding-session`** must not assume in-scope promotion.
+```
+
+The § 5 StrReplace must include **`### Gitlink promotion scope`** when the PRD line is present or ship target is a gitlink checkout. When decision is **`not-applicable`**, omit the subsection and state *Gitlink promotion scope: not applicable* in Step **7a** only.
+
 The `StrReplace` for § 5 must replace from `## 5. Changes` through its `_TBD_` placeholder and include both the change bullets **and** the `### Decomposition assessment` subsection in `new_string`. Do **not** write `### Complexity score` in that same replace — Step 6c appends it after the decomposition assessment is final (it needs the finished §4 and §5 text to fill the table).
 
 ### Step 6c — Plan-scope complexity score (mandatory)
@@ -734,7 +746,7 @@ Do **not** draft section 6 (`Delivery phases | PR breakdown`) or section 7 (Cave
 
 ### Step 7a — Recap after initial draft
 
-After **Echo to chat** (§§1–5 + complexity table), end with **one short status line only** (plan path, band, overall score). **Do not** embed the next-move menu in prose blockquotes.
+After **Echo to chat** (§§1–5 + complexity table), end with **one short status line only** (plan path, band, overall score). When **`### Gitlink promotion scope`** is present with **`follow-up`** or **`excluded`**, the status line **must** name the decision — **forbidden** silent omission (for example *Gitlink promotion: follow-up — pr-plan must record before coding-session*). **Do not** embed the next-move menu in prose blockquotes.
 
 When the full section echo is too long for one message, use rule **2** priority **3** split only: prior message = echo; **next** message = **`mission_control_present_structured_choice`** with Step **7b** options — never a prose-only follow-up. On the **initial §§1–5 draft turn**, call **`mission_control_present_structured_choice`** in the **same** message as **`mission_control_send_agent_result`** — MCP structured choice first, terminal result last (rule **2** § *Same message as spawn terminal*).
 

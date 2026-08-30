@@ -308,7 +308,11 @@ Pin the center **`defaultBranch`** tip only. Git is **skill-owned** per [`.sedea
 
 **Mandatory before ship row close (binding):** When the ship chain touched submodule gitlinks, **`prShipComplete: true`** is **forbidden** until hosting **`origin/main`** records merged tips and **`HOSTING_ROOT`** is refreshed. Pin promotion is **not** optional developer follow-up — see **`coding-session/SKILL.md`** § *Hosting-pin-complete gate (before prShipComplete)*. **Forbidden recap language:** *"if you want"*, *"optional follow-up"*, *"when you're ready"*, *"remains follow-up"*.
 
-**Calibration:** `incident_hosting_pin_promotion_treated_optional_2026-08-03.agent-incident-report.md`.
+### Planning-phase gitlink scope gate (binding)
+
+Before implementation handoff, planning must record explicit **`gitlink-promotion: in-scope | follow-up | excluded`** when the ship target is a hosting gitlink checkout (product repo or center submodule path). Cross-ref: **`ad-hoc-prd/SKILL.md`** § *Gitlink checkout ship target*, **`master-planner/SKILL.md`** §5 **`### Gitlink promotion scope`**, **`pr-plan/SKILL.md`** §5a / §5c-pre. **Forbidden:** treating pin promotion as implicit follow-up without a documented **`follow-up`** or **`excluded`** decision at PRD or planning gates.
+
+**Calibration:** `incident_hosting_pin_promotion_treated_optional_2026-08-03.agent-incident-report.md`; `incident_template_ship_gitlink_scope_implicit_87be77c1` ([issue #43](https://github.com/sedea-ai/community/issues/43)).
 
 **Launch from worktree (after bootstrap success — when hosting repo documents dev launcher):**
 
