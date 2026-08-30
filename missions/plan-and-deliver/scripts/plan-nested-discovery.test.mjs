@@ -37,10 +37,6 @@ async function makeFixtureHostingRoot() {
 
   await fs.writeFile(path.join(plansDir, 'flat_fixture_a1b2.plan.md'), PLAN_FRONTMATTER, 'utf8');
 
-  const roadmapDir = path.join(plansDir, 'roadmap-topics');
-  await fs.mkdir(roadmapDir, { recursive: true });
-  await fs.writeFile(path.join(roadmapDir, 'roadmap_fixture_c3d4.plan.md'), PLAN_FRONTMATTER, 'utf8');
-
   const nestedDispatchDir = path.join(plansDir, '2026-08', 'dispatch-nest_e5f6');
   await fs.mkdir(nestedDispatchDir, { recursive: true });
   await fs.writeFile(
@@ -54,6 +50,11 @@ async function makeFixtureHostingRoot() {
   await fs.mkdir(ignoredDir, { recursive: true });
   await fs.writeFile(path.join(ignoredDir, 'ignored_fixture_d4e5.plan.md'), PLAN_FRONTMATTER, 'utf8');
 
+  // Legacy roadmap-topics subtree on disk — must not register as a search dir.
+  const roadmapDir = path.join(plansDir, 'roadmap-topics');
+  await fs.mkdir(roadmapDir, { recursive: true });
+  await fs.writeFile(path.join(roadmapDir, 'roadmap_fixture_c3d4.plan.md'), PLAN_FRONTMATTER, 'utf8');
+
   return hostingRoot;
 }
 
@@ -62,7 +63,7 @@ afterEach(() => {
   resetPlanStateContextForTests();
 });
 
-test('collectPlanSearchDirs registers flat, roadmap-topics, and nested dispatch dirs', async () => {
+test('collectPlanSearchDirs registers flat root and nested dispatch dirs only', async () => {
   const hostingRoot = await makeFixtureHostingRoot();
   const plansDir = path.join(hostingRoot, '.sedea', 'operations', 'user', 'plans');
   const dirs = [];
@@ -70,26 +71,18 @@ test('collectPlanSearchDirs registers flat, roadmap-topics, and nested dispatch 
 
   assert.deepEqual(
     dirs.sort(),
-    [
-      plansDir,
-      path.join(plansDir, 'roadmap-topics'),
-      path.join(plansDir, '2026-08', 'dispatch-nest_e5f6'),
-    ].sort(),
+    [plansDir, path.join(plansDir, '2026-08', 'dispatch-nest_e5f6')].sort(),
   );
 });
 
-test('listAllPlans unions flat-root, roadmap-topics, and nested dispatch plans', async () => {
+test('listAllPlans unions flat-root and nested dispatch plans only', async () => {
   const hostingRoot = await makeFixtureHostingRoot();
   process.env.PLAN_STATE_HOSTING_ROOT = hostingRoot;
 
   const plans = await listAllPlans();
   const slugs = plans.map((p) => p.slug).sort();
 
-  assert.deepEqual(slugs, [
-    'flat_fixture_a1b2',
-    'nested_fixture_b2c3',
-    'roadmap_fixture_c3d4',
-  ]);
+  assert.deepEqual(slugs, ['flat_fixture_a1b2', 'nested_fixture_b2c3']);
 });
 
 test('findPlanBySlug resolves nested dispatch plans globally', async () => {
@@ -121,4 +114,7 @@ test('findPlanBySlug resolves nested dispatch plans globally', async () => {
 
   const missing = await findPlanBySlug('does_not_exist_z9z9');
   assert.equal(missing, null);
+
+  const legacyRoadmap = await findPlanBySlug('roadmap_fixture_c3d4');
+  assert.equal(legacyRoadmap, null);
 });

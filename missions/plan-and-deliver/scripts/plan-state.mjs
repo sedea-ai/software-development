@@ -128,12 +128,10 @@ async function buildPlanDirs(repoRoot) {
   return dirs;
 }
 
-/** Register flat `plans/`, roadmap-topics, and nested `plans/YYYY-MM/<dispatch-slug>/` dirs. */
+/** Register flat `plans/` and nested `plans/YYYY-MM/<dispatch-slug>/` dirs. */
 export async function collectPlanSearchDirs(plansDir, dirs) {
   if (!(await dirExists(plansDir))) return;
   dirs.push(plansDir);
-  const roadmap = path.join(plansDir, 'roadmap-topics');
-  if (await dirExists(roadmap)) dirs.push(roadmap);
 
   let entries;
   try {
@@ -142,7 +140,7 @@ export async function collectPlanSearchDirs(plansDir, dirs) {
     return;
   }
   for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name === 'roadmap-topics') continue;
+    if (!entry.isDirectory()) continue;
     if (!/^\d{4}-\d{2}$/.test(entry.name)) continue;
     const monthDir = path.join(plansDir, entry.name);
     let dispatchEntries;
@@ -1547,7 +1545,7 @@ async function cmdReparent(flags) {
 }
 
 // Shared pre-check for `reparent` / `archive --parent`. Validates that
-// - a target slug resolves (under `plans/` or `plans/roadmap-topics/`),
+// - a target slug resolves (under `plans/` or nested dispatch dirs),
 // - source isn't its own parent,
 // - reparenting wouldn't create a cycle (walks target's ancestor chain).
 // Terminates the process via die() on any violation; returns normally
@@ -1725,7 +1723,7 @@ async function removeChildBullet(parent, childSlug, dryRun) {
 
 // `migrate-parent-to-sidecar [--dry-run]` — one-shot corpus migration for
 // step 3 of the parent-slug-in-sidecar plan. For every plan under `plans/`
-// and `plans/roadmap-topics/`:
+// (flat root and nested dispatch dirs):
 //   1. If plan frontmatter has a `parent:` key, copy its value into the
 //      sidecar (creating the sidecar with the conventional header if
 //      missing) and then delete the frontmatter `parent:` key.
@@ -1944,7 +1942,7 @@ function canonicalTodoStatus(raw) {
 // value already matches, returns `changed: false` and skips the disk
 // write (no watcher reload thrash). Unknown todo id lists the available
 // ids in the error message so the agent can self-correct without a
-// re-read. Source file can live under `plans/` or `plans/roadmap-topics/` —
+// re-read. Source file can live under `plans/` or nested dispatch dirs —
 // resolution is via the existing `findPlanBySlug`.
 async function cmdSetTodoStatus(flags) {
   const slug = requireString(flags, 'slug');
@@ -2165,7 +2163,7 @@ Subcommands:
       already-active plans.
 
   migrate-parent-to-sidecar [--dry-run]
-      One-shot: for every plan under plans/ and plans/roadmap-topics/, copy
+      One-shot: for every plan under plans/ (flat and nested dispatch dirs), copy
       frontmatter parent: into the sidecar (creating the sidecar if needed)
       and strip the frontmatter key. Idempotent:
       re-runs are no-ops. Reports conflicts where both locations already
