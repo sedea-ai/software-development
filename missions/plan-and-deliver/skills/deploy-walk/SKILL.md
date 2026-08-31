@@ -627,7 +627,7 @@ Confirmation: *"Marked {Before or After}-deploy step N skipped: \"{reason}\". Ne
 `StrReplace` to append a block note **without flipping**:
 
 - `old_string`: `{line N verbatim}`.
-- `new_string`: `{line N}` + ` *(YYYY-MM-DD: Blocked — {reason})*` (append the block note after the full step line; e.g. `1. [ ] Curl staging endpoint with each of the 9 \`pushType\` values. *(2026-05-14: Blocked — staging push-shared@2.4 not yet deployed; awaiting dispatch from #infra.)*`).
+- `new_string`: `{line N}` + ` *(YYYY-MM-DD: Blocked — {reason})*` (append the block note after the full step line; e.g. `1. [ ] Hit staging health endpoint for each configured tenant id. *(2026-05-14: Blocked — staging auth-service@2.4 not yet deployed; awaiting release from #platform.)*`).
 
 The box stays `[ ]`. The skill stops the loop — no next-step hint, no auto-advance. The **developer** re-invokes `deploy-walk present <N>` later when the blocker clears, at which point the prior block note is surfaced (per § *Step 3 — `deploy-walk present <N>`* above).
 
@@ -777,8 +777,8 @@ new_string: **Status:** deployed *(2026-05-14: PR plan drafted.)* *(2026-05-14 1
 For block-then-resume, the `done` edit `old_string` includes the prior block note so it's preserved as audit trail:
 
 ```
-old_string: 1. [ ] Curl staging endpoint with each of the 9 `pushType` values. *(2026-05-14: Blocked — staging push-shared@2.4 not yet deployed.)*
-new_string: 1. [x] Curl staging endpoint with each of the 9 `pushType` values. *(2026-05-14: Blocked — staging push-shared@2.4 not yet deployed.)* *(2026-05-15: done — staging deploy completed overnight; all 9 returned 200 + non-empty arrays.)*
+old_string: 1. [ ] Hit staging health endpoint for each configured tenant id. *(2026-05-14: Blocked — staging auth-service@2.4 not yet deployed.)*
+new_string: 1. [x] Hit staging health endpoint for each configured tenant id. *(2026-05-14: Blocked — staging auth-service@2.4 not yet deployed.)* *(2026-05-15: done — staging deploy completed overnight; all tenants returned 200.)*
 ```
 
 History is **append-only**. Never overwrite or compact prior `*(YYYY-MM-DD: ...)*` entries.

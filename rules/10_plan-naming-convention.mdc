@@ -34,11 +34,11 @@ Every plan title, PR title, and PR description must communicate the **benefit** 
 <forbidden>: extract device evaluator
 
 # GOOD — benefit named, specific verb
-improve: isolate device evaluator so campaign worker can scale independently
-simplify: collapse three overlapping campaign config loaders into one
+improve: isolate device evaluator so background worker can scale independently
+simplify: collapse three overlapping config loaders into one module
 harden: remove silent catch in webhook handler so Sentry sees failures
 speedup: batch DB writes in candidate collector (p95 15s → 2s)
-decouple: lift shopify client out of push-shared so ai-campaign-orchestrator can move independently
+decouple: lift shared HTTP client out of common library so api service can deploy independently
 ```
 
 ```
