@@ -151,10 +151,10 @@ Two **independent** layers apply on **implementation** lanes (`coding-session` a
 
 | Layer | Source | Controls | User grants via |
 |-------|--------|----------|-----------------|
-| **1 — Workflow** | § *Review before commit* (above) | Pause before advancing ship stage (summary, next skill, cut point) | **AskQuestion** — workflow-only options (*more changes*, *defer*, …) at cut-point; **auto-advance** after cut-point for pre-PR spawn, clean-go create-PR, and post-merge cleanup |
+| **1 — Workflow** | § *Review before commit* (above) | Pause before advancing ship stage (summary, next skill, cut point) | **AskQuestion** — workflow-only options (*more changes*, *defer*, …) at cut-point; **auto-advance** cut-point Act (commit + Before deploy); pre-PR spawn on **next dedicated spawn-only turn**; clean-go create-PR and post-merge cleanup auto-advance per skill |
 | **2 — Git history** | [`.sedea/centers/sedea/rules/6_git-commit-push-gate.mdc`](.sedea/centers/sedea/rules/6_git-commit-push-gate.mdc) | `git commit`, `git push`, PR steps that imply push | **Same user message** includes *commit* / *push*, **or** an **AskQuestion** pick on **that turn** whose `id` is `commit-only`, `executive-override-push`, or `commit-push-pr` (rule 6 § *After the user is satisfied*) — on **`coding-session`**, **`git push`** before **`pre-pr-review`** **`go`** requires **`executive-override-push`** or explicit same-message *push* per [`coding-session/SKILL.md`](../missions/plan-and-deliver/skills/coding-session/SKILL.md) § *Pre-PR ship gate (push/PR)* |
 
-**Cross-turn rule:** A workflow **AskQuestion** pick in a **prior** turn does **not** authorize commit or push. Ship cut-point approval authorizes commit + Before deploy + **auto** pre-PR spawn on the **next** turn — it does **not** require a separate *run pre-pr-review* pick.
+**Cross-turn rule:** A workflow **AskQuestion** pick in a **prior** turn does **not** authorize commit or push. Ship cut-point approval authorizes commit + Before deploy on the **Act turn**; **auto** pre-PR spawn runs on the **dedicated spawn-only turn after** (see [`coding-session/SKILL.md`](../missions/plan-and-deliver/skills/coding-session/SKILL.md) § *Pre-PR spawn turn sequencing*) — **forbidden** batching spawn with commit, shell, or deploy-walk on the Act turn — it does **not** require a separate *run pre-pr-review* pick.
 
 **When both layers apply in one turn**, use **one AskQuestion** with separate workflow options and git options (brief `label` text per [`.sedea/centers/sedea/rules/2_ask-question-instructions.mdc`](.sedea/centers/sedea/rules/2_ask-question-instructions.mdc)), **or** split turns: workflow **AskQuestion** first, then a **new** user message with *commit* / *push*.
 
@@ -171,7 +171,7 @@ Planning-tree picks use [`.sedea/centers/software-development/rules/30_planning-
 | Developer signal (this turn or **AskQuestion** pick) | May continue workflow / spawn next skill? | May run **`git commit`**? | May run **`git push`**? |
 |------------------------------------------------------|----------------------------------------|---------------------------|-------------------------|
 | *Proceed*, *next stage*, *looks good*, *approved cut point* (workflow only) | **Yes** — advance to commit + Before deploy on pick turn | **No** — unless the **same user message** also says *commit* (or equivalent) | **No** — unless the **same message** says *push* or *commit and push* |
-| *Committed* / *ready for pre-PR review* (after implementation approval + commit + Before deploy when applicable) | **Yes** — **auto-spawn **`pre-pr-review`** per **`coding-session`** (no spawn modal) | **No** — unless the **same message** authorizes a **new** *commit* | **No** — until the **same message** says *push* |
+| *Committed* / *ready for pre-PR review* (after implementation approval + commit + Before deploy when applicable) | **Yes** — **auto-spawn **`pre-pr-review`** on the **spawn-only turn** after cut-point Act per **`coding-session`** (no spawn modal) | **No** — unless the **same message** authorizes a **new** *commit* | **No** — until the **same message** says *push* |
 | *commit*, *land the worktree*, *create a commit* in **same user message** | **Yes** | **Yes** (if there are changes to commit; skip if tree clean per cadence) | **No** — unless the message also says *push* |
 | *push*, *commit and push*, *publish the worktree* in **same user message** | **Yes** | **Yes** when commit is included or already done | **Yes** |
 
@@ -187,7 +187,7 @@ When Mission Control dispatches **`plan and deliver`** on **software-development
 | **`plan and deliver`** Squad Leader (planning only) | Usually no hosting-repo writes — rule 6 often N/A on that lane |
 | Edits under **`.sedea/centers/`** on a **center-maintenance** or hosting dispatch | Rule 6 **applies** (not mission-owned) unless another mission owns git for that lane |
 
-**Both layers still apply** on implementation lanes — see § *Ship git consent (workflow + Sedea gate)*. Ship cut-point approval is **not** commit or push consent by itself on the modal turn — **Act** runs on the response turn. Approving cut-point **does** authorize **auto** pre-PR spawn after commit + Before deploy complete.
+**Both layers still apply** on implementation lanes — see § *Ship git consent (workflow + Sedea gate)*. Ship cut-point approval is **not** commit or push consent by itself on the modal turn — **Act** runs on the response turn. Approving cut-point **does** authorize cut-point Act (commit + Before deploy); **auto** pre-PR spawn runs on the **dedicated spawn-only turn after**, not on the Act turn.
 
 ## deploy-walk vs plan-reconcile (not chained)
 
@@ -203,6 +203,8 @@ Start **`plan-reconcile`** separately: developer phrase on active **`coding-sess
 ## Pre-PR review — spawn-only from **`coding-session`**
 
 **Rule (read first).** The **only** path that may execute [`pre-pr-review/SKILL.md`](../missions/plan-and-deliver/skills/pre-pr-review/SKILL.md) is a **fresh spawned child lane** opened by active **`coding-session`** via MCP **`mission_control_spawn_agent`** after ship cut-point + Before deploy (or documented skip). **Auto-spawn** on **`coding-session`** means **call MCP spawn + wait** for child **`mission_control_send_agent_result`** — **not** load and run review steps inline on the coding-session lane.
+
+**Turn split (binding):** Cut-point **Act turn** completes commit + Before deploy only. **Spawn turn** (next turn) emits **`mission_control_spawn_agent` alone** per rule **4** § *Spawn-ack semantics* — **forbidden** batching spawn with commit, shell, or deploy-walk on the Act turn. **External-wait turn** (turn after spawn) opens Yield / #external-wait resume modal per **`coding-session/SKILL.md`** § *Pre-PR spawn turn sequencing*.
 
 | Lane | May run **`pre-pr-review`**? | Handoff |
 |------|------------------------------|---------|
