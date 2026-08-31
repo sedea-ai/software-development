@@ -6,6 +6,8 @@ Cross-ref checkpoint UX: [`coding-session-checkpoint-ux.md`](coding-session-chec
 
 **Deploy-done emit guard:** Normative owner [`coding-session/SKILL.md`](../skills/coding-session/SKILL.md) § *Deploy-done emit guard* — after After deploy **`deployStatus: done`**, forbid success terminal without **`prShipComplete`**; auto-run post-after-deploy tail with zero modals on Checkpoint clean path. **Hosting-pin-complete:** when submodule gitlinks were in scope, run **`coding-session`** § *Hosting-pin-complete gate* before **`prShipComplete`**. Calibration: `incident_pr_ship_complete_tail_skipped_2026-08-02.agent-incident-report.md`; `incident_hosting_pin_promotion_treated_optional_2026-08-03.agent-incident-report.md`.
 
+**Before deploy blocking sequence:** Ship cut-point **Act** → inline Before deploy **`deploy-walk`** (mandatory when §7 **`### Before deploy`** has any **`[ ]`**) → **`beforeDeployStatus: complete|skipped`** → **`pre-pr-review`** spawn. Vitest pass **≠** Before deploy complete. **Post-merge cleanup terminal emit guard:** normative owner **`coding-session`** § *Post-merge cleanup terminal emit guard* — forbid success terminal / **`prShipComplete: true`** while owned **`WORKTREE_ROOT`** remains after merge when cleanup is authorized but not run.
+
 ---
 
 ## Deploy test plan confirmations

@@ -118,6 +118,30 @@ Highest confidence first. Stop at the first match.
 
 Do **not** use `<open_and_recently_viewed_files>` as the primary resolver for planning targets.
 
+## Plans write path resolution (optional nested base)
+
+**On-demand within this rule.** Path-resolution depth for optional **`plansBasePath`** spawn handover is **not** inlined on every dispatch warm-up — **`coding-session`** omits rule **30** from frontmatter (384 KiB cap). **`Read`** this section (or **`../missions/plan-and-deliver/skills/README.md`** § *Spawn handover inputs*) when a planning skill must resolve or forward a plans write directory.
+
+| Priority | Source | Result |
+|----------|--------|--------|
+| 1 | **`inputs.plansBasePath`** — absolute, valid under operations **`plans/`** tree | **`writeDir`** = handover; **`plansBasePath`** echoed when nested |
+| 2 | **`inputs.targetPlanPath`** dirname | **`writeDir`** = plan file directory when valid |
+| 3 | **`inputs.parentPlanPath`** dirname | **`writeDir`** = parent plan directory when valid |
+| 4 | Flat **`plans/`** root for active scope | **`writeDir`** = flat root; **`plansBasePath`** = **`null`** |
+
+**Valid write directories:**
+
+- Flat scope root: **`.sedea/operations/<scope>/plans`**
+- Nested dispatch folder: **`.sedea/operations/<scope>/plans/YYYY-MM/<dispatch-slug>/`**
+
+**Spawn handover (binding):** when **`plan-state resolve-plans-write-dir --json`** returns non-null **`plansBasePath`**, include that absolute path in **`mission_control_spawn_agent`** **`inputs`** for every child that creates or resolves plans (**`new-plan`**, **`phase-planner`**, **`delivery-phases`**, **`pr-breakdown`**, nested **`phase-planner`**, etc.). **Forbidden:** forwarding flat-root paths when the parent resolved nested handover; **forbidden:** omitting **`plansBasePath`** on decomposition indexed-child inline handoff when JSON is non-null.
+
+**Explicit plan paths unchanged:** **`targetPlanPath`** and **`parentPlanPath`** remain the authoritative anchors for *which* plan file to edit; **`plansBasePath`** governs *where new* sibling/child plan files land when the dispatch uses nested layout.
+
+**Helper invocation:** see **`../missions/plan-and-deliver/skills/README.md`** § *Spawn handover inputs* — **`plan-state.mjs resolve-plans-write-dir --json`** from **`HOSTING_ROOT`**.
+
+**Flat-root fallback:** when spawn omits **`plansBasePath`**, skills fall back to parent/target dirname, then flat **`plans/`** — pre-cutover behavior unchanged per PRD §5.4.
+
 ## Snapshot freshness
 
 Assume plan files under `.sedea/operations/**/plans/` are single-writer for this session. A **plan-tree state change** invalidates mid-flow assumptions when:

@@ -6,6 +6,39 @@ Cross-ref: [`development-process.md`](../../docs/development-process.md) § *Dep
 
 ---
 
+## Spawn handover inputs (plan-writing chain)
+
+Normative slim table: [`skills/README.md`](../skills/README.md) § *Spawn handover inputs*. Path-resolution priority and on-demand load: rule **30** § *Plans write path resolution*.
+
+**Omit **`plansBasePath`** when:** dispatch uses flat `plans/` root only; resolve JSON returns **`plansBasePath: null`**.
+
+**Nested path shape (binding):** **`.sedea/operations/<scope>/plans/YYYY-MM/<dispatch-slug>/`** — validated by **`plan-resolve-plans-write-dir.mjs`**. **Forbidden:** user-id, **`joint`**, dispatch mtime, or **`ls -lt`** heuristics — rule **31** § *Plans and docs paths*.
+
+**Resolve helper (binding):** from **`HOSTING_ROOT`**:
+
+```bash
+.sedea/centers/sedea/scripts/run-sedea-node.sh \
+  .sedea/centers/software-development/missions/plan-and-deliver/scripts/plan-state.mjs \
+  resolve-plans-write-dir --json \
+  ${PLANS_BASE_PATH:+--plans-base-path "$PLANS_BASE_PATH"} \
+  ${TARGET_PLAN_PATH:+--target-plan-path "$TARGET_PLAN_PATH"} \
+  ${PARENT_PLAN_PATH:+--parent-plan-path "$PARENT_PLAN_PATH"}
+```
+
+**Resolution priority:** **`plansBasePath`** → **`targetPlanPath`** dirname → **`parentPlanPath`** dirname → flat **`plans/`** root.
+
+**Skills that honor and propagate (Phase A):**
+
+| Skill | Write | Spawn propagate |
+|-------|-------|-----------------|
+| **`new-plan`**, **`master-planner`**, **`phase-planner`** | Resolve **`writeDir`** before scaffold | **`plansBasePath`** in spawn **`inputs`** when JSON non-null |
+| **`delivery-phases`**, **`pr-breakdown`** | Resolve from session **`inputs`** | Inline **`new-plan`** handoff row + standalone spawn **`inputs`** |
+| **`coding-session`** | — | **`targetPlanPath`** only at spawn |
+
+**Sidecar:** nested first write sets **`plansMonthBucket: YYYY-MM`** (PR 1); flat-root omits.
+
+---
+
 ### Planning open-item modal contract
 
 Planning composition skills that surface review gaps before approval use the same modal shape as **`author-prd/SKILL.md`** Step **10**. This applies when a planning lane presents open items in generated PRDs, Master Plans, phase plans, PR breakdowns, plan stubs, or PR plans before the developer approves, revises, defers, or starts implementation.
