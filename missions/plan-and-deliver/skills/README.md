@@ -37,27 +37,34 @@ When a skill runs **inline** on the invoker’s lane (not spawned via **`mission
 
 ## software-development center edit destination gate (binding)
 
-Applies to **all PRD and planning skills** on this center (`author-prd`, `ad-hoc-prd`, `brainstorm-research`, `master-planner`, `phase-planner`, `delivery-phases`, `pr-breakdown`, `new-plan`, `pr-plan`, and **`quick-fix-plan`**). Happy-path PRD/plan writes under **`.sedea/operations/`** do **not** open this gate.
+Applies to **all PRD and planning skills** on this center (`author-prd`, `ad-hoc-prd`, `brainstorm-research`, `master-planner`, `phase-planner`, `delivery-phases`, `pr-breakdown`, `new-plan`, `pr-plan`, **`quick-fix-plan`**, and **`coding-session`** when editing center git content). Happy-path PRD/plan writes under **`.sedea/operations/`** do **not** open this gate.
 
 **Trigger:** any step that would **create, edit, move, or delete** files under **`.sedea/centers/software-development/`** (center git content — rules, missions, skills, docs, `center.yaml`).
+
+**Hosting-repo context (binding):** Resolve **`HOSTING_ROOT`** (MCP **`sedea_get_hosting_root`**) and **`.cursor/rules/dot-sedea.mdc`** **`ownCenters`** before presenting options. **Do not** frame **`centers-development-hosting-repo`** as an app product monorepo or imply **`sedea-ai/app`** when the active host is the CE center development host.
 
 USER_CHECKPOINT — pick software-development center edit destination before any center write.
 
 | Option id | Label | Action |
 |-----------|-------|--------|
-| `ship-app-rd` | Ship in `sedea-ai/software-development` — Sedea app process / ops | Continue on the **app-focused** center remote; require hosting **Own centers** listing for `software-development` → `git@github.com:sedea-ai/software-development.git` and **`CENTER_WORKTREE_ROOT`** before writes |
-| `delegate-base-rd` | Delegate to base center — `sedea-centers/software-development` | **Stop** local center writes; developer continues on **`sedea-centers-development-hosting-repo`** for **general** software-development center operating-model changes |
+| `ship-ce-center-rd` | Ship in `sedea-centers/software-development` — CE center worktree on this host | Open **`CENTER_WORKTREE_ROOT`** per rule **7** § *Worktree directory path (center repo)*; edit, commit, and PR to registry **`source`** (`git@github.com:sedea-centers/software-development.git`). **Default on `centers-development-hosting-repo`** and when **`ownCenters`** lists `software-development` → sedea-centers remote. |
+| `ship-app-rd` | Ship in `sedea-ai/software-development` — Sedea app process / ops | Continue on the **app-focused** center remote (`git@github.com:sedea-ai/software-development.git`) with **`CENTER_WORKTREE_ROOT`**. **Only when `HOSTING_ROOT` is an app-focused host** (for example **`sedea-ai/app`**) and the change is app-specific process — not the CE open-source center catalog host. |
+| `wrong-host-switch` | Wrong hosting repo — open CE center development host | **Stop** center writes on **this** lane. Developer continues on **`centers-development-hosting-repo`** (or the authorized CE center development host from **`dot-sedea.mdc`**) for general **`sedea-centers/software-development`** operating-model changes. **Forbidden:** offering this option when **`HOSTING_ROOT` already is `centers-development-hosting-repo`**. |
 | `pause` | Pause — stop until I say more | No writes |
 | `more-details` | More details for option _ | Elaborate; re-ask |
 
-**How to choose (nature of the change):**
+**How to choose (nature of the change + active host):**
 
-| Destination | When |
-|-------------|------|
-| **`sedea-ai/software-development`** (`ship-app-rd`) | Change reflects how the **Sedea app** is developed, its processes and operations |
-| **`sedea-centers/software-development`** (`delegate-base-rd`) | Change applies to how the software-development center operates **in general** — not app-specific |
+| Active host | Change nature | Pick |
+|-------------|---------------|------|
+| **`centers-development-hosting-repo`** (CE center development host) | Any durable **`sedea-centers/software-development`** content | **`ship-ce-center-rd`** — you develop this center **on this host** via center worktree; not “delegate elsewhere” |
+| **`sedea-ai/app`** (or app-focused hosting) | App-specific software-development process / ops | **`ship-app-rd`** |
+| **`sedea-ai/app`** (or non-CE host) | General CE center operating-model change | **`wrong-host-switch`** → CE development host |
+| Uncertain host or remote | — | **`more-details`** — do not guess |
 
-**Forbidden:** writing center files without this gate; treating **`sedea-centers/software-development`** as Own on **`sedea-ai/app`**; editing the primary hosting clone’s submodule checkout without **`CENTER_WORKTREE_ROOT`**.
+**Modal defaults:** When **`HOSTING_ROOT`** basename is **`centers-development-hosting-repo`**, set **`defaultOptionId: ship-ce-center-rd`**. When app-focused host and change is app-specific, **`defaultOptionId: ship-app-rd`**.
+
+**Forbidden:** writing center files without this gate; treating **`sedea-centers/software-development`** as Own on **`sedea-ai/app`**; editing the primary hosting clone’s submodule checkout without **`CENTER_WORKTREE_ROOT`**; labeling CE center work on **`centers-development-hosting-repo`** as “delegate to base center” or “app hosting repo”.
 
 Each listed skill **must** point here from its Checkpoint / pre-write guidance. Do not re-author a divergent option table in individual skills.
 
