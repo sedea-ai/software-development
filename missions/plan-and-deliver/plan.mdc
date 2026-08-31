@@ -365,7 +365,8 @@ Marker syntax: [`.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md`](.s
 2. When scope is readable from the opening message (feature title or command remainder), run **Dispatch display refresh** (above) — **skip** when chrome already matches. Default **`Parent: null`** intake — see §4 *External PM scope*; do not prompt for Hub topic parents.
 3. Parse optional opening seeds: `prdTitle`, readable `@path` to an existing PRD, URLs, or description blurb — pass through to §2; do **not** treat seeds alone as developer-approved PRD.
 4. When a **GitHub issue URL** is present (Hub intake note or opening message), bind it on the leader ledger per [rule **60**](../../rules/60_github-issue-dispatch-closure.mdc) (`githubIssueUrl` / number / repo).
-5. Continue to §2.
+5. **Nested dispatch intake (post-cutover):** When a dispatch title is readable from the opening message (feature title or command remainder), run **`plan-state.mjs dispatch-intake --title "<title>" --json`** from **`HOSTING_ROOT`** (main hosting clone — rule **0** § *Operations persistence*). When JSON reports **`cutoverActive: true`**, store **`dispatchSlug`**, **`plansMonthBucket`**, and absolute **`plansBasePath`** on the leader lane handover for §§3 and 5 spawn preflight. When cutover is inactive (script error or omitted JSON), skip — flat-root pre-cutover behavior unchanged. **Forbidden:** manual `.sedea/operations/.../plans/YYYY-MM/<slug>/` construction without the script; **forbidden:** AskQuestion opt-in for nested layout after cutover.
+6. Continue to §2.
 
 **Out of scope for this step:** **`new-plan`** indexed-child expansion — uses **AskQuestion** per **30_planning-target-resolution** § *Sedea input channel* on planning lanes, not §1–2.
 
@@ -463,7 +464,7 @@ USER_CHECKPOINT — pick next step when brainstorm child reports failure or part
 
 **Procedure**
 
-1. Compile child **`inputs`** from §2: `prdTitle`, `prdDescription`, `operation`, `targetPath` when set, `sourceMaterials`, optional `sectionPolicy`, `existingPrdBody` when **`manage`**, and **`operationsDocsDirectory`** from lane identity / spawn preamble.
+1. Compile child **`inputs`** from §2: `prdTitle`, `prdDescription`, `operation`, `targetPath` when set, `sourceMaterials`, optional `sectionPolicy`, `existingPrdBody` when **`manage`**, and **`operationsDocsDirectory`** from lane identity / spawn preamble. When §1 nested intake stored **`plansBasePath`**, include it in spawn **`inputs`** for plan-writing downstream handover per [rule **30**](../../rules/30_planning-target-resolution.mdc) § *Plans write path resolution*.
 2. Set **`initiatingPrompt`** with the user's description and numbered source list; instruct the child to extend the source ledger and **not** invent scope from title alone.
 3. Run **`skills/README.md`** § *Universal spawn preflight* (including display metadata). Set **`name`** to `PRD-{prdTitle}` and **`description`** from PRD scope — not generic child placeholders (rule **50** § *Lane title prefix conventions*).
 4. **Spawn turn:** Emit exactly one **`mission_control_spawn_agent`** for **`author-prd`** with a new `correlationId`, dispatch-unique `slug`, and preflight **`inputs`** — **alone** per **Squad Leader spawn turn sequencing**.
@@ -550,8 +551,9 @@ USER_CHECKPOINT — retry master-planner spawn, revise seed, or abandon when spa
    | `prdRef` | Approved PRD link or `@path` from §3 **`author-prd`** outputs |
    | `parent` | When §4 seed has **`Parent: null`**, set spawn **`"parent": "null"`** (JSON string sentinel). Otherwise resolved slug, `@path`, or absolute plan path. **Forbidden:** JSON `null` in spawn `inputs.parent` — **`master-planner`** frontmatter declares **`type: string`**. Sidecar **`parent: null`** is unrelated to spawn wire encoding. |
    | `related` | Array from §4 `Related` entries, or `[]` when none |
+   | `plansBasePath` | Absolute path from §1 **`dispatch-intake`** JSON when **`cutoverActive: true`** — **omit** when cutover inactive or nested handover unavailable |
 
-   **Seed vs spawn (binding):** **`Parent: null`** in the §4 seed block is semantic (root delivery plan). The spawn line must still include **`"parent": "null"`** as a **string** in **`inputs`** — not JSON null and not omission of the key. See **`planner/SKILL.md`** § *Wire encoding — nullable `parent`* and **`skills/README.md`** § *Universal spawn preflight* row **1b**.
+   **Spawn handover (binding):** when **`plansBasePath`** is set on the leader lane, include it in spawn **`inputs`** for **`master-planner`** and every downstream plan-writing child spawn the Squad Leader emits. **Forbidden:** omitting **`plansBasePath`** when leader intake resolved nested handover; **forbidden:** re-deriving flat-root paths when nested handover is active. **`Parent: null`** in the §4 seed block is semantic (root delivery plan). The spawn line must still include **`"parent": "null"`** as a **string** in **`inputs`** — not JSON null and not omission of the key. See **`planner/SKILL.md`** § *Wire encoding — nullable `parent`* and **`skills/README.md`** § *Universal spawn preflight* row **1b**.
 
    **Stop** and surface a one-line fix list when any required key is missing, renamed, or nested under the wrong parent key. Do **not** emit `mission_control_spawn_agent` until preflight passes.
 

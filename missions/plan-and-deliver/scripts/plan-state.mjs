@@ -18,6 +18,7 @@ import {
   deriveFlatPlansRootFromPath,
   resolvePlansWriteDir,
 } from './plan-resolve-plans-write-dir.mjs';
+import { deriveDispatchIntake } from './plan-dispatch-intake.mjs';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -602,6 +603,62 @@ async function cmdResolvePlansWriteDir(flags) {
   log(`source: ${payload.source}`);
   if (payload.plansBasePath) log(`plansBasePath: ${payload.plansBasePath}`);
   if (payload.flatPlansRoot) log(`flatPlansRoot: ${payload.flatPlansRoot}`);
+}
+
+// ---------- subcommand: dispatch-intake ----------
+
+// `dispatch-intake --title <text> [--hosting-root <abs>] [--operations-scope user]
+//   [--json] [--ignore-cutover] [--hex-suffix <4hex>]`
+// Derive unique dispatch slug + absolute plansBasePath for Squad Leader nested intake.
+async function cmdDispatchIntake(flags) {
+  const asJson = flags.json === true;
+  const title = requireString(flags, 'title');
+  const ignoreCutover = flags['ignore-cutover'] === true;
+
+  let hostingRoot =
+    typeof flags['hosting-root'] === 'string' ? path.resolve(flags['hosting-root']) : null;
+  if (!hostingRoot) {
+    await ensureSedeaContext();
+    hostingRoot = SEDEA_REPO_ROOT;
+  }
+  if (!path.isAbsolute(hostingRoot)) die('dispatch-intake: --hosting-root must be absolute');
+
+  const operationsScope =
+    typeof flags['operations-scope'] === 'string' && flags['operations-scope'].length > 0
+      ? flags['operations-scope']
+      : 'user';
+
+  const randomFn =
+    typeof flags['hex-suffix'] === 'string'
+      ? () => Buffer.from(String(flags['hex-suffix']).padStart(4, '0').slice(0, 4), 'hex')
+      : undefined;
+
+  const result = await deriveDispatchIntake({
+    title,
+    hostingRoot,
+    operationsScope,
+    requireCutover: !ignoreCutover,
+    ...(randomFn ? { randomFn } : {}),
+  });
+
+  const payload = {
+    cutoverActive: result.cutoverActive,
+    dispatchSlug: result.dispatchSlug,
+    dispatchTitleKebab: result.dispatchTitleKebab,
+    plansMonthBucket: result.plansMonthBucket,
+    plansBasePath: result.plansBasePath,
+    flatPlansRoot: result.flatPlansRoot,
+  };
+
+  if (asJson) {
+    process.stdout.write(`${JSON.stringify(payload)}\n`);
+    return;
+  }
+
+  log(`dispatchSlug: ${payload.dispatchSlug}`);
+  log(`plansMonthBucket: ${payload.plansMonthBucket}`);
+  log(`plansBasePath: ${payload.plansBasePath}`);
+  if (!payload.cutoverActive) log('cutoverActive: false (ignore-cutover)');
 }
 
 // ---------- subcommand: set-session ----------
@@ -2109,6 +2166,12 @@ Subcommands:
       explicit plansBasePath handover, target plan dirname, parent plan dirname,
       then flat plans root (first registered scope dir or --flat-plans-root).
 
+  dispatch-intake --title <text> [--hosting-root <abs>] [--operations-scope <scope>]
+      [--json] [--ignore-cutover] [--hex-suffix <4hex>]
+      Derive unique dispatch slug (kebab title + 4hex) and absolute plansBasePath
+      under plans/YYYY-MM/<dispatch-slug>/ for Squad Leader nested intake post-cutover.
+      Requires active cutover config unless --ignore-cutover (tests / pre-cutover drills).
+
   set-session --slug <slug> --focus <abs>
       Set sidecar session.focusPath; promotes sidecar status to started when
       the plan is active and status is missing or not_started.
@@ -2209,6 +2272,9 @@ async function main() {
       break;
     case 'resolve-plans-write-dir':
       await cmdResolvePlansWriteDir(flags);
+      break;
+    case 'dispatch-intake':
+      await cmdDispatchIntake(flags);
       break;
     case 'set-session':
       await cmdSetSession(flags);
