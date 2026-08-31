@@ -430,6 +430,14 @@ Run **without** an **AskQuestion** approval gate **before each agent-executable 
 | **Mission Control MCP** | `sedea_get_current_user`; `sedea_add_worktree_folder` / `sedea_remove_worktree_folder` when worktree lifecycle applies; `mission_control_update_lane_display` on **own** slot only |
 | **Parse / verify** | Read JSON, YAML, Markdown plan sections; compare output to expected shape; count matches; exit codes — **agent parses**, not developer |
 
+**Anti-pattern — tests do not satisfy product UI steps (binding):**
+
+| Step text signals | Classification |
+|-------------------|----------------|
+| EDH, F5, webview, dashboard UI, visual metrics bar, button disabled/enabled, mission spawn count **visible in product UI** | **Manual only** — unit/integration test pass (`npm test`, vitest, `node --test`, …) **does not** satisfy even when related `*.test.ts` exists and passes |
+
+**Forbidden:** treating vitest / **`npm test`** stdout as proof for steps whose plan text names browser, webview, dashboard, or on-screen UI verification.
+
 ### Submodule ship attestation (After deploy — binding)
 
 When the anchored PR plan's **`### After deploy`** step text references **submodule source merged**, **`promote-submodule-pin`**, **honest attestation**, **`verify-submodule-ship-attestation`**, or **dual-repo ship gate** attestation, classify the step **agent-executable** and run this procedure **before** flipping the checkbox.

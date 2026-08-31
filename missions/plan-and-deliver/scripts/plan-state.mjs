@@ -13,6 +13,11 @@ import * as path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { parseDocument, Document, YAMLMap, YAMLSeq, isMap, isSeq } from 'yaml';
+import { applyPlansMonthBucketOnFirstWrite } from './plan-sidecar-month-bucket.mjs';
+import {
+  deriveFlatPlansRootFromPath,
+  resolvePlansWriteDir,
+} from './plan-resolve-plans-write-dir.mjs';
 
 const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 
@@ -118,20 +123,57 @@ async function buildPlanDirs(repoRoot) {
   const scopes = await listOperationsScopeSegments(repoRoot);
   for (const scope of scopes) {
     const plansDir = path.join(ops, scope, 'plans');
-    const subs = [plansDir, path.join(plansDir, 'roadmap-topics')];
-    for (const d of subs) {
-      if (await dirExists(d)) dirs.push(d);
-    }
+    await collectPlanSearchDirs(plansDir, dirs);
   }
   return dirs;
 }
 
+/** Register flat `plans/` and nested `plans/YYYY-MM/<dispatch-slug>/` dirs. */
+export async function collectPlanSearchDirs(plansDir, dirs) {
+  if (!(await dirExists(plansDir))) return;
+  dirs.push(plansDir);
+
+  let entries;
+  try {
+    entries = await fs.readdir(plansDir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (!/^\d{4}-\d{2}$/.test(entry.name)) continue;
+    const monthDir = path.join(plansDir, entry.name);
+    let dispatchEntries;
+    try {
+      dispatchEntries = await fs.readdir(monthDir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const dispatchEntry of dispatchEntries) {
+      if (dispatchEntry.isDirectory()) {
+        dirs.push(path.join(monthDir, dispatchEntry.name));
+      }
+    }
+  }
+}
+
 async function ensureSedeaContext() {
   if (SEDEA_REPO_ROOT) return;
-  const repoRoot = findSedeaRepoRoot(SCRIPT_DIR);
+  const envRoot = process.env.PLAN_STATE_HOSTING_ROOT;
+  const repoRoot =
+    typeof envRoot === 'string' && envRoot.length > 0
+      ? path.resolve(envRoot)
+      : findSedeaRepoRoot(SCRIPT_DIR);
   if (!repoRoot) die('plan-state: could not find .sedea (walk up from script path failed)');
   SEDEA_REPO_ROOT = repoRoot;
   SEDEA_PLAN_DIRS = await buildPlanDirs(repoRoot);
+}
+
+/** @internal Test hook — reset module-scoped plan discovery cache between isolated runs. */
+export function resetPlanStateContextForTests() {
+  SEDEA_REPO_ROOT = null;
+  SEDEA_PLAN_DIRS = null;
+  _hostingOrgRepoCache = null;
 }
 
 function parseGithubRemote(url) {
@@ -228,7 +270,7 @@ function sidecarPathFor(planPath) {
   return path.join(path.dirname(planPath), `${slug}.state.yaml`);
 }
 
-async function findPlanBySlug(slug) {
+export async function findPlanBySlug(slug) {
   await ensureSedeaContext();
   for (const dir of SEDEA_PLAN_DIRS) {
     const candidate = path.join(dir, `${slug}.plan.md`);
@@ -241,7 +283,7 @@ async function findPlanBySlug(slug) {
   return null;
 }
 
-async function listAllPlans() {
+export async function listAllPlans() {
   await ensureSedeaContext();
   const out = [];
   for (const dir of SEDEA_PLAN_DIRS) {
@@ -285,6 +327,7 @@ async function loadSidecarDoc(planPath) {
   }
   ensureKey(doc, 'worktrees', new YAMLSeq());
   ensureKey(doc, 'prs', new YAMLSeq());
+  applyPlansMonthBucketOnFirstWrite(doc, planPath);
   return { doc, statePath, slug, existed };
 }
 
@@ -342,7 +385,11 @@ async function readSidecarPlain(planPath) {
   const statusRaw = typeof raw.status === 'string' ? raw.status : null;
   const status =
     statusRaw && PLAN_BOARD_STATUSES.has(statusRaw) ? statusRaw : null;
-  return { statePath, data: { worktrees, prs, session, parent, archived, status } };
+  const plansMonthBucket =
+    typeof raw.plansMonthBucket === 'string' && /^\d{4}-\d{2}$/.test(raw.plansMonthBucket)
+      ? raw.plansMonthBucket
+      : null;
+  return { statePath, data: { worktrees, prs, session, parent, archived, status, plansMonthBucket } };
 }
 
 // Sidecar archive bucket: sidecar `archived` is authoritative (rule 8).
@@ -467,6 +514,94 @@ async function cmdSetWorktrees(flags) {
   doc.set('worktrees', seq);
   await saveSidecar(statePath, doc);
   log(`worktrees set on ${statePath} (${entries.length} entr${entries.length === 1 ? 'y' : 'ies'})`);
+}
+
+// ---------- subcommand: init-sidecar ----------
+
+// `init-sidecar --plan-path <abs> --parent <slug|null> [--plans-base-path <abs>]`
+// Create a new sidecar stub at first plan write with parent, optional
+// plansMonthBucket (derived), and empty worktrees/prs lists.
+async function cmdInitSidecar(flags) {
+  const planPath = path.resolve(requireString(flags, 'plan-path'));
+  if (!path.isAbsolute(planPath)) die('init-sidecar: --plan-path must be absolute');
+  if (!(await fileExists(planPath))) die(`init-sidecar: plan file not found: ${planPath}`);
+
+  const statePath = sidecarPathFor(planPath);
+  if (await fileExists(statePath)) die(`init-sidecar: sidecar already exists: ${statePath}`);
+
+  if (flags.parent === undefined) die('init-sidecar: --parent is required (use null for root plans)');
+  const parent =
+    flags.parent === 'null' || flags.parent === null
+      ? null
+      : requireString(flags, 'parent');
+  const plansBasePath =
+    typeof flags['plans-base-path'] === 'string' ? path.resolve(flags['plans-base-path']) : null;
+
+  const slug = path.basename(planPath).replace(/\.plan\.md$/i, '');
+  const doc = new Document({});
+  doc.commentBefore = ` Sidecar for operations plan runtime. Plan: ${slug}.plan.md`;
+  doc.contents = new YAMLMap();
+  doc.set('parent', parent);
+  applyPlansMonthBucketOnFirstWrite(doc, planPath, { plansBasePath });
+  ensureKey(doc, 'worktrees', new YAMLSeq());
+  ensureKey(doc, 'prs', new YAMLSeq());
+  await saveSidecar(statePath, doc);
+  const bucket = doc.get('plansMonthBucket');
+  log(
+    `init-sidecar: wrote ${statePath}${bucket ? ` (plansMonthBucket: ${bucket})` : ' (flat-root — no plansMonthBucket)'}`,
+  );
+}
+
+// ---------- subcommand: resolve-plans-write-dir ----------
+
+// `resolve-plans-write-dir [--plans-base-path <abs>] [--target-plan-path <abs>]
+//   [--parent-plan-path <abs>] [--flat-plans-root <abs>] [--json]`
+// Resolve the absolute directory for plan file writes (handover path or flat fallback).
+async function cmdResolvePlansWriteDir(flags) {
+  const asJson = flags.json === true;
+  const explicitFlat =
+    typeof flags['flat-plans-root'] === 'string' ? path.resolve(flags['flat-plans-root']) : null;
+
+  let flatPlansRoot = explicitFlat;
+  if (!flatPlansRoot) {
+    await ensureSedeaContext();
+    flatPlansRoot = SEDEA_PLAN_DIRS?.[0] ?? null;
+  }
+
+  const targetPlanPath =
+    typeof flags['target-plan-path'] === 'string' ? path.resolve(flags['target-plan-path']) : null;
+  const parentPlanPath =
+    typeof flags['parent-plan-path'] === 'string' ? path.resolve(flags['parent-plan-path']) : null;
+  const plansBasePath =
+    typeof flags['plans-base-path'] === 'string' ? path.resolve(flags['plans-base-path']) : null;
+
+  const resolved = resolvePlansWriteDir({
+    plansBasePath,
+    targetPlanPath,
+    parentPlanPath,
+    flatPlansRoot,
+  });
+
+  if (!resolved.writeDir) {
+    die('resolve-plans-write-dir: could not resolve a plans write directory from inputs');
+  }
+
+  const payload = {
+    writeDir: resolved.writeDir,
+    source: resolved.source,
+    plansBasePath: resolved.plansBasePath,
+    flatPlansRoot: deriveFlatPlansRootFromPath(resolved.writeDir),
+  };
+
+  if (asJson) {
+    process.stdout.write(`${JSON.stringify(payload)}\n`);
+    return;
+  }
+
+  log(`writeDir: ${payload.writeDir}`);
+  log(`source: ${payload.source}`);
+  if (payload.plansBasePath) log(`plansBasePath: ${payload.plansBasePath}`);
+  if (payload.flatPlansRoot) log(`flatPlansRoot: ${payload.flatPlansRoot}`);
 }
 
 // ---------- subcommand: set-session ----------
@@ -1410,7 +1545,7 @@ async function cmdReparent(flags) {
 }
 
 // Shared pre-check for `reparent` / `archive --parent`. Validates that
-// - a target slug resolves (under `plans/` or `plans/roadmap-topics/`),
+// - a target slug resolves (under `plans/` or nested dispatch dirs),
 // - source isn't its own parent,
 // - reparenting wouldn't create a cycle (walks target's ancestor chain).
 // Terminates the process via die() on any violation; returns normally
@@ -1588,7 +1723,7 @@ async function removeChildBullet(parent, childSlug, dryRun) {
 
 // `migrate-parent-to-sidecar [--dry-run]` — one-shot corpus migration for
 // step 3 of the parent-slug-in-sidecar plan. For every plan under `plans/`
-// and `plans/roadmap-topics/`:
+// (flat root and nested dispatch dirs):
 //   1. If plan frontmatter has a `parent:` key, copy its value into the
 //      sidecar (creating the sidecar with the conventional header if
 //      missing) and then delete the frontmatter `parent:` key.
@@ -1807,7 +1942,7 @@ function canonicalTodoStatus(raw) {
 // value already matches, returns `changed: false` and skips the disk
 // write (no watcher reload thrash). Unknown todo id lists the available
 // ids in the error message so the agent can self-correct without a
-// re-read. Source file can live under `plans/` or `plans/roadmap-topics/` —
+// re-read. Source file can live under `plans/` or nested dispatch dirs —
 // resolution is via the existing `findPlanBySlug`.
 async function cmdSetTodoStatus(flags) {
   const slug = requireString(flags, 'slug');
@@ -1964,6 +2099,16 @@ Subcommands:
   set-worktrees --slug <slug> --json '[{"repo":"user-auth","path":"/abs"}]'
       Replace sidecar worktrees[] wholesale.
 
+  init-sidecar --plan-path <abs> --parent <slug|null> [--plans-base-path <abs>]
+      Create a new sidecar stub with parent, optional plansMonthBucket (first-write
+      derivation), and empty worktrees/prs. Refuses when the sidecar already exists.
+
+  resolve-plans-write-dir [--plans-base-path <abs>] [--target-plan-path <abs>]
+      [--parent-plan-path <abs>] [--flat-plans-root <abs>] [--json]
+      Resolve absolute plans write directory for core planner skills. Priority:
+      explicit plansBasePath handover, target plan dirname, parent plan dirname,
+      then flat plans root (first registered scope dir or --flat-plans-root).
+
   set-session --slug <slug> --focus <abs>
       Set sidecar session.focusPath; promotes sidecar status to started when
       the plan is active and status is missing or not_started.
@@ -2018,7 +2163,7 @@ Subcommands:
       already-active plans.
 
   migrate-parent-to-sidecar [--dry-run]
-      One-shot: for every plan under plans/ and plans/roadmap-topics/, copy
+      One-shot: for every plan under plans/ (flat and nested dispatch dirs), copy
       frontmatter parent: into the sidecar (creating the sidecar if needed)
       and strip the frontmatter key. Idempotent:
       re-runs are no-ops. Reports conflicts where both locations already
@@ -2058,6 +2203,12 @@ async function main() {
       break;
     case 'set-worktrees':
       await cmdSetWorktrees(flags);
+      break;
+    case 'init-sidecar':
+      await cmdInitSidecar(flags);
+      break;
+    case 'resolve-plans-write-dir':
+      await cmdResolvePlansWriteDir(flags);
       break;
     case 'set-session':
       await cmdSetSession(flags);
@@ -2109,6 +2260,12 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  die(err && err.stack ? err.stack : String(err));
-});
+const isMain =
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === path.resolve(fileURLToPath(import.meta.url));
+
+if (isMain) {
+  main().catch((err) => {
+    die(err && err.stack ? err.stack : String(err));
+  });
+}

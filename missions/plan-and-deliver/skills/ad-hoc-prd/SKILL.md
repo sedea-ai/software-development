@@ -136,6 +136,25 @@ Ad-hoc means **shorter PRD input**, not lower delivery scrutiny. Do not use this
 - If the request is obviously larger than a small change, still write the short PRD when inputs are sufficient, but set `outputs.complexityGuard: "needs-master-plan-assessment"` and include the reasons in `outputs.remainingTasks`.
 - Leave all complexity scoring, decomposition routing, and downstream agent spawning to **`master-planner`** and later skills.
 
+## Gitlink checkout ship target (binding)
+
+When the change request implies shipping from a **hosting gitlink checkout** — a product repo path (for example `extension-template/`) or a center submodule under **`.sedea/centers/<slug>/`** per [`.sedea/centers/sedea/rules/0_hosting-repo.mdc`](.sedea/centers/sedea/rules/0_hosting-repo.mdc) § *Three-repo submodule taxonomy* — the Ad-Hoc PRD **must** record an explicit **Gitlink promotion scope** decision. **Forbidden:** implicit exclusion or `_TBD_` when the ship target is clearly a gitlink checkout.
+
+| Detection signal | Examples |
+|------------------|----------|
+| **`details`** or **`roadmapHints`** | Named product repo path, center submodule checkout, "ship from extension-template" |
+| Explicit ship-path language | Worktree under a hosting gitlink, submodule pointer promotion |
+
+**Required PRD line:** `**Gitlink promotion scope:** <in-scope | follow-up | excluded>` — see § *Ad-Hoc PRD file shape (template)*.
+
+| Value | Meaning |
+|-------|---------|
+| **`in-scope`** | Hosting gitlink promotion is part of this dispatch ship chain |
+| **`follow-up`** | Substantive source-repo ship now; hosting gitlink promotion deferred with documented follow-up |
+| **`excluded`** | Explicit out-of-scope with rationale (not silent omission) |
+
+When gitlink checkout is detected and the line is missing or `_TBD_`, treat as an **open item** at step **5** — offer scoped resolution before **Approve PRD**. Set `outputs.gitlinkPromotionScope` on terminal result (`in-scope` | `follow-up` | `excluded` | `not-applicable`).
+
 ## Docs write root (required to write)
 
 New Ad-Hoc PRDs are written under the **resolved docs write root** per **`.sedea/centers/software-development/rules/31_dispatch-scope.mdc`** § *Docs write root resolution*:
@@ -219,6 +238,7 @@ USER_CHECKPOINT — provide missing ad-hoc PRD inputs on this lane.
  - `# <Title>` — handoff title (not the filename).
  - **`Master Plan:`** line — `_TBD_` plus one sentence that **`master-planner`** will create the `.plan.md` from this Ad-Hoc PRD and the developer should paste or link that path here when it exists (do **not** invent a plan path).
  - **`## 1–3`** sections filled from handoff details; `_TBD_` where unavoidable + say what is missing.
+ - When § *Gitlink checkout ship target* applies, populate **`Gitlink promotion scope`** per template — **forbidden** `_TBD_` on that line when ship target is clearly a gitlink checkout.
 
    - **Relevant Links (post-write):** After a successful create or material revise write, call MCP **`mission_control_update_relevant_documents`** with the absolute Ad-Hoc PRD path (`kind: prd`) on this lane — same turn preferred. **Skip** when already registered this session with no content change. Does **not** replace terminal `prdPath` / `prdRef`. See **`../README.md`** § *Relevant Links — post-write registration*.
 
@@ -228,7 +248,7 @@ USER_CHECKPOINT — provide missing ad-hoc PRD inputs on this lane.
 
 USER_CHECKPOINT — approve, revise, or resolve open items on this Ad-Hoc PRD before invoker downstream steps.
 
- **Detect open items** before building the modal: `_TBD_` bullets in §§1–3, explicit risks or unknowns in **§3 Proposed solution**, thin or ambiguous acceptance criteria, and `outputs.complexityGuard: needs-master-plan-assessment`.
+ **Detect open items** before building the modal: `_TBD_` bullets in §§1–3, missing or `_TBD_` **Gitlink promotion scope** when § *Gitlink checkout ship target* applies, explicit risks or unknowns in **§3 Proposed solution**, thin or ambiguous acceptance criteria, and `outputs.complexityGuard: needs-master-plan-assessment`.
 
  **When open items exist** — **one modal, multiple questions**:
  - **`displayMarkdown`:** numbered list — each open item elaborated (section, gap text, why a decision matters, agent-proposed resolution options).
@@ -291,6 +311,7 @@ Required `outputs` fields:
 - `outputs.operationsDocsDirectory`
 - `outputs.developerApprovedPrd` — `true` only when the developer selected **Approve PRD** on this lane; `false` on non-terminal results
 - `outputs.missingFields`
+- `outputs.gitlinkPromotionScope` — `in-scope` | `follow-up` | `excluded` | `not-applicable` from approved PRD line
 - `outputs.roadmapHints`
 - `outputs.complexityGuard`
 - `outputs.activeLanes`
@@ -337,6 +358,8 @@ Use this shape for every new **`.ad-hoc-prd.md`** file.
 # <Title>
 
 **Master Plan:** _TBD — run **`master-planner`** using this Ad-Hoc PRD as input; replace this line with a link to the resulting `.plan.md` when it exists._
+
+**Gitlink promotion scope:** <in-scope | follow-up | excluded | not-applicable> — required when ship target is a hosting gitlink checkout (product repo such as `extension-template/`, or center submodule under `.sedea/centers/<slug>/`). Record explicit developer decision; **forbidden** implicit exclusion.
 
 ## 1. Problem statement
 

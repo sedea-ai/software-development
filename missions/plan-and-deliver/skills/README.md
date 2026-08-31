@@ -81,6 +81,16 @@ Squad Leader §§3/§5 spawn **`author-prd`** / **`master-planner`**; decomposit
 
 **On-demand:** Full planning spawn table, implementation consent layers, and depth-first notify — [`docs/spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) § *Planning spawn*.
 
+## Spawn handover inputs
+
+| Input | When | Behavior |
+|-------|------|----------|
+| **`plansBasePath`** | Nested folder | Write dir; forward |
+| **`targetPlanPath`** | Anchored plan | Authoritative path |
+| **`parentPlanPath`** | Decomp child | Parent dirname |
+
+Omit `plansBasePath` for flat root. rule **30**; [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md).
+
 ## Ship spawn (detached / coding-session chain)
 
 **On-demand:** [`docs/spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) — parallel **`hosting-repo-rules`** fork, worktree-bootstrap drain gate D1–D5, worktree removal ownership detail.
