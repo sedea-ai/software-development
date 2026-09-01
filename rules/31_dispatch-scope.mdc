@@ -29,6 +29,7 @@ Every Mission Control agent lane on a dispatch is bound to **one dispatch scope*
 - Constructing or depending on `.sedea/operations/**/dispatch/**` paths for entity IO
 - **`ls -lt`** (or any mtime sort) across all dispatch folders under `.sedea/operations/`
 - Inferring dispatch scope from “newest” folder, parallel tabs, or PR index alone without **`targetPlanSlug`** + active **`dispatchId`**
+- Inferring dispatch scope from the “newest” **`plans/YYYY-MM/`** bucket or nested **`<dispatch-slug>/`** directory under `.sedea/operations/.../plans/` without active **`dispatchId`** + explicit **`targetPlanSlug`** / spawn **`inputs`**
 
 Refresh host identity with MCP **`sedea_get_current_user`** when a skill requires it — **not** to derive operations filesystem paths.
 
@@ -55,7 +56,37 @@ Plans and docs under `.sedea/operations/.../plans/` and `docs/` remain filesyste
 |---------|------|
 | **PR / phase plans** | Use **`targetPlanPath`**, **`parentPlanPath`**, or other explicit spawn **`inputs`** — absolute or workspace-relative paths supplied by Mission Control |
 | **Follow-up edits** | Reuse the anchored absolute plan path from the lane — do not re-derive from directory segments under `.sedea/operations/` |
+| **New plan writes (nested post-cutover)** | When spawn **`inputs.plansBasePath`** is supplied, write new sibling/child plan files under that absolute directory — resolution priority and helper invocation: rule **30** § *Plans write path resolution* |
 | **Docs reports** | Resolve write root per **Docs write root resolution** below; write on the **main hosting clone** only |
+
+### Nested plans layout (post-cutover)
+
+After the scope **Phase C cutover milestone** is active (Master Plan §7 Caveats + **development-process.md** § *Plans layout (nested post-cutover)*), new **`plan and deliver`** dispatches may anchor plan files under nested folders:
+
+```text
+.sedea/operations/<workspace-bound-scope>/plans/YYYY-MM/<unique-dispatch-slug>/
+```
+
+| Segment | Meaning |
+|---------|---------|
+| **`YYYY-MM`** | Developer local timezone month at first plan write for that dispatch (sidecar **`plansMonthBucket`** when set) |
+| **`<unique-dispatch-slug>`** | Kebab-case dispatch title + 4-char hex suffix from Squad Leader **`plan-state.mjs dispatch-intake`** |
+
+**Pre-cutover** and in-flight dispatches keep flat-root **`plans/`** behavior when **`plansBasePath`** is omitted or cutover is inactive — rule **30** § *Flat-root fallback*.
+
+**Explicit plan paths unchanged:** **`targetPlanPath`** and **`parentPlanPath`** remain the authoritative anchors for *which* plan file to edit; **`plansBasePath`** governs *where new* sibling/child plan files land when nested layout applies.
+
+### `plansBasePath` handover (binding)
+
+Mission Control re-injects absolute **`plansBasePath`** from leader **`dispatchPlansHandover`** on every downstream spawn whose skill schema declares the input (rule **4** § spawn validation — host persists handover on first Squad Leader spawn that supplies nested intake).
+
+| Priority | Source | Agent use |
+|----------|--------|-----------|
+| 1 | Spawn **`inputs.plansBasePath`** (host-injected from leader handover) | **`writeDir`** for new plan scaffolds when nested layout is active |
+| 2 | Explicit **`targetPlanPath`** / **`parentPlanPath`** | Authoritative *which file* — dirname may imply write dir when **`plansBasePath`** omitted |
+| 3 | Flat **`plans/`** root for active scope | Pre-cutover fallback per rule **30** |
+
+**Forbidden:** relying on transcript prose alone for nested folder propagation; omitting **`plansBasePath`** on plan-writing child spawns when leader nested handover is active; forwarding flat-root write dirs when **`plan-state.mjs resolve-plans-write-dir --json`** returned non-null **`plansBasePath`**; reconstructing **`.sedea/operations/.../plans/YYYY-MM/<slug>/`** from directory scans, dispatch **mtime**, or “newest” nested folder heuristics — bind to **`dispatchId`**, explicit plan paths, and spawn handover instead.
 
 ### Docs write root resolution (binding)
 
@@ -104,7 +135,7 @@ Sedea binds operations **plans/docs** to one **workspace-bound scope segment** u
 
 | Subtree | Purpose |
 |---------|---------|
-| `plans/` | Flat plan union for this workspace scope |
+| `plans/` | Plan union for this workspace scope — flat **`plans/*.plan.md`** at scope root **or** nested **`plans/YYYY-MM/<dispatch-slug>/`** post-cutover when **`plansBasePath`** handover applies |
 | `docs/` | Scope-level operational docs |
 | `dispatch/<epochMs>/` | **Abandoned legacy** filesystem bundles — product must not depend on them |
 
