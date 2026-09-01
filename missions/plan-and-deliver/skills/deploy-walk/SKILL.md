@@ -179,6 +179,21 @@ Canonical table: **`.sedea/centers/software-development/docs/development-process
 
 **Pre-merge vs post-merge:** **`coding-session`** runs walk **Before deploy** while the PR is still open (`**Status:**` stays `drafted`). **`coding-session`** (post-create-pr gate) owns **After deploy** and the `drafted → deployed → done` lifecycle. Completing either walk does **not** start **`plan-reconcile`** — reconcile is a separate developer or **`coding-session`** follow-on when merge/archive triage is needed.
 
+## Before/After deploy manual parity (binding)
+
+| Phase | Role |
+|-------|------|
+| **Before deploy** | Primary bug-fix window — session worktree still open; fix defects here before PR |
+| **After deploy** | Post-merge smoke / regression — low probability when Before deploy was thorough; harder to fix (session worktree usually removed after post-merge cleanup) |
+
+When **`Status:`** is `deployed` and the active sub-section is **`### After deploy`**:
+
+1. **Coverage (binding):** The walk **must** cover every **manual** step from **`### Before deploy`** — either numbered retest rows mirroring Before manual items, **or** one umbrella manual step (for example *Smoke — re-run all Before deploy manual checks*) plus After-specific rows.
+2. **Forbidden:** After deploy walk that presents only After-specific manual steps when Before deploy had manual `[ ]` items — unless plan §7 documents an approved umbrella row that explicitly covers them.
+3. **Defect handback:** On **`deploy-step-blocked`**, developer-reported regression during an After deploy [Manual step await gate](#manual-step-await-gate-binding), or pick of **`return-to-implementation-new-worktree`**: set **`outputs.returnToImplementation: true`**, **`outputs.afterDeployDefect: true`**, and hand back to **`coding-session`** [Return to implementation from deploy walk](../coding-session/SKILL.md#return-to-implementation-from-deploy-walk-new-worktree) — **Branch B** when the session worktree path is missing (typical post-merge).
+
+Cross-ref: **`coding-session/SKILL.md`** § *Before/After deploy parity (binding)* for pre-walk parity repair and §7 strengthening on restart.
+
 ## Inline on coding-session (`before-deploy-only`)
 
 When `upstreamSkill` is **`coding-session`** and `deployWalkScope` is **`before-deploy-only`**:

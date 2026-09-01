@@ -659,6 +659,8 @@ USER_CHECKPOINT — approve dispatch resolution when planning and ship gates all
 
 - **After deploy** runs **after the PR has merged** — inline on **`coding-session`** after post-merge cleanup (detached branches table order 7), per [Agent-delegated PR approve and merge](skills/coding-session/SKILL.md#agent-delegated-pr-approve-and-merge) (when delegation authorized) or after the developer confirms merge via **`check-pr-status`** / **`spawn-after-deploy-walk`** at [Post-create-pr handoff gate](skills/coding-session/SKILL.md#post-create-pr-handoff-gate).
 
+- **After deploy manual parity (binding):** After merge, inline **`deploy-walk`** must cover all Before deploy **manual** verification — explicit retest rows or one umbrella manual item in §7, plus After-specific checks. After deploy defect → **`coding-session`** restart from new worktree per **`coding-session/SKILL.md`** § *Before/After deploy parity (binding)*.
+
 Detached **`deploy-walk`** dispatch redirects to **`coding-session`**. **`plan-reconcile`** runs **inline** on **`coding-session`** when the developer explicitly chooses reconcile — see [Plan-reconcile handoff (inline)](skills/coding-session/SKILL.md#plan-reconcile-handoff-inline). Finishing deploy-walk does **not** auto-run **`plan-reconcile`**.
 
 **PR review cycle (cyclic — post-create-pr)**

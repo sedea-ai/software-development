@@ -697,7 +697,7 @@ Under Checkpoint trust, after **`outputs.prState: merged`** (or merge confirmed 
 
    **Built-in `sedea` promote fast-path (binding):** When script-backed **`promote-submodule-pin`** for built-in **`sedea`** exits terminal **`skipped` / `not-applicable`** with no drift and no cleanup **`promote-pin-required`** hint, Do **not** run gitlink, submodule, registry, remote-tip, or alignment inspection on this lane. Continue immediately to step **3** in the **same assistant turn**.
 
-3. [After deploy deploy-walk handoff](#after-deploy-deploy-walk-handoff) — inline **`deploy-walk`** for **`### After deploy`** only.
+3. [After deploy deploy-walk handoff](#after-deploy-deploy-walk-handoff) — inline **`deploy-walk`** for **`### After deploy`** (with Before deploy manual parity per § *Before/After deploy parity (binding)*). Manual gates may set **`returnToImplementation`** / **`afterDeployDefect`** for mandatory restart.
 4. When **`deployStatus: done`** and **`deployTodoStatus: done`**, run [Hosting-pin-complete gate (before prShipComplete)](#hosting-pin-complete-gate-before-prshipcomplete) when gitlink scope applies — **before** [Post–After deploy remainder inventory](#post-after-deploy-remainder-inventory).
 5. Auto-run remainder inventory steps (**`plan-reconcile`** then **`pr-ship-complete`**) without [Post–After deploy remainder authorization](#post-after-deploy-remainder-authorization) batch modal when reconcile requires no developer picks **and** **`hostingPinCompleteStatus`** is **`complete`** or **`not-applicable`**.
 
@@ -1600,6 +1600,21 @@ If commit fails or tree stays dirty after commit, stop with `partial` — do not
 3. **`executive-override-push`** also runs **`git push`** after a successful commit on the **same response turn** — the **only** cut-point path that pushes before **`prePrReviewCleared`**. Routine push before **`create-pr`** runs after **`pre-pr-review`** **`go`** per [Inline create-pr (auto on clean go)](#inline-create-pr-auto-on-clean-go) and rule **20** § *Commit and push cadence*.
 4. Verify `git status --short` is empty before inline deploy-walk or pre-PR authorization.
 
+## Before/After deploy parity (binding)
+
+| Phase | Role |
+|-------|------|
+| **Before deploy** | Primary bug-fix window — worktree still open; fix defects here before PR |
+| **After deploy** | Post-merge smoke / regression — low probability when Before deploy was thorough; **harder to fix** because post-merge cleanup usually removed the session worktree |
+
+**After deploy manual parity (binding):** Inline **`deploy-walk`** for **`### After deploy`** must cover every Before deploy **manual** step — explicit retest rows or one umbrella manual item in plan §7, plus After-specific checks. See **`deploy-walk/SKILL.md`** § *Before/After deploy manual parity (binding)*.
+
+**After deploy defect → restart (binding):** When **`outputs.afterDeployDefect: true`**, inline **`deploy-walk`** sets **`outputs.returnToImplementation: true`**, or the developer picks **`return-to-implementation-new-worktree`** from an After deploy manual gate **after merge**:
+
+1. Run [Return to implementation from deploy walk](#return-to-implementation-from-deploy-walk-new-worktree) — **Branch B** when post-merge cleanup ran (typical; session worktree gone).
+2. **Before** resuming implementation, update PR plan §7 under the new **`WORKTREE_ROOT`**: strengthen **`### Before deploy`** steps that would have caught the defect; add or strengthen **`### After deploy`** smoke steps.
+3. Re-enter the ship chain from [Generic flow](#generic-flow-single-repo) — **forbidden** resume mid-chain at pre-PR, merge, or post-merge gates.
+
 ## Before deploy deploy-walk handoff
 
 **Precondition:** `outputs.bootstrapStatus: success`. **Do not** run Before deploy **`deploy-walk`** inline while bootstrap is `pending` or `failed`.
@@ -2427,6 +2442,7 @@ Run from [Act after post-create-pr pick](#act-after-post-create-pr-pick) when th
 
 1. **Verify merge** — `prState` must be **`merged`** (from coding-session `outputs` after inline **`create-pr`** or a fresh `gh pr view` / repo check). If still **`open`**, report one line and re-open [Post-create-pr handoff gate](#post-create-pr-handoff-gate) — do **not** run inline **`deploy-walk`** for After deploy only.
 2. When plan-anchored, **read** §7. If **`### After deploy`** is empty or all `[x]` and capstone is done, note in one line and under Checkpoint trust auto-run [Post–After deploy remainder inventory](#post-after-deploy-remainder-inventory) when non-empty — **forbidden:** re-open [Post-create-pr handoff gate](#post-create-pr-handoff-gate). Otherwise offer [Plan-reconcile handoff (inline)](#plan-reconcile-handoff-inline) defer — no inline walk.
+2a. **Before/After manual parity (binding):** Read **`### Before deploy`** manual items. Verify **`### After deploy`** includes parity — numbered retest rows mirroring Before manual steps **or** one umbrella manual item (*Smoke — re-run all Before deploy manual checks*). When Before deploy had manual items and After deploy lacks parity, **stop** — append the umbrella row (or explicit retest rows) to plan §7 under the active worktree when one still exists, otherwise note on the leader ledger and append on [Branch B — new worktree](#branch-b--new-worktree) before implementation resumes — then continue the walk.
 3. Load `.sedea/centers/software-development/missions/plan-and-deliver/skills/deploy-walk/SKILL.md` and run it **inline on this lane** — **post-merge full walk** (do **not** set `deployWalkScope: before-deploy-only`). **Do not** emit **`mission_control_spawn_agent`** for **`deploy-walk`**.
 
 **Inline context:**
@@ -2462,9 +2478,9 @@ Option id **`return-to-implementation-new-worktree`** is stable in every gate th
 
 ### Return to implementation from deploy walk (new worktree)
 
-Run on the **spawned coding-session lane** when inline **`deploy-walk`** reports **`outputs.returnToImplementation: true`**, when the developer picks **`return-to-implementation-new-worktree`** at [Post–After deploy remainder authorization](#post-after-deploy-remainder-authorization), or at **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) (including mid–After deploy verification).
+Run on the **spawned coding-session lane** when inline **`deploy-walk`** reports **`outputs.returnToImplementation: true`**, when **`outputs.afterDeployDefect: true`**, when the developer picks **`return-to-implementation-new-worktree`** at [Post–After deploy remainder authorization](#post-after-deploy-remainder-authorization), or at **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) (including mid–After deploy verification).
 
-**Purpose:** During deploy verification (Before deploy, After deploy, or post-deploy tail), resume implementation for a follow-on fix pass — product defect **or** skill/Checkpoint calibration the developer directs from deploy verification (for example post-merge modal scope). Route to **Branch A** when the session worktree still exists; **Branch B** when it was removed (typical after [Post-merge workspace cleanup](#post-merge-workspace-cleanup)).
+**Purpose:** During deploy verification (Before deploy, After deploy, or post-deploy tail), resume implementation for a follow-on fix pass — product defect **or** skill/Checkpoint calibration the developer directs from deploy verification (for example post-merge modal scope). Route to **Branch A** when the session worktree still exists; **Branch B** when it was removed (typical after [Post-merge workspace cleanup](#post-merge-workspace-cleanup)). **After deploy defect (binding):** When **`outputs.afterDeployDefect: true`** or the handback follows an After deploy manual gate **after merge**, **mandatory Branch B** — do not use Branch A.
 
 **Preconditions:**
 
@@ -2487,7 +2503,7 @@ Run on the **spawned coding-session lane** when inline **`deploy-walk`** reports
 
 #### Branch B — new worktree
 
-1. **Audit note** — Append one dated line under the plan **`## Follow-ups`** (or §7 deploy note when Follow-ups is absent): *Deploy verification — return to implementation (new worktree)* with the active deploy step or defect summary from chat.
+1. **Audit note** — Append one dated line under the plan **`## Follow-ups`** (or §7 deploy note when Follow-ups is absent): *Deploy verification — return to implementation (new worktree)* with the active deploy step or defect summary from chat. When **`outputs.afterDeployDefect: true`**, also strengthen plan §7 **`### Before deploy`** and **`### After deploy`** test steps before implementation resumes (see § *Before/After deploy parity (binding)*).
 2. **Worktree name** — `fix/<short-description>` per **20_efficient-pr-shipping.mdc** § *Worktree naming* (hosting-repo worktree branch).
 3. Run [Generic flow](#generic-flow-single-repo) steps **1–4** from **`HOSTING_ROOT`** (center **`worktree-setup.sh`**, sidecar, MCP attach, bootstrap hint).
 4. Set **`outputs.shipPhase: implementing`**, **`outputs.rowStatus: active`**, clear stale **`prState`** / merge-only outputs that no longer apply to the new fix pass when starting a post-merge fix (keep **`targetPlanPath`** / slug).

@@ -334,6 +334,8 @@ Per-PR **`## 7. Deploy test plan`** (**`### Before deploy`** / **`### After depl
 | Submodule attestation when **this PR** changes a gitlink | **`promote-submodule-pin`**, hosting **`git pull`** |
 | | **`plan-reconcile`**, **`pr-ship-complete`**, dispatch resolution |
 
+**After deploy manual parity (binding):** **`### After deploy`** must re-cover Before deploy **manual** checks (umbrella item OK) — **`deploy-walk/SKILL.md`** § *Before/After deploy manual parity (binding)* and **`coding-session/SKILL.md`** § *Before/After deploy parity (binding)*.
+
 **`plan-reconcile` timing (binding):** Runs **inline on the active `coding-session` lane while the dispatch is open** — typically auto-advanced after After deploy on the Checkpoint clean path. **Forbidden:** § 7 After deploy steps or agent modal copy that defer reconcile to "when dispatch closes" or "after dispatch resolution" — closure ends all agent lanes.
 
 ## Plan reconcile triggers
