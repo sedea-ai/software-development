@@ -1,41 +1,49 @@
-lastSyncedUpstreamSha: "34be3dfd9b76e58fae5238eb99ce3b985e892112"
-
+---
+lastSyncedUpstreamSha: 94b91ac8b0fe182f856a26a1c00097b2fad9849c
 history:
-  - upstreamSha: "06d12a4b7e4ceadc6982f7a82bde69bf61ef28e4"
-    recordedAt: "2026-08-27T03:45:30Z"
-    centerPrUrl: "https://github.com/sedea-ai/software-development/pull/63"
-  - upstreamSha: "b20a927c9d90058a87cd87ef06e7f779e3093eb8"
-    recordedAt: "2026-08-31T00:22:00Z"
-    centerPrUrl: "https://github.com/sedea-ai/software-development/pull/66"
-  - upstreamSha: "7a565189e42a2dedcdf99d7ec8415f66ccd53e68"
-    recordedAt: "2026-08-31T01:30:00Z"
-    centerPrUrl: "https://github.com/sedea-ai/software-development/pull/69"
-  - upstreamSha: "34be3dfd9b76e58fae5238eb99ce3b985e892112"
-    recordedAt: "2026-09-02T00:28:00Z"
-    centerPrUrl: "https://github.com/sedea-ai/software-development/pull/70"
-
+- upstreamSha: 06d12a4b7e4ceadc6982f7a82bde69bf61ef28e4
+  recordedAt: '2026-08-27T03:45:30Z'
+  centerPrUrl: https://github.com/sedea-ai/software-development/pull/63
+- upstreamSha: b20a927c9d90058a87cd87ef06e7f779e3093eb8
+  recordedAt: '2026-08-31T00:22:00Z'
+  centerPrUrl: https://github.com/sedea-ai/software-development/pull/66
+- upstreamSha: 7a565189e42a2dedcdf99d7ec8415f66ccd53e68
+  recordedAt: '2026-08-31T01:30:00Z'
+  centerPrUrl: https://github.com/sedea-ai/software-development/pull/69
+- upstreamSha: 34be3dfd9b76e58fae5238eb99ce3b985e892112
+  recordedAt: '2026-09-02T00:28:00Z'
+  centerPrUrl: https://github.com/sedea-ai/software-development/pull/70
+- upstreamSha: 94b91ac8b0fe182f856a26a1c00097b2fad9849c
+  recordedAt: '2026-09-02T21:28:58Z'
+  centerPrUrl: https://github.com/sedea-ai/software-development/pull/71
 prMetadataCache:
-  - prNumber: 63
-    repo: "sedea-ai/software-development"
-    axis: "downstream"
-    mergeCommit: "63a8611d509f2e7f1f3bbec35e71d2cfa7b38ca6"
-    lastVerifiedAt: "2026-08-27T03:45:30Z"
-    classification: "preserved"
-  - prNumber: 66
-    repo: "sedea-ai/software-development"
-    axis: "downstream"
-    mergeCommit: "0005873f4815ec6a97b1b8ff798f50c6ad2e9652"
-    lastVerifiedAt: "2026-08-31T00:22:00Z"
-    classification: "preserved"
-  - prNumber: 69
-    repo: "sedea-ai/software-development"
-    axis: "downstream"
-    mergeCommit: "3dca95216d8a1dcecfc0e788ea7d0143a7ee4c22"
-    lastVerifiedAt: "2026-08-31T01:30:00Z"
-    classification: "preserved"
-  - prNumber: 70
-    repo: "sedea-ai/software-development"
-    axis: "downstream"
-    mergeCommit: "58d7f1dcb013ddb514241c6a80558c5a18bcffe3"
-    lastVerifiedAt: "2026-09-02T00:28:00Z"
-    classification: "preserved"
+- prNumber: 63
+  repo: sedea-ai/software-development
+  axis: downstream
+  mergeCommit: 63a8611d509f2e7f1f3bbec35e71d2cfa7b38ca6
+  lastVerifiedAt: '2026-08-27T03:45:30Z'
+  classification: preserved
+- prNumber: 66
+  repo: sedea-ai/software-development
+  axis: downstream
+  mergeCommit: '0005873f4815ec6a97b1b8ff798f50c6ad2e9652'
+  lastVerifiedAt: '2026-08-31T00:22:00Z'
+  classification: preserved
+- prNumber: 69
+  repo: sedea-ai/software-development
+  axis: downstream
+  mergeCommit: 3dca95216d8a1dcecfc0e788ea7d0143a7ee4c22
+  lastVerifiedAt: '2026-08-31T01:30:00Z'
+  classification: preserved
+- prNumber: 70
+  repo: sedea-ai/software-development
+  axis: downstream
+  mergeCommit: 58d7f1dcb013ddb514241c6a80558c5a18bcffe3
+  lastVerifiedAt: '2026-09-02T00:28:00Z'
+  classification: preserved
+- prNumber: 71
+  repo: sedea-ai/software-development
+  axis: downstream
+  mergeCommit: 7dd9bcc665eafc51c8a102edffc02d6f7d3f17d1
+  lastVerifiedAt: '2026-09-02T21:28:58Z'
+  classification: preserved
