@@ -6,7 +6,7 @@ Cross-ref checkpoint UX: [`coding-session-checkpoint-ux.md`](coding-session-chec
 
 **Deploy-done emit guard:** Normative owner [`coding-session/SKILL.md`](../skills/coding-session/SKILL.md) § *Deploy-done emit guard* — after After deploy **`deployStatus: done`**, forbid success terminal without **`prShipComplete`**; auto-run post-after-deploy tail with zero modals on Checkpoint clean path. **Hosting-pin-complete:** when submodule gitlinks were in scope, run **`coding-session`** § *Hosting-pin-complete gate* before **`prShipComplete`**. Calibration: `incident_pr_ship_complete_tail_skipped_2026-08-02.agent-incident-report.md`; `incident_hosting_pin_promotion_treated_optional_2026-08-03.agent-incident-report.md`.
 
-**Before deploy blocking sequence:** Ship cut-point **Act** → inline Before deploy **`deploy-walk`** (mandatory when §7 **`### Before deploy`** has any **`[ ]`**) → **`beforeDeployStatus: complete|skipped`** → **`pre-pr-review`** spawn. Vitest pass **≠** Before deploy complete. **Post-merge cleanup terminal emit guard:** normative owner **`coding-session`** § *Post-merge cleanup terminal emit guard* — forbid success terminal / **`prShipComplete: true`** while owned **`WORKTREE_ROOT`** remains after merge when cleanup is authorized but not run.
+**Before deploy blocking sequence:** Ship cut-point **Act** (commit + clean tree) → **[Before deploy gate](../skills/coding-session/SKILL.md#before-deploy-gate-checkpoint--binding)** with inline Before deploy **`deploy-walk`** (mandatory when §7 **`### Before deploy`** has any **`[ ]`**) → **`beforeDeployStatus: complete|skipped`** → **`pre-pr-review`** spawn. Vitest pass **≠** Before deploy complete. **Forbidden:** folding Before deploy into cut-point Checkpoint auto-advance without the explicit gate when §7 has manual steps. **Post-merge cleanup terminal emit guard:** normative owner **`coding-session`** § *Post-merge cleanup terminal emit guard* — forbid success terminal / **`prShipComplete: true`** while owned **`WORKTREE_ROOT`** remains after merge when cleanup is authorized but not run.
 
 ---
 
@@ -50,7 +50,8 @@ flowchart TB
     direction LR
     RRC["Repo rules reconcile<br/>§5 → .mdc"]:::gate
     CUT["Ship cut-point<br/>review · approve · commit"]:::gate
-    BDW["Before deploy<br/>deploy-walk inline"]:::inline
+    BDG["Before deploy gate<br/>deploy-walk inline"]:::gate
+    BDW["Before deploy<br/>walk procedure"]:::inline
     SMG["Submodule merge gate<br/>source on main · inline promote"]:::inline
     CPR["create-pr"]:::inline
     PRV["pr-review"]:::inline
@@ -59,7 +60,7 @@ flowchart TB
     PIN["Hosting-pin-complete<br/>verify main gitlinks"]:::inline
     ADW["After deploy<br/>deploy-walk inline"]:::inline
     REC["plan-reconcile<br/>explicit start"]:::inline
-    RRC --> CUT --> BDW --> SMG --> CPR
+    RRC --> CUT --> BDG --> BDW --> SMG --> CPR
     CPR --> PRV --> WAIT --> PMC --> ADW --> PIN --> REC
   end
 
@@ -67,7 +68,7 @@ flowchart TB
     PPR["pre-pr-review"]:::spawn
   end
 
-  BDW -->|spawn| PPR
+  BDG -->|spawn after gate| PPR
   PPR -->|result go| SMG
   SMG -->|source merged · pin aligned| CPR
 ```
@@ -77,9 +78,10 @@ Pre-ship setup on this lane (not shown): implement → [Repo rules reconciliatio
 | Step | Section | Mode | Commit required? | Modal? |
 |------|---------|------|------------------|--------|
 | 0 | [Repo rules reconciliation](../skills/coding-session/SKILL.md#repo-rules-reconciliation-binding) | gate + procedure | **No** | **Yes** (plan-anchored; skip when §5 `_None_` only) |
-| 1 | [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy) | gate | **No** for review — combined modal covers approve + commit + Before deploy inline | **Yes** |
-| 2 | [Before deploy deploy-walk handoff](coding-session-ship-chain.md#before-deploy-deploy-walk-handoff) | inline | **Yes** — after cut-point **Act** (commit when needed, then inline walk) | **No** (manual §7 step only) |
-| 3 | [Auto-spawn pre-pr-review](coding-session-ship-chain.md#auto-spawn-pre-pr-review) + [Pre-PR review handoff](coding-session-ship-chain.md#pre-pr-review-handoff) | spawn | **Yes** — Before deploy resolved or skipped | **Spawn turn:** **No** modal — spawn alone (rule **4**); **next turn:** Yield / #external-wait resume modal |
+| 1 | [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy) | gate | **No** for review — combined modal covers approve + commit (Before deploy is a separate gate) | **Yes** |
+| 1b | [Before deploy gate](../skills/coding-session/SKILL.md#before-deploy-gate-checkpoint--binding) | gate + inline | **Yes** — after cut-point **Act**; inline **`deploy-walk`** runs here | **Yes** when §7 has manual steps — Manual step await **same turn**; **No** when agent-executable-only |
+| 2 | [Before deploy deploy-walk handoff](coding-session-ship-chain.md#before-deploy-deploy-walk-handoff) | inline | **Yes** — invoked from step **1b** | **No** (manual §7 — gate owned by step **1b**) |
+| 3 | [Auto-spawn pre-pr-review](coding-session-ship-chain.md#auto-spawn-pre-pr-review) + [Pre-PR review handoff](coding-session-ship-chain.md#pre-pr-review-handoff) | spawn | **Yes** — Before deploy gate satisfied (`beforeDeployStatus` terminal) | **Spawn turn:** **No** modal — spawn alone (rule **4**); **next turn:** Yield / #external-wait resume modal |
 | 3b | [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) | inline procedure | **No** — after **`pre-pr-review`** **go**; may amend hosting gitlink in **`WORKTREE_ROOT`** via script-backed **`promote-submodule-pin`** | **Checkpoint:** **No** on clean path — auto-advance source verify + inline promote; modal on source-not-on-main or promote hard stop |
 | 3c | [Gitlink-only ship router](../skills/coding-session/SKILL.md#gitlink-only-ship-router-binding) | inline procedure | **No** — after step **3b** when gitlink scope applies | **Checkpoint:** **No** on Path A — pin terminal; **forbidden** steps **4–5** when **`outputs.pinPromotionPath: true`** |
 | 4 | [Inline create-pr (auto on clean go)](#inline-create-pr-auto-on-clean-go) or [Create-PR handoff after go](#create-pr-handoff-after-go) | inline | **Path B only** — after router selects mixed/non-gitlink diff | **Checkpoint:** **No** — auto create-pr / **`approve-followups-create-pr`**; **skip** when **`outputs.pinPromotionPath: true`** |
@@ -107,7 +109,7 @@ Until **`prePrReviewCleared`**, **forbidden** in **any** modal on this lane (inc
 | Create-PR options | **`proceed-create-pr`**, **`approve-followups-create-pr`**, **`create-pr-no-followups`**, **`create-pr-gate`** picks, labels containing *create PR* or *open PR* |
 | Chat artifacts | GitHub `pull/new/` URLs, paraphrased “open a PR on GitHub” hints after local commit |
 
-**Allowed before cleared:** **`commit-only`** paths at [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy) (commit + Before deploy + auto **`pre-pr-review`** — push is **not** required for the committed diff review).
+**Allowed before cleared:** **`commit-only`** paths at [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy) (commit + [Before deploy gate](../skills/coding-session/SKILL.md#before-deploy-gate-checkpoint--binding) + auto **`pre-pr-review`** — push is **not** required for the committed diff review).
 
 **After cleared:** push and inline **`create-pr`** run per [Inline create-pr (auto on clean go)](#inline-create-pr-auto-on-clean-go) and rule **20** § *Commit and push cadence* — **no** separate create-PR modal on clean **`go`** without proposed follow-ups.
 

@@ -9,8 +9,8 @@ description: >-
  On a **spawned child lane** with layer-2 approval (or **pr-plan** spawn auto-authorize),
  **implement the anchored PR plan on this lane** in that worktree; on **prompt-only**
  entry, emit a copy/paste-safe two-phase session prompt for a separate coding chat.
- After implementation, run the **ship chain** (one cut-point modal: approve + commit +
- Before deploy **deploy-walk** inline → **auto-spawn pre-pr-review** → **auto inline create-pr** on clean **go** → inline **`pr-review`** → **agent-delegated approve + merge** when authorized → **auto post-merge cleanup** when merged → After deploy **deploy-walk** inline). Plan-anchored runs validate
+ After implementation, run the **ship chain** (cut-point approve + commit → **Before deploy gate**
+ with inline **deploy-walk** → **auto-spawn pre-pr-review** → **auto inline create-pr** on clean **go** → inline **`pr-review`** → **agent-delegated approve + merge** when authorized → **auto post-merge cleanup** when merged → After deploy **deploy-walk** inline). Plan-anchored runs validate
  per-PR plans with plan-ws-completeness.mjs (_TBD_ in body requires completion or
  explicit override incomplete plan). Use under mission dispatch, natural language, or
  after planning when handing off implementation.
@@ -525,6 +525,7 @@ After Mission Control reload or window restart on **this** spawned **`coding-ses
 5. **Dispatch binding (binding):** When the preamble includes `[Mission Control — post-restore cold session]`, treat **`Active dispatch UUID`**, **`Bundle directory`**, and **`Your slot id`** in that preamble as authoritative scope. Read **`parent-child-registry.v1.json`**, **`dispatch-tab.v1.json`**, and **`dispatch-events.v1.ndjson` only under that bundle directory** — never under sibling dispatch folders.
 6. **Forbidden cold-restore recovery:** `ls -lt` (or any mtime sort) across `.sedea/operations/**/dispatch/` to pick a dispatch; opening another tab's bundle because it is "newer"; mapping **PR N** without **`targetPlanSlug`** + the dispatch id stated in the preamble.
 7. When spawn context JSON is missing from the preamble but dispatch binding is present, recover handover from **this dispatch's** registry (and `dispatch-events` for the matching `correlationId`) before running tools — do not improvise cross-dispatch scope.
+8. **Before deploy gate rewind (binding):** When resuming mid-ship at **`pre-pr-spawn-pending`**, **`pre-pr-review`**, **`create-pr`**, or post-create-pr gates and **`outputs.beforeDeployStatus`** is not **`complete`** or **`skipped`** on a plan-anchored run, **rewind** to [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) — **forbidden** resume at pre-PR spawn, inline **`create-pr`**, or merge gates until the gate completes or documents skip.
 
 ## Relationship to `pr-plan`
 
@@ -672,7 +673,8 @@ Under Checkpoint trust, **happy-path protocol steps may auto-advance when this l
 | **Spawned implementation** steps **5–6** | Auto-advance through implementation batches | exception: blocking stop → `partial` result |
 | **Implementation continuation gate** | **Auto-advance** — resolve **`ready-for-review`** when [clean implementation](#implementation-continuation-gate) criteria pass | **Gate** when any clean criterion fails — [Implementation continuation gate](#implementation-continuation-gate) |
 | **Repo rules reconciliation** + **pre-review verification** (steps **7–8**) | Auto-advance on happy path before ship cut-point | exception: action bullets without `.mdc` diff; verification failures — [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) |
-| **Ship cut-point gate** | **Auto-advance** — resolve **`commit-only`** and **Act same turn** (full path: commit + inline Before deploy **`deploy-walk`** when plan-anchored) when [clean cut-point](#ship-cut-point-gate-approve-commit-before-deploy) criteria pass; if Act cannot continue this turn → [Yield gate](#yield-gate-checkpoint--binding) | **Gate** when any clean criterion fails — [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) |
+| **Ship cut-point gate** | **Auto-advance** — resolve **`commit-only`** and **Act same turn** (commit + verify clean tree only — **forbidden** inline Before deploy on cut-point Act) when [clean cut-point](#ship-cut-point-gate-approve-commit-before-deploy) criteria pass; hand off to [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) on plan-anchored runs; if Act cannot continue this turn → [Yield gate](#yield-gate-checkpoint--binding) | **Gate** when any clean criterion fails — [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) |
+| **Before deploy gate** | **Auto-advance** when §7 Before deploy is agent-executable-only and inline **`deploy-walk`** autonomous pass completes same turn | **Gate** when §7 has manual steps — [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) **same turn** as first manual presentation; **forbidden** spawn **`pre-pr-review`** while **`beforeDeployStatus`** unset |
 | **Pre-PR review feedback** | **Auto-advance** — **`fix-now-session`** **same turn** when **`actionablePrePrFindings`** (implement Must + Should; append follow-ups to plan); after clean **`go`**, [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) then inline **`create-pr`** without findings; **`approve-followups-create-pr`** **same turn** when **`hasProposedFollowUps`** only | Exception: developer **`defer`** / **`revise-scope`** in **same** message — [Review feedback approval gate](#review-feedback-approval-gate) Non-Checkpoint modal only |
 | **Submodule merge gate (before create-pr)** | **Auto-advance** when source on center **`defaultBranch`** and script-backed **`promote-submodule-pin`** succeeds for every affected gitlink (including built-in **`sedea`**) | **Gate** when source not on **`defaultBranch`**, promote hard stop, or ambiguous scope |
 | **Pre-merge ship** (after post-create-pr pick → **`pr-review`** or direct **`approve-merge-pr`** → merge delegation) | **Auto-advance** — rebase push **`--force-with-lease`**; pre-merge → **`approve-merge-pr`** when **`mergeDelegationReady`** | **Checkpoint gate** at **`pr-review`** disposition only; exception: merge blockers after inspect — [Pre-merge authorization gate](#pre-merge-authorization-gate) |
@@ -1338,12 +1340,13 @@ Pre-ship setup on this lane (not shown): implement → [Repo rules reconciliatio
 | Step | Section | Mode | Commit required? | Modal? |
 |------|---------|------|------------------|--------|
 | 0 | [Repo rules reconciliation](#repo-rules-reconciliation-binding) | gate + procedure | **No** | **Yes** (plan-anchored; skip when §5 `_None_` only) |
-| 1 | [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) | gate | **No** for review — combined modal covers approve + commit + Before deploy inline | **Yes** |
-| 2 | [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) | inline | **Yes** — after cut-point **Act** (commit when needed, then inline walk) | **No** (manual §7 step only) |
-| 3a | Cut-point **Act** completes | inline | **Yes** — commit + Before deploy on **Act turn** only | **No** — **forbidden** spawn on this turn |
-| 3b | [Auto-spawn pre-pr-review](#auto-spawn-pre-pr-review) + [Pre-PR review handoff](#pre-pr-review-handoff) | spawn | **Yes** — Before deploy resolved or skipped | **Dedicated spawn turn:** **`mission_control_spawn_agent` alone** (rule **4**) — **forbidden** batch with commit, shell, plan IO, or structured choice |
+| 1 | [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) | gate | **No** for review — combined modal covers approve + commit (Before deploy is a separate gate) | **Yes** |
+| 1b | [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) | gate + inline | **Yes** — after cut-point **Act** (commit when needed); inline **`deploy-walk`** runs here — **not** folded into cut-point auto-advance | **Yes** when §7 has manual steps — **`deploy-walk`** Manual step await **same turn** as presentation; **No** when §7 is agent-executable-only and walk completes same turn |
+| 2 | [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) | inline | **Yes** — invoked from step **1b** | **No** (manual §7 step only — gate owned by step **1b**) |
+| 3a | Before deploy gate completes | inline | **Yes** — `beforeDeployStatus: complete` or `skipped` | **No** — **forbidden** spawn on this turn |
+| 3b | [Auto-spawn pre-pr-review](#auto-spawn-pre-pr-review) + [Pre-PR review handoff](#pre-pr-review-handoff) | spawn | **Yes** — Before deploy gate satisfied | **Dedicated spawn turn:** **`mission_control_spawn_agent` alone** (rule **4**) — **forbidden** batch with commit, shell, plan IO, or structured choice |
 | 3c | After spawn turn | gate | **No** | **Next turn:** Yield / #external-wait resume modal |
-| 3b | [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) | inline procedure | **No** — after **`pre-pr-review`** **go**; may amend hosting gitlink in **`WORKTREE_ROOT`** via script-backed **`promote-submodule-pin`** | **Checkpoint:** **No** on clean path — auto-advance source verify + inline promote; modal on source-not-on-main or promote hard stop |
+| 3d | [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) | inline procedure | **No** — after **`pre-pr-review`** **go**; may amend hosting gitlink in **`WORKTREE_ROOT`** via script-backed **`promote-submodule-pin`** | **Checkpoint:** **No** on clean path — auto-advance source verify + inline promote; modal on source-not-on-main or promote hard stop |
 | 4 | [Inline create-pr (auto on clean go)](#inline-create-pr-auto-on-clean-go) or [Create-PR handoff after go](#create-pr-handoff-after-go) | inline | After submodule gate passes (or N/A — no gitlink in scope) | **Checkpoint:** **No** — auto create-pr / **`approve-followups-create-pr`**; **non-Checkpoint:** modal when **`hasProposedFollowUps`** or **`proceed-create-pr`** |
 | 5 | [Post-create-pr handoff gate](#post-create-pr-handoff-gate) | gate | **No** | **Yes** — **Checkpoint** and non-Checkpoint; **forbidden:** prose-only PR URL / *Next: inline pr-review* without modal |
 | 6 | Inline **`pr-review`** (see skill path in **`plan.mdc`** §8) | inline | **No** — after PR exists | **Checkpoint:** **Yes** at disposition gate (PR review stop); **non-Checkpoint:** triage disposition modal |
@@ -1442,14 +1445,14 @@ Under Checkpoint trust, **auto-advance** as if the developer picked **`commit-on
 3. `outputs.bootstrapStatus === 'success'` (or documented attested `--skip-*`).
 4. Developer did **not** pick **`more-changes`**, **`defer`**, or name executive override in the **same** message.
 
-**Full `commit-only` path (binding):** Checkpoint auto-advance **`commit-only`** always authorizes the **combined** cut-point pick — *Approve, commit, run Before deploy walk* — not the shortened approve-and-commit-only variant. On [Act after ship cut-point pick](#act-after-ship-cut-point-pick), run in order:
+**Full `commit-only` path (binding):** Checkpoint auto-advance **`commit-only`** authorizes approve + commit on the cut-point pick — **not** inline Before deploy on the cut-point **Act** turn. On [Act after ship cut-point pick](#act-after-ship-cut-point-pick), run in order:
 
 1. **`git commit`** when `git status --short` is non-empty.
 2. Verify clean tree.
-3. When plan-anchored, [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) inline (`deployWalkScope: before-deploy-only`) — **even when** §7 **`### Before deploy`** items are already `[x]` (re-attest on the walk; do **not** skip because boxes were checked on a prior pass).
-4. End the cut-point **Act turn** when Before deploy is satisfied — set `outputs.shipPhase: pre-pr-spawn-pending`. **Forbidden** [Auto-spawn pre-pr-review](#auto-spawn-pre-pr-review) on this turn. Spawn runs on the **dedicated next turn** per [Pre-PR spawn turn sequencing](#pre-pr-spawn-turn-sequencing-binding).
+3. When plan-anchored, set `outputs.shipPhase: before-deploy-gate-pending` and run [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) — inline **`deploy-walk`** runs **inside the gate**, not as a compressed sub-step of cut-point auto-advance recap.
+4. End the **Before deploy gate** turn with `outputs.shipPhase: pre-pr-spawn-pending` only when **`beforeDeployStatus`** is **`complete`** or **`skipped`**. **Forbidden** [Auto-spawn pre-pr-review](#auto-spawn-pre-pr-review) on the cut-point **Act** turn or on any turn where **`beforeDeployStatus`** is unset.
 
-**Forbidden on Checkpoint auto-advance:** resolving to **`commit-only-skip-before-deploy`**, the modal-only “approve and commit” shortcut that omits inline **`deploy-walk`**, spawning **`pre-pr-review`** on the cut-point Act turn, or jumping to pre-PR spawn without inline Before deploy when plan-anchored; recording implicit **`commit-only`** then StreamFinal with “Act next turn” and **no** Yield / cut-point modal.
+**Forbidden on Checkpoint auto-advance:** resolving to **`commit-only-skip-before-deploy`**, the modal-only “approve and commit” shortcut that omits the Before deploy gate, spawning **`pre-pr-review`** on the cut-point Act turn, or jumping to pre-PR spawn without [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) when plan-anchored; narrating *Before deploy complete via tests* and skipping inline **`deploy-walk`**; recording implicit **`commit-only`** then StreamFinal with “Act next turn” and **no** Yield / gate when manual §7 steps remain.
 
 **Resolved pick id (exception paths only):**
 
@@ -1586,16 +1589,16 @@ Run on the **developer's response turn** after a cut-point pick — **not** in t
 
 | Pick | Actions (in order) |
 |------|---------------------|
-| **`commit-only`** (Before deploy unchecked) | 1. **`git commit`** if `git status --short` is non-empty · 2. Verify clean tree · 3. [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) inline (no second modal) |
+| **`commit-only`** (Before deploy unchecked) | 1. **`git commit`** if `git status --short` is non-empty · 2. Verify clean tree · 3. [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) |
 | **`executive-override-push`** (Before deploy unchecked) | Same as **`commit-only`** row, then **`git push`** on the response turn when commit succeeded — override only |
-| **`commit-only-skip-before-deploy`** | 1. **`git commit`** if dirty · 2. Append dated skip note under §7 or **`## Follow-ups`** |
+| **`commit-only-skip-before-deploy`** | 1. **`git commit`** if dirty · 2. Append dated skip note under §7 or **`## Follow-ups`** · 3. Set **`beforeDeployStatus: skipped`** |
 | **`commit-only`** (Before deploy satisfied or free-form) | 1. **`git commit`** if dirty · 2. Verify clean |
-| **`commit-only`** (Checkpoint auto-advance, plan-anchored) | Same as **`commit-only`** (Before deploy unchecked) row — **always** run inline Before deploy **`deploy-walk`**, even when §7 boxes are already `[x]` |
+| **`commit-only`** (Checkpoint auto-advance, plan-anchored) | Same as **`commit-only`** (Before deploy unchecked) row — **always** enter [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding), even when §7 boxes are already `[x]` (re-attest on the walk) |
 | **`executive-override-push`** (Before deploy satisfied or free-form) | Same as **`commit-only`** row, then **`git push`** when commit succeeded |
-| **`spawn-before-deploy-walk`** | [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) inline |
-| **`skip-before-deploy`** | Dated skip note |
+| **`spawn-before-deploy-walk`** | [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) |
+| **`skip-before-deploy`** | Dated skip note · set **`beforeDeployStatus: skipped`** |
 
-**After cut-point Act completes** (commit + Before deploy satisfied or documented skip): set `outputs.shipPhase: pre-pr-spawn-pending` and **stop** — do **not** spawn on this turn. On the **next turn**, run [Auto-spawn pre-pr-review](#auto-spawn-pre-pr-review) as a spawn-only turn per [Pre-PR spawn turn sequencing](#pre-pr-spawn-turn-sequencing-binding).
+**After Before deploy gate completes** (`beforeDeployStatus: complete` or `skipped`): set `outputs.shipPhase: pre-pr-spawn-pending` and **stop** — do **not** spawn on this turn. On the **next turn**, run [Auto-spawn pre-pr-review](#auto-spawn-pre-pr-review) as a spawn-only turn per [Pre-PR spawn turn sequencing](#pre-pr-spawn-turn-sequencing-binding).
 
 - **`defaultOptionId: commit-only`** when implementation is clean and the tree is dirty (developer may still pick **`more-changes`** or **`defer`**).
 
@@ -1625,13 +1628,31 @@ If commit fails or tree stays dirty after commit, stop with `partial` — do not
 
 1. Run [Return to implementation from deploy walk](#return-to-implementation-from-deploy-walk-new-worktree) — **Branch B** when post-merge cleanup ran (typical; session worktree gone).
 2. **Before** resuming implementation, update PR plan §7 under the new **`WORKTREE_ROOT`**: strengthen **`### Before deploy`** steps that would have caught the defect; add or strengthen **`### After deploy`** smoke steps.
-3. Re-enter the ship chain from [Generic flow](#generic-flow-single-repo) — **forbidden** resume mid-chain at pre-PR, merge, or post-merge gates.
+3. Re-enter the ship chain from [Generic flow](#generic-flow-single-repo) — **forbidden** resume mid-chain at pre-PR, merge, or post-merge gates without passing [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) when **`beforeDeployStatus`** is unset.
+
+## Before deploy gate (Checkpoint — binding)
+
+**Precondition:** [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) **Act** completed (committed when needed, clean tree) **or** [Post-reload / cold session](#post-reload--cold-session-binding) rewind when **`beforeDeployStatus`** is not terminal.
+
+**Purpose:** Explicit ship-chain stop between cut-point commit and **`pre-pr-review`** spawn — **not** folded into cut-point Checkpoint auto-advance compression. Vitest / **`npm test`** pass **≠** **`beforeDeployStatus: complete`**.
+
+**Entry (plan-anchored — binding):**
+
+1. Set `outputs.shipPhase: before-deploy-gate-pending` when entering from cut-point **Act**.
+2. Run [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) inline (`deployWalkScope: before-deploy-only`) — **even when** §7 **`### Before deploy`** items are already `[x]` (re-attest on the walk).
+3. **Manual §7 steps (binding):** After agent-executable pass completes, **must** emit **`mission_control_present_structured_choice`** per **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) on the **same turn** as first manual step presentation — **forbidden** spawn **`pre-pr-review`** while manual items remain `[ ]` without documented skip or developer confirmation.
+4. **Agent-executable-only §7 (binding):** When every Before deploy line is agent-executable and inline **`deploy-walk`** autonomous pass succeeds, **auto-advance** — flip applicable `[x]` with dated notes, set **`beforeDeployStatus: complete`**, **`outputs.shipPhase: pre-pr-spawn-pending`** **same turn** — no extra modal.
+5. **Hard invariant:** **Forbidden** spawn **`pre-pr-review`** while **`outputs.beforeDeployStatus`** is unset, **`pending`**, or manual Before deploy items remain `[ ]` without skip documentation.
+
+**Free-form / skip paths:** **`commit-only-skip-before-deploy`** / **`skip-before-deploy`** at cut-point set **`beforeDeployStatus: skipped`** with dated note — then **`pre-pr-spawn-pending`** on the **next** turn only.
+
+**Calibration:** `incident_before_deploy_skipped_checkpoint_autoadvance_2026-09-02.agent-incident-report.md` — Checkpoint cut-point → pre-PR compression skipped formal deploy-walk when §7 had manual steps.
 
 ## Before deploy deploy-walk handoff
 
 **Precondition:** `outputs.bootstrapStatus: success`. **Do not** run Before deploy **`deploy-walk`** inline while bootstrap is `pending` or `failed`.
 
-Run from [Act after ship cut-point pick](#act-after-ship-cut-point-pick) when the cut-point pick authorizes inline walk (**`commit-only`**, **`executive-override-push`**, or **`spawn-before-deploy-walk`**) — **no second AskQuestion** for the walk on that path. **Do not** spawn **`pre-pr-review`** or run inline **`create-pr`** until this step completes or is skipped via **`commit-only-skip-before-deploy`** / **`skip-before-deploy`**.
+Run from [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) or [Act after ship cut-point pick](#act-after-ship-cut-point-pick) when the pick authorizes inline walk (**`commit-only`**, **`executive-override-push`**, or **`spawn-before-deploy-walk`**) — **no second AskQuestion** for the walk on that path when agent-executable-only §7 auto-advances. **Do not** spawn **`pre-pr-review`** or run inline **`create-pr`** until [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) completes or is skipped via **`commit-only-skip-before-deploy`** / **`skip-before-deploy`**.
 
 When `targetPlanPath` resolves to a PR plan:
 

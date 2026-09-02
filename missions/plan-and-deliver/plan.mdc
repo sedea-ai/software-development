@@ -42,6 +42,7 @@ flowchart TB
   subgraph CS["coding-session lane"]
     direction LR
     CUT["Ship cut-point<br/>review · approve · commit"]:::gate
+    BDG["Before deploy gate<br/>deploy-walk inline"]:::gate
     BDW["Before deploy<br/>deploy-walk inline"]:::inline
     CPR["create-pr"]:::inline
     PRV["pr-review"]:::inline
@@ -49,7 +50,7 @@ flowchart TB
     PMC["Cleanup<br/>pull · detach worktree"]:::proc
     ADW["After deploy<br/>deploy-walk inline"]:::inline
     REC["plan-reconcile<br/>explicit start"]:::inline
-    CUT --> BDW --> CPR
+    CUT --> BDG --> BDW --> CPR
     CPR --> PRV --> WAIT --> PMC --> ADW --> REC
   end
 
