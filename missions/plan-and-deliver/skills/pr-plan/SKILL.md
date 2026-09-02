@@ -494,6 +494,7 @@ When the developer chooses **`prefill-sections`** or asks for a § 7 sketch on t
 | PR-specific verification beyond standing CI and § 6 tests | `plan-reconcile`, archive PR plan, **`pr-ship-complete`** |
 | Production smoke / monitor / rollback checks for **this change** | Pre-PR review, create PR, PR review, approve/merge PR |
 | Submodule attestation when **this PR** changes a gitlink | Worktree setup, attach, cleanup; **`git pull origin main`** |
+| After deploy author note: hosting gitlink promoted, **`HOSTING_ROOT`** refreshed, Reload Window before manual smoke (product gitlink ships) | **`promote-submodule-pin`** as a §7 checkbox — ship chain owns pin promotion |
 | | **`promote-submodule-pin`**, dispatch resolution, generic protocol-step rows |
 
 **`plan-reconcile` wording (binding):** **Forbidden** After deploy lines such as *Archive via plan-reconcile when dispatch closes* or *defer plan-reconcile to dispatch close*. Correct timing: inline on the **active `coding-session` lane while the dispatch is open**, before Squad Leader dispatch resolution — see **development-process.md** § *§7 Deploy test plan — ship-chain boundary*.
