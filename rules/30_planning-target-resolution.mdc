@@ -120,7 +120,7 @@ Do **not** use `<open_and_recently_viewed_files>` as the primary resolver for pl
 
 ## Plans write path resolution (optional nested base)
 
-**On-demand within this rule.** Path-resolution depth for optional **`plansBasePath`** spawn handover is **not** inlined on every dispatch warm-up — **`coding-session`** omits rule **30** from frontmatter (384 KiB cap). **`Read`** this section (or **`../missions/plan-and-deliver/skills/README.md`** § *Spawn handover inputs*) when a planning skill must resolve or forward a plans write directory.
+**On-demand within this rule.** Path-resolution depth for optional **`plansBasePath`** spawn handover is **not** inlined on every dispatch warm-up — **`coding-session`** omits rule **30** from frontmatter (384 KiB cap). **`Read`** this section (or **`../missions/plan-and-deliver/skills/README.md`** § *Spawn handover inputs*) when a planning skill must resolve or forward a plans write directory. Dispatch-scope binding (**`dispatchId`**, forbidden mtime / “newest nested folder” discovery): rule **31** § *Agent dispatch scope (binding)* and § *Plans and docs paths*.
 
 | Priority | Source | Result |
 |----------|--------|--------|

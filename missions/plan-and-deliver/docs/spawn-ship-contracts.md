@@ -39,6 +39,23 @@ Normative slim table: [`skills/README.md`](../skills/README.md) § *Spawn handov
 
 ---
 
+## Center edit destination gate (on-demand detail)
+
+Slim option table and **`USER_CHECKPOINT`** marker live in [`skills/README.md`](../skills/README.md) § *software-development center edit destination gate*. Load this section when **`more-details`** or host routing is ambiguous.
+
+| Active host | Change nature | Pick |
+|-------------|---------------|------|
+| **`centers-development-hosting-repo`** | Durable **`sedea-centers/software-development`** content | **`ship-ce-center-rd`** — center worktree on this host |
+| **`sedea-ai/app`** (app-focused) | App-specific process / ops | **`ship-app-rd`** |
+| Non-CE host | General CE center operating-model change | **`wrong-host-switch`** → CE development host |
+| Uncertain | — | **`more-details`** |
+
+**Modal defaults:** **`defaultOptionId: ship-ce-center-rd`** on **`centers-development-hosting-repo`**; **`ship-app-rd`** on app-focused host when change is app-specific.
+
+**Forbidden:** framing CE center work on **`centers-development-hosting-repo`** as “delegate to base center” or app hosting; **`wrong-host-switch`** when already on CE development host.
+
+---
+
 ### Planning open-item modal contract
 
 Planning composition skills that surface review gaps before approval use the same modal shape as **`author-prd/SKILL.md`** Step **10**. This applies when a planning lane presents open items in generated PRDs, Master Plans, phase plans, PR breakdowns, plan stubs, or PR plans before the developer approves, revises, defers, or starts implementation.
