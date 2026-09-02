@@ -173,7 +173,8 @@ Canonical table: **`.sedea/centers/software-development/docs/development-process
 | How it starts | Lane |
 |---------------|------|
 | Developer phrase (`deploy-walk present <N>`, status, done/skip/block) on active **`coding-session`** | Inline on **`coding-session`** |
-| **`coding-session`** after implementation approval + commit — Before deploy only | Inline (`upstreamSkill: coding-session`, `deployWalkScope: before-deploy-only`) |
+| **`coding-session`** [Before deploy gate](../coding-session/SKILL.md#before-deploy-gate-checkpoint--binding) after cut-point commit — Before deploy only | Inline (`upstreamSkill: coding-session`, `deployWalkScope: before-deploy-only`) — **not** folded into cut-point auto-advance |
+| **`coding-session`** after implementation approval + commit — Before deploy only (legacy path label) | Same as Before deploy gate row — prefer gate entry |
 | **`coding-session`** After deploy — developer chooses **PR merged — start After deploy deploy-walk** at post-create-pr gate | Inline (`upstreamSkill: coding-session`) — full §7 walk |
 | Detached phrase / direct skill dispatch without **`coding-session`** | **Stop** — redirect to **`coding-session`** (see *Standalone dispatch*) |
 
