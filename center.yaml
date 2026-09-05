@@ -63,6 +63,7 @@ missions:
       - missions/debug-and-fix/skills/debug-and-fix/SKILL.md
       - missions/plan-and-deliver/skills/brainstorm-research/SKILL.md
   # Reuses plan-and-deliver SKILL.md paths (no mission-local copies except spawn targets).
+  # G1 hard-wire: when sedea.features.cline-agent-runtime is on, dispatches seed agentRuntime: cline at create.
   - slug: single-phase
     plan: missions/single-phase/plan.mdc
     skills: missions/single-phase/skills/
