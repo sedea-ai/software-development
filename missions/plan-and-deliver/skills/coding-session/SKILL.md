@@ -398,7 +398,7 @@ When the **committed hosting diff** for this ship chain is **gitlink-only** — 
 | PR opened | [Post-create-pr handoff gate](#post-create-pr-handoff-gate) |
 | Post-merge cleanup modal | [Post-merge workspace cleanup](#post-merge-workspace-cleanup) |
 | After deploy walk | [After deploy deploy-walk handoff](#after-deploy-deploy-walk-handoff) |
-| Implementation continuation | [Implementation continuation gate](#implementation-continuation-gate) |
+| Implementation review | [Implementation review gate](#implementation-continuation-gate) |
 
 Inline **`deploy-walk`** and **`pr-review`** on this lane must include the same table per their skill contracts.
 
@@ -492,7 +492,7 @@ On spawned **`coding-session`** lanes, Mission Control opens the AskQuestion UI 
 | Recap + diff summary **without** MCP structured choice on the **same** turn | **No modal** — agent failure |
 | Redirect cut-point to Squad Leader or another tab | § *Post-reload / cold session* — cut-point runs **on this lane** |
 
-**Required instead:** call **`mission_control_present_structured_choice`** (recap in **`displayMarkdown`**; ship options in **`askQuestion`**) per the gate template for that step. During implementation with **no** open ship gate, use [Implementation continuation gate](#implementation-continuation-gate) — **not** rule **2** default options that include push or PR paths.
+**Required instead:** call **`mission_control_present_structured_choice`** (recap in **`displayMarkdown`**; ship options in **`askQuestion`**) per the gate template for that step. During implementation with **no** open ship gate, use [Implementation review gate](#implementation-continuation-gate) — **not** rule **2** default options that include push or PR paths.
 
 ### Every developer-await turn (binding)
 
@@ -501,7 +501,7 @@ On spawned **`coding-session`** lanes, **any** assistant turn where the develope
 | Await point | Modal section |
 |-------------|----------------|
 | Worktree / implementation | [Worktree-open gate](#worktree-open-gate) |
-| Implementation batch (no ship gate open) | [Implementation continuation gate](#implementation-continuation-gate) — **Checkpoint:** auto-advance **`ready-for-review`** when clean; modal only on exception |
+| Implementation batch (no ship gate open) | [Implementation review gate](#implementation-continuation-gate) — **always modal** on every trust level |
 | Plan §5 → `.mdc` reconcile (plan-anchored) | [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) |
 | Review-ready / commit / Before deploy | [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) — **Checkpoint:** auto-advance **`commit-only`** + **Act same turn** when clean; [Yield gate](#yield-gate-checkpoint--binding) if Act cannot continue; modal on exception |
 | Before deploy manual step | § [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) step 4 |
@@ -633,7 +633,7 @@ On a **clean** Checkpoint ship chain (no eligibility failures, named defer/revis
 | **2** | **PR review** — inline **`pr-review`** disposition (Step **3b** / Step **4**) after PR exists | **`pr-review/SKILL.md`** disposition gate on this lane |
 | **3** | **Manual deploy verification** — §7 Production Deploy Steps the agent cannot execute | **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) for **`### Before deploy`** and **`### After deploy`** manual steps |
 
-**Auto-advance under Checkpoint (not consent-modal stops — standard ship operations when Act continues same turn):** [Release-note fragment ship profile](#release-note-fragment-ship-profile-checkpoint--binding) when eligible; worktree-open when [Auto-authorize](#auto-authorize-implementation-pr-plan-spawn) or [Auto-authorize release-note fragment ship](#auto-authorize-release-note-fragment-ship) applies; implementation continuation; repo rules reconciliation; ship cut-point (**Act same turn** — see [Yield gate](#yield-gate-checkpoint--binding) if Act cannot continue); agent-executable Before deploy **`deploy-walk`** steps; **`pre-pr-review`** child **result** handback when Act continues same turn (**spawn turn** emits spawn alone per rule **4** — Yield / #external-wait resume modal on the **next** turn, not batched with spawn); pre-PR findings with **`flags`** / Must / Should (**`fix-now-session`** **same turn** — **no** review-feedback consent modal; append **`proposedFollowUps`** to plan when present); inline **`create-pr`** on clean **`go`** (including **`create-pr`** [Checkpoint — auto-advance `authorize-create-pr`](../create-pr/SKILL.md#checkpoint--auto-advance-authorize-create-pr-binding) — **forbidden:** *Create the pull request now?* consent modal); create-PR when **`hasProposedFollowUps`** only (**`approve-followups-create-pr`** **same turn** — append + open PR); rebase onto **`origin/main`** including conflict resolution and **`--force-with-lease`** push; failing CI remediation; post-fix push + **`pr-review`** Step 5; pre-merge when **`mergeDelegationReady`** (**`approve-merge-pr`**); post-merge cleanup and After deploy agent-executable steps; **`deploy-walk`** [Checkpoint — auto-advance `approve-deploy-closure`](../deploy-walk/SKILL.md#checkpoint--auto-advance-approve-deploy-closure-binding) when After deploy is fully satisfied (**forbidden:** *approve deploy checklist closure?* modal on clean path); inline **`plan-reconcile`** [Checkpoint — auto-advance `approve-reconcile-mutations`](../plan-reconcile/SKILL.md#checkpoint--auto-advance-approve-reconcile-mutations-binding), [Checkpoint — auto-advance own-plan archive](../plan-reconcile/SKILL.md#checkpoint--auto-advance-own-plan-archive-binding), and [Checkpoint — auto-advance `confirm-inline-closure`](../plan-reconcile/SKILL.md#checkpoint--auto-advance-confirm-inline-closure-binding) when clean (**forbidden:** *approve PR-tracked reconcile mutations?*, multi-plan *pick plans to archive?*, and *confirm plan-reconcile inline closure?* on the clean own-plan path).
+**Auto-advance under Checkpoint (not consent-modal stops — standard ship operations when Act continues same turn):** [Release-note fragment ship profile](#release-note-fragment-ship-profile-checkpoint--binding) when eligible; worktree-open when [Auto-authorize](#auto-authorize-implementation-pr-plan-spawn) or [Auto-authorize release-note fragment ship](#auto-authorize-release-note-fragment-ship) applies; repo rules reconciliation after [Implementation review gate](#implementation-continuation-gate) pick; ship cut-point (**Act same turn** — see [Yield gate](#yield-gate-checkpoint--binding) if Act cannot continue); agent-executable Before deploy **`deploy-walk`** steps; **`pre-pr-review`** child **result** handback when Act continues same turn (**spawn turn** emits spawn alone per rule **4** — Yield / #external-wait resume modal on the **next** turn, not batched with spawn); pre-PR findings with **`flags`** / Must / Should (**`fix-now-session`** **same turn** — **no** review-feedback consent modal; append **`proposedFollowUps`** to plan when present); inline **`create-pr`** on clean **`go`** (including **`create-pr`** [Checkpoint — auto-advance `authorize-create-pr`](../create-pr/SKILL.md#checkpoint--auto-advance-authorize-create-pr-binding) — **forbidden:** *Create the pull request now?* consent modal); create-PR when **`hasProposedFollowUps`** only (**`approve-followups-create-pr`** **same turn** — append + open PR); rebase onto **`origin/main`** including conflict resolution and **`--force-with-lease`** push; failing CI remediation; post-fix push + **`pr-review`** Step 5; pre-merge when **`mergeDelegationReady`** (**`approve-merge-pr`**); post-merge cleanup and After deploy agent-executable steps; **`deploy-walk`** [Checkpoint — auto-advance `approve-deploy-closure`](../deploy-walk/SKILL.md#checkpoint--auto-advance-approve-deploy-closure-binding) when After deploy is fully satisfied (**forbidden:** *approve deploy checklist closure?* modal on clean path); inline **`plan-reconcile`** [Checkpoint — auto-advance `approve-reconcile-mutations`](../plan-reconcile/SKILL.md#checkpoint--auto-advance-approve-reconcile-mutations-binding), [Checkpoint — auto-advance own-plan archive](../plan-reconcile/SKILL.md#checkpoint--auto-advance-own-plan-archive-binding), and [Checkpoint — auto-advance `confirm-inline-closure`](../plan-reconcile/SKILL.md#checkpoint--auto-advance-confirm-inline-closure-binding) when clean (**forbidden:** *approve PR-tracked reconcile mutations?*, multi-plan *pick plans to archive?*, and *confirm plan-reconcile inline closure?* on the clean own-plan path).
 
 **Not exceptions (binding):** pre-PR review **`flags`**, PR comment fix loops, rebase conflict resolution, failing CI fix paths, and post-create-pr rebase push — run as **standard operations** without an extra coding-session modal between steps **except** [Post-create-pr handoff gate](#post-create-pr-handoff-gate) stop **1** and **`pr-review`** disposition stop **2**. **Forbidden:** prose-only *Next: inline pr-review* / PR URL recap without post-create-pr **`mission_control_present_structured_choice`** on the **`create-pr`** completion turn — that gate is the resume surface for PR handling, not external-wait.
 
@@ -672,7 +672,7 @@ Under Checkpoint trust, **happy-path protocol steps may auto-advance when this l
 | **Worktree-open gate** | **Gate** when layer 2 modal required — **first developer-pick gate on spawned lane** | Authorize worktree (below) |
 | **Generic flow** steps **1–4** — setup, sidecar, attach, bootstrap | Auto-advance on happy path | exception: bootstrap / attach failure |
 | **Spawned implementation** steps **5–6** | Auto-advance through implementation batches | exception: blocking stop → `partial` result |
-| **Implementation continuation gate** | **Auto-advance** — resolve **`ready-for-review`** when [clean implementation](#implementation-continuation-gate) criteria pass | **Gate** when any clean criterion fails — [Implementation continuation gate](#implementation-continuation-gate) |
+| **Implementation review gate** | **Gate** — **always** emit [Implementation review gate](#implementation-continuation-gate) modal on implementation batch completion | exception: none — successful tests do not skip the modal |
 | **Repo rules reconciliation** + **pre-review verification** (steps **7–8**) | Auto-advance on happy path before ship cut-point | exception: action bullets without `.mdc` diff; verification failures — [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) |
 | **Ship cut-point gate** | **Auto-advance** — resolve **`commit-only`** and **Act same turn** (commit + verify clean tree only — **forbidden** inline Before deploy on cut-point Act) when [clean cut-point](#ship-cut-point-gate-approve-commit-before-deploy) criteria pass; hand off to [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) on plan-anchored runs; if Act cannot continue this turn → [Yield gate](#yield-gate-checkpoint--binding) | **Gate** when any clean criterion fails — [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) |
 | **Before deploy gate** | **Auto-advance** when §7 Before deploy is agent-executable-only and inline **`deploy-walk`** autonomous pass completes same turn | **Gate** when §7 has manual steps — [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) **same turn** as first manual presentation; **forbidden** spawn **`pre-pr-review`** while **`beforeDeployStatus`** unset |
@@ -835,7 +835,7 @@ Single-concern **docs-only** promotion of one approved unreleased fragment onto 
 7. [Post-merge workspace cleanup](#post-merge-workspace-cleanup) when merged.
 8. Terminal **`mission_control_send_agent_result`** with **`outputs.mergeProofVerified: true`**, **`outputs.mergeProofPath`** (= **`hostingFragmentRelPath`**), **`outputs.prState: merged`**, **`outputs.fragmentShipStatus: merged`**.
 
-**Skipped on clean path (binding):** [Pre-worktree validation](#pre-worktree-validation-plan-completeness); [Worktree-open gate](#worktree-open-gate); [Spawned implementation lane](#spawned-implementation-lane); [Implementation continuation gate](#implementation-continuation-gate); [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy); Before deploy / After deploy **`deploy-walk`**; **`pre-pr-review`** spawn; [Post-create-pr handoff gate](#post-create-pr-handoff-gate); inline **`pr-review`** disposition; **`plan-reconcile`**.
+**Skipped on clean path (binding):** [Pre-worktree validation](#pre-worktree-validation-plan-completeness); [Worktree-open gate](#worktree-open-gate); [Spawned implementation lane](#spawned-implementation-lane); [Implementation review gate](#implementation-continuation-gate); [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy); Before deploy / After deploy **`deploy-walk`**; **`pre-pr-review`** spawn; [Post-create-pr handoff gate](#post-create-pr-handoff-gate); inline **`pr-review`** disposition; **`plan-reconcile`**.
 
 **Exceptions (developer-input or failure gates still apply):** bootstrap / attach failure; push or PR create failure; merge blocked by policy; merge proof missing after claimed merge — report **`failure`** / **`partial`** with **`errors`**.
 
@@ -1030,7 +1030,7 @@ Normative path when **`pr-plan`** (or another spawner) opens a **coding-session*
 3. **Warm-up on this lane** — Follow [Session prompt structure](#session-prompt-structure) Phase 1 steps (workspace readiness, worktree name check, load **Project rules** from the worktree, plan file + sidecar when anchored). You may skip emitting a fenced **external** session prompt unless the developer asks for a copy.
 4. **Read the anchored PR plan** — Load `targetPlanPath` (from spawn `inputs` / `initiatingPrompt`). Use §§ **1–4** for scope context; **first implementation work** is substantive fill of §§ **5–8** (replace `_TBD_` as code paths become known), then code/tests/docs per those sections.
 5. **Implement** — Make edits in the appropriate worktree until **implementation ready for developer review** or a blocking stop. **Hosting-repo** tracked files: **`WORKTREE_ROOT`**. **Center git content** under **`.sedea/centers/software-development/`**: open **`../README.md`** § *Software Development center edit destination gate* **before** first center write; edit only in **`CENTER_WORKTREE_ROOT`** (rule **7** § *Worktree directory path (center repo)*, rule **3** § *Center-repo worktree procedure*) — on **`centers-development-hosting-repo`**, default **`ship-ce-center-rd`**, not app-host framing. **Do not** `git commit` or `git push` during implementation — see **20_efficient-pr-shipping.mdc** § *Review before commit* and [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) (ship cut-point also requires `outputs.bootstrapStatus: success`). Maintain **`## Follow-ups`** on the PR plan per **development-process** § *Coding Session*.
-6. **Continuation** — Keep `outputs.continuationStatus: "active"` and `outputs.shipPhase: "implementing"` while work remains. Emit **`mission_control_send_agent_result`** with `status: partial` when blocked; do **not** use `continuationStatus: terminal` to mean “prompt emitted — hand off elsewhere.”
+6. **Continuation** — Keep `outputs.continuationStatus: "active"` and `outputs.shipPhase: "implementing"` while work remains. When an implementation batch passes verification, follow [Implementation-to-ship handoff invariant](#implementation-to-ship-handoff-invariant-binding) — **forbidden** terminal result or parent refocus on the completion turn. Emit **`mission_control_send_agent_result`** with `status: partial` only for **blockers**; do **not** use `partial` or terminal status to hand off after unselected [Implementation review gate](#implementation-continuation-gate).
 7. **Repo rules reconciliation** — When plan-anchored, run [Repo rules reconciliation (binding)](#repo-rules-reconciliation-binding) and pass [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) before step **8** or [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy). Skip when `anchorType` is free-form or plan **§5** is `_None — no repo rule updates required for this PR._` only.
 8. **Pre-review verification** — Before [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy), complete pre-review verification prescribed by applicable **Project rules** paths (hosting-repo **`.cursor/rules/*.mdc`** listed in the session prompt or plan **§5**). **`Read`** each cited rule and run its before-review steps; re-run after each implementation batch. Block the review modal until every prescribed step passes (**exit 0**). Commands and repo-specific paths live in those hosting rules only — do not duplicate them in this skill.
 9. **Ship chain** — When implementation is ready for developer review, step **7** reconciliation passes (or is skipped), and step **8** passes (or no Project rule prescribes verification), follow [Ship chain after implementation](#ship-chain-after-implementation-coding-session-lane) on **this same lane** ([Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) — one modal for approve + commit + Before deploy spawn when applicable → **`pre-pr-review`** → **`create-pr`** when authorized). **Do not** skip Before deploy or open a PR before that order completes.
@@ -1387,37 +1387,32 @@ Include **`executive-override-push`** in a cut-point modal **only** when the dev
 | **Act** | Same as legacy **`commit-push`** at cut-point — [Commit execution](#commit-execution-internal) may push on the response turn |
 | **Default** | When override is **not** named in the message, **omit** **`executive-override-push`** and **`commit-push`** entirely |
 
-## Implementation continuation gate
+## Implementation review gate (binding)
 
-When **`outputs.shipPhase`** is **`implementing`** (or **`worktree`** after bootstrap) and **no** ship gate in § *Every developer-await turn* is open, close an implementation batch here — either auto-advance (Checkpoint clean path) or call **`mission_control_present_structured_choice`** (non-Checkpoint or exception path) using **`modalTitle`**: *Coding session — continue implementation*.
+<a id="implementation-continuation-gate"></a>
 
-### Checkpoint — auto-advance `ready-for-review` (binding)
+When **`outputs.shipPhase`** is **`implementing`** (or **`worktree`** after bootstrap) and **no** ship gate in § *Every developer-await turn* is open, close an implementation batch here. See [Implementation-to-ship handoff invariant](#implementation-to-ship-handoff-invariant-binding).
 
-Under Checkpoint trust, **auto-advance** as if the developer picked **`ready-for-review`** — **no** **`mission_control_present_structured_choice`** — when **all** of the following hold after an implementation batch:
+**Always modal (binding):** After an implementation batch completes, **every** trust level — including Checkpoint — **must** call **`mission_control_present_structured_choice`** on the **same turn** using **`modalTitle`**: *Coding session — implementation review*. **Forbidden:** auto-advancing past this gate; emitting **`mission_control_send_agent_result`** or **`mission_control_refocus_parent_lane`** on the implementation completion turn.
+
+**Pre-modal recap (binding):** [Session orientation table (binding)](#session-orientation-table-binding) as first block; then diff summary (`git status --short`), verification attestation, and scope vs anchored plan when present.
+
+**Clean criteria** (for **`defaultOptionId`** only — **not** for skipping the modal):
 
 1. Step **5** scope for the current batch is complete (no in-progress edits or blocking tool failures).
 2. **No open gotchas** — no unresolved caveats, blocking open items, or honest deferrals in plan **§8** that require developer pick before review.
 3. **No unfixable failing tests** — prescribed pre-review verification (step **8** / Project rules) passes, or is honestly N/A for this PR.
 4. **No material plan divergence** — work matches PR plan **§1 Single concern** and **§3 Change scope** (including substantive §§5–8 fill).
 
-When clean: one-line recap (what landed, verification attestation), then proceed on the **same** or **next** turn as **`ready-for-review`** — run [Repo rules reconciliation (binding)](#repo-rules-reconciliation-binding) when plan-anchored; open [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) or [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) when steps **7–8** preconditions pass.
+USER_CHECKPOINT — approve implementation or continue on this lane.
 
-**Exception — gate required:** When **any** clean criterion fails, the agent cannot honestly attest, or the developer explicitly requests review deferral in the **same** message, call **`mission_control_present_structured_choice`** per below — not prose-only recap.
-
-USER_CHECKPOINT — pick continue implementation or ready for review on this lane.
-
-### Non-Checkpoint and exception modal (binding)
-
-When Checkpoint auto-advance does **not** apply (non-Checkpoint dispatch, or any failed clean criterion above), close the turn with **`mission_control_present_structured_choice`**.
-
-**Option order (binding):** When this gate is shown, **`ready-for-review`** MUST be the **first** actionable option — the recommended default path to [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy). List **`continue-implement`** second.
-
-**Required `options`** (in order):
+**Option order (binding):**
 
 | Option id | Label (brief) |
 |-----------|---------------|
-| `ready-for-review` | Ready for developer review — open ship cut-point |
-| `continue-implement` | Continue implementation on this lane |
+| `approve-implementation-proceed-ship-cutpoint` | **Code approved — proceed to ship cut-point** |
+| `request-changes-continue-implement` | Request changes — continue implementation |
+| `continue-implement` | Continue implementation (more work planned) |
 | `defer` | Defer — pause this lane |
 | `more-details` | More details for option _ |
 
@@ -1425,11 +1420,14 @@ When Checkpoint auto-advance does **not** apply (non-Checkpoint dispatch, or any
 
 | Pick | Actions |
 |------|---------|
-| **`continue-implement`** | Resume [Spawned implementation lane](#spawned-implementation-lane) step 5 |
-| **`ready-for-review`** | Run [Repo rules reconciliation (binding)](#repo-rules-reconciliation-binding) when plan-anchored; then open [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) or [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) on the **next** turn when step **8** pre-review verification passes |
+| **`approve-implementation-proceed-ship-cutpoint`** | Set **`outputs.shipPhase: review-ready`** when appropriate; run [Repo rules reconciliation (binding)](#repo-rules-reconciliation-binding) when plan-anchored; then open [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) or [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) on the **same** or **next** turn when steps **7–8** preconditions pass |
+| **`request-changes-continue-implement`** | Resume [Spawned implementation lane](#spawned-implementation-lane) step **5**; keep **`outputs.shipPhase: implementing`** |
+| **`continue-implement`** | Resume step **5** |
 | **`defer`** | Keep `continuationStatus: active`; no edits until developer continues |
 
-- **`defaultOptionId: ready-for-review`** when implementation is substantially complete and only documented minor deferrals remain in §8 (developer may still pick **`continue-implement`**).
+- **`defaultOptionId: approve-implementation-proceed-ship-cutpoint`** when all clean criteria pass (developer may still pick **`request-changes-continue-implement`** or **`continue-implement`**).
+
+**Legacy alias:** **`ready-for-review`** in downstream prose maps to **`approve-implementation-proceed-ship-cutpoint`**.
 
 ## Ship cut-point gate (approve, commit, Before deploy)
 
@@ -1441,7 +1439,7 @@ When implementation is **ready for developer review** (or the developer signals 
 
 Under Checkpoint trust, **auto-advance** as if the developer picked **`commit-only`** — **no** cut-point consent modal when clean — when **all** of the following hold:
 
-1. [Implementation continuation gate](#implementation-continuation-gate) **clean** criteria pass (batch complete, no open gotchas, no unfixable failing tests, no material plan divergence).
+1. Developer picked **`approve-implementation-proceed-ship-cutpoint`** at [Implementation review gate](#implementation-continuation-gate) (or equivalent legacy **`ready-for-review`** path) and [Implementation review gate](#implementation-continuation-gate) **clean** criteria pass (batch complete, no open gotchas, no unfixable failing tests, no material plan divergence).
 2. Steps **7–8** preconditions pass — repo rules reconciliation complete or skipped; pre-review verification passes or is N/A.
 3. `outputs.bootstrapStatus === 'success'` (or documented attested `--skip-*`).
 4. Developer did **not** pick **`more-changes`**, **`defer`**, or name executive override in the **same** message.
@@ -3122,8 +3120,36 @@ Implement the scoped change described in `@<absolute-targetPlanPath>` §§ 5–7
 
 **Follow-ups discipline.** Append to `## Follow-ups` on that plan when you discover scope-adjacent items.
 
-Stop after implementation; run the **ship chain** ([Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) → Before deploy **`deploy-walk`** when applicable → **`pre-pr-review`**) per **development-process** — **no commit** before cut-point approval.
+Stop after implementation; run the **ship chain** ([Implementation review gate](#implementation-continuation-gate) → [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) → Before deploy **`deploy-walk`** when applicable → **`pre-pr-review`**) per **development-process** — **no commit** before cut-point approval.
 ```
+
+## Implementation-to-ship handoff invariant (binding)
+
+After an implementation batch passes verification, the lane is **`implementation-ready`**, **never terminal**. **`outputs.continuationStatus`** must remain **`active`**. **`outputs.shipPhase`** may advance toward review (`review-ready`) but the lane **must not** call **`mission_control_send_agent_result`**, **`mission_control_refocus_parent_lane`**, or hand control to the parent on the implementation completion turn.
+
+**Required same turn:** (1) [Session orientation table (binding)](#session-orientation-table-binding); (2) diff + verification recap; (3) **`mission_control_present_structured_choice`** at [Implementation review gate](#implementation-continuation-gate) — primary option asks whether the developer **approves the code and wants to proceed to the ship cut-point**.
+
+Successful tests, prior planning approval, or prose recap **do not** substitute for the developer pick. **Forbidden:** conflating “implementation complete” with “ship complete.”
+
+### Implementation-ready state table
+
+| State | Terminal? | Required action |
+|---|---:|---|
+| Implementation ready; dirty/uncommitted worktree | No | Open [Implementation review gate](#implementation-continuation-gate) |
+| Developer requests changes | No | Continue implementation; remain active |
+| Developer defers | No | Remain active / waiting with structured continuation |
+| PR merged but cleanup/deploy/reconcile pending | No | Continue ship chain |
+| `prShipComplete: true`, `shipPhase: done`, cleanup + reconcile complete | Yes | Emit terminal success |
+
+### Terminal-result guard (binding)
+
+**`status: success`** is **forbidden** unless **`outputs.prShipComplete: true`**, **`outputs.shipPhase: done`**, and required cleanup/reconciliation outputs are present. **`status: partial`** is for **blockers**, not unselected checkpoints or ordinary developer review. Evidence the lane remains active: dirty worktree, no PR, no merge, pending cleanup, pending After deploy, pending plan reconciliation.
+
+Refocus is a **post-terminal** convenience — **not** a substitute for the lane's next gate.
+
+**Calibration:** `incident_coding_session_implementation_terminal_before_checkpoint_2026-09-07.agent-incident-report.md` (operations docs when present).
+
+Cross-ref: [Deploy-done emit guard](#deploy-done-emit-guard-binding), [Completion (spawned)](#completion-spawned) MCP preflight **R7**.
 
 ## Completion (spawned)
 
@@ -3139,6 +3165,7 @@ Required `outputs` per **## Implementation handoff result**, **Mission Control s
 | R4 | Re-emit updated MCP result after user-requested follow-up on this lane (same spawn session; host resolves **`correlationId`**) |
 | R5 | **`mission_control_refocus_parent_lane`** — when **Required** per § *MCP parent refocus* below; **omit** on detached / parentless entry |
 | R6 | **Post-merge cleanup terminal emit guard** — when **`prState: merged`** and [Post-merge workspace cleanup](#post-merge-workspace-cleanup) ownership preconditions pass, **`postMergeCleanupStatus`** must be **`success`**, **`skipped_no_stale`**, or documented defer before **`prShipComplete: true`** / success terminal |
+| R7 | **Implementation-to-ship handoff guard** — **`status: success`** **forbidden** unless **`outputs.prShipComplete: true`**, **`outputs.shipPhase: done`**, and required cleanup/reconciliation outputs present; **`status: partial`** **forbidden** when the only blocker is unselected [Implementation review gate](#implementation-continuation-gate) or incomplete ship chain — see [Implementation-to-ship handoff invariant](#implementation-to-ship-handoff-invariant-binding) |
 
 ### MCP parent refocus (`mission_control_refocus_parent_lane`)
 
@@ -3146,7 +3173,10 @@ Required `outputs` per **## Implementation handoff result**, **Mission Control s
 |-------------------------|----------|
 | Detached / parentless entry (no resolvable spawned parent) | **Omit** — do not call refocus |
 | Notify-only turns; mid-ship re-emits while work remains on this lane | **Forbidden** |
+| Implementation-ready; dirty worktree; ship chain incomplete | **Forbidden** |
+| `shipPhase` is `implementing`, `worktree`, or `review-ready` with **`prShipComplete`** absent or false | **Forbidden** |
 | Open **`pre-pr-review`** / ship child; cut-point or post-create gate still open | **Forbidden** |
+| [Implementation review gate](#implementation-continuation-gate) unselected or ship chain incomplete | **Forbidden** |
 | True ship / abandon / blocked terminal with resolvable spawned parent (typical **`pr-plan`** §5d child) | **Required** |
 
 Call **`mission_control_refocus_parent_lane`** (optional `{ "reason": "coding-session-complete" }` — no host-resolved identity keys) **immediately before** **`mission_control_send_agent_result`** when **Required** above. See **`../README.md`** § *Parent refocus on terminal*.

@@ -73,10 +73,21 @@ flowchart TB
   SMG -->|source merged · pin aligned| CPR
 ```
 
-Pre-ship setup on this lane (not shown): implement → [Repo rules reconciliation](../skills/coding-session/SKILL.md#repo-rules-reconciliation-binding) → pre-review verification (step **8**) → [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy). Center **`worktree-setup.sh`** runs before implement (bootstrap inside setup).
+Pre-ship setup on this lane (not shown): implement → [Implementation review gate](../skills/coding-session/SKILL.md#implementation-continuation-gate) → [Repo rules reconciliation](../skills/coding-session/SKILL.md#repo-rules-reconciliation-binding) → pre-review verification (step **8**) → [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy). Center **`worktree-setup.sh`** runs before implement (bootstrap inside setup).
+
+## Implementation-ready handoff (binding)
+
+Named stage: **`implementation-ready → structured review/approval checkpoint → ship cut-point`**.
+
+Emit the [Implementation review gate](../skills/coding-session/SKILL.md#implementation-continuation-gate) on the **implementation completion turn** — **not** after a terminal result. **Forbidden:** **`mission_control_send_agent_result`** or **`mission_control_refocus_parent_lane`** before the developer picks at the review gate. “Code is okay — proceed” is a **developer choice**; passing tests does not authorize commit or parent handback.
+
+Normative owner for invariant detail: [Implementation-to-ship handoff invariant](../skills/coding-session/SKILL.md#implementation-to-ship-handoff-invariant-binding).
+
+**Calibration:** `incident_coding_session_implementation_terminal_before_checkpoint_2026-09-07.agent-incident-report.md` (operations docs when present).
 
 | Step | Section | Mode | Commit required? | Modal? |
 |------|---------|------|------------------|--------|
+| −1 | [Implementation review gate](../skills/coding-session/SKILL.md#implementation-continuation-gate) | gate | **No** | **Yes — always** |
 | 0 | [Repo rules reconciliation](../skills/coding-session/SKILL.md#repo-rules-reconciliation-binding) | gate + procedure | **No** | **Yes** (plan-anchored; skip when §5 `_None_` only) |
 | 1 | [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy) | gate | **No** for review — combined modal covers approve + commit (Before deploy is a separate gate) | **Yes** |
 | 1b | [Before deploy gate](../skills/coding-session/SKILL.md#before-deploy-gate-checkpoint--binding) | gate + inline | **Yes** — after cut-point **Act**; inline **`deploy-walk`** runs here | **Yes** when §7 has manual steps — Manual step await **same turn**; **No** when agent-executable-only |
@@ -124,49 +135,16 @@ Include **`executive-override-push`** in a cut-point modal **only** when the dev
 | **Act** | Same as legacy **`commit-push`** at cut-point — [Commit execution](coding-session-ship-chain.md#commit-execution-internal) may push on the response turn |
 | **Default** | When override is **not** named in the message, **omit** **`executive-override-push`** and **`commit-push`** entirely |
 
-## Implementation continuation gate
+## Implementation review gate
 
-When **`outputs.shipPhase`** is **`implementing`** (or **`worktree`** after bootstrap) and **no** ship gate in § *Every developer-await turn* is open, close an implementation batch here — either auto-advance (Checkpoint clean path) or call **`mission_control_present_structured_choice`** (non-Checkpoint or exception path) using **`modalTitle`**: *Coding session — continue implementation*.
+**Normative owner:** [`coding-session/SKILL.md`](../skills/coding-session/SKILL.md#implementation-continuation-gate) § *Implementation review gate (binding)* and [Implementation-to-ship handoff invariant](../skills/coding-session/SKILL.md#implementation-to-ship-handoff-invariant-binding).
 
-### Checkpoint — auto-advance `ready-for-review` (binding)
+On-demand summary:
 
-Under Checkpoint trust, **auto-advance** as if the developer picked **`ready-for-review`** — **no** **`mission_control_present_structured_choice`** — when **all** of the following hold after an implementation batch:
-
-1. Step **5** scope for the current batch is complete (no in-progress edits or blocking tool failures).
-2. **No open gotchas** — no unresolved caveats, blocking open items, or honest deferrals in plan **§8** that require developer pick before review.
-3. **No unfixable failing tests** — prescribed pre-review verification (step **8** / Project rules) passes, or is honestly N/A for this PR.
-4. **No material plan divergence** — work matches PR plan **§1 Single concern** and **§3 Change scope** (including substantive §§5–8 fill).
-
-When clean: one-line recap (what landed, verification attestation), then proceed on the **same** or **next** turn as **`ready-for-review`** — run [Repo rules reconciliation (binding)](../skills/coding-session/SKILL.md#repo-rules-reconciliation-binding) when plan-anchored; open [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) or [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy) when steps **7–8** preconditions pass.
-
-**Exception — gate required:** When **any** clean criterion fails, the agent cannot honestly attest, or the developer explicitly requests review deferral in the **same** message, call **`mission_control_present_structured_choice`** per below — not prose-only recap.
-
-USER_CHECKPOINT — pick continue implementation or ready for review on this lane.
-
-### Non-Checkpoint and exception modal (binding)
-
-When Checkpoint auto-advance does **not** apply (non-Checkpoint dispatch, or any failed clean criterion above), close the turn with **`mission_control_present_structured_choice`**.
-
-**Option order (binding):** When this gate is shown, **`ready-for-review`** MUST be the **first** actionable option — the recommended default path to [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy). List **`continue-implement`** second.
-
-**Required `options`** (in order):
-
-| Option id | Label (brief) |
-|-----------|---------------|
-| `ready-for-review` | Ready for developer review — open ship cut-point |
-| `continue-implement` | Continue implementation on this lane |
-| `defer` | Defer — pause this lane |
-| `more-details` | More details for option _ |
-
-**Forbidden** on this gate: **`commit-push`**, push labels, any create-PR option ids, rule **2** *Commit + push* / *Open PR* defaults, or repurposing [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy) options here.
-
-| Pick | Actions |
-|------|---------|
-| **`continue-implement`** | Resume [Spawned implementation lane](../skills/coding-session/SKILL.md#spawned-implementation-lane) step 5 |
-| **`ready-for-review`** | Run [Repo rules reconciliation (binding)](../skills/coding-session/SKILL.md#repo-rules-reconciliation-binding) when plan-anchored; then open [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) or [Ship cut-point gate](coding-session-ship-chain.md#ship-cut-point-gate-approve-commit-before-deploy) on the **next** turn when step **8** pre-review verification passes |
-| **`defer`** | Keep `continuationStatus: active`; no edits until developer continues |
-
-- **`defaultOptionId: ready-for-review`** when implementation is substantially complete and only documented minor deferrals remain in §8 (developer may still pick **`continue-implement`**).
+- After an implementation batch completes, **always** emit the review modal on the **same turn** — **every** trust level, including Checkpoint.
+- Primary option: **`approve-implementation-proceed-ship-cutpoint`** — *Code approved — proceed to ship cut-point*.
+- **Forbidden** on the implementation completion turn: **`mission_control_send_agent_result`**, **`mission_control_refocus_parent_lane`**, or parent handback before the developer pick.
+- See [Implementation-ready handoff (binding)](#implementation-ready-handoff-binding) above for the named stage in the ship chain.
 
 ## Ship cut-point gate (approve, commit, Before deploy)
 
@@ -178,7 +156,7 @@ When implementation is **ready for developer review** (or the developer signals 
 
 Under Checkpoint trust, **auto-advance** as if the developer picked **`commit-only`** — **no** cut-point consent modal when clean — when **all** of the following hold:
 
-1. [Implementation continuation gate](coding-session-ship-chain.md#implementation-continuation-gate) **clean** criteria pass (batch complete, no open gotchas, no unfixable failing tests, no material plan divergence).
+1. Developer picked **`approve-implementation-proceed-ship-cutpoint`** at [Implementation review gate](../skills/coding-session/SKILL.md#implementation-continuation-gate) and that gate's **clean** criteria pass (batch complete, no open gotchas, no unfixable failing tests, no material plan divergence).
 2. Steps **7–8** preconditions pass — repo rules reconciliation complete or skipped; pre-review verification passes or is N/A.
 3. `outputs.bootstrapStatus === 'success'` (or documented attested `--skip-*`).
 4. Developer did **not** pick **`more-changes`**, **`defer`**, or name executive override in the **same** message.
