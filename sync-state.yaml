@@ -1,5 +1,5 @@
 ---
-lastSyncedUpstreamSha: 94b91ac8b0fe182f856a26a1c00097b2fad9849c
+lastSyncedUpstreamSha: dc19841c8d9a8ece86f8afb0fc4627ead50605a7
 history:
 - upstreamSha: 06d12a4b7e4ceadc6982f7a82bde69bf61ef28e4
   recordedAt: '2026-08-27T03:45:30Z'
@@ -16,6 +16,9 @@ history:
 - upstreamSha: 94b91ac8b0fe182f856a26a1c00097b2fad9849c
   recordedAt: '2026-09-02T21:28:58Z'
   centerPrUrl: https://github.com/sedea-ai/software-development/pull/71
+- upstreamSha: dc19841c8d9a8ece86f8afb0fc4627ead50605a7
+  recordedAt: '2026-09-07T12:31:38Z'
+  centerPrUrl: https://github.com/sedea-ai/software-development/pull/73
 prMetadataCache:
 - prNumber: 63
   repo: sedea-ai/software-development
@@ -46,4 +49,10 @@ prMetadataCache:
   axis: downstream
   mergeCommit: 7dd9bcc665eafc51c8a102edffc02d6f7d3f17d1
   lastVerifiedAt: '2026-09-02T21:28:58Z'
+  classification: preserved
+- prNumber: 73
+  repo: sedea-ai/software-development
+  axis: downstream
+  mergeCommit: 2b85b4b55f9b998d08e57013f866966ee8c28a7f
+  lastVerifiedAt: '2026-09-07T12:31:38Z'
   classification: preserved
