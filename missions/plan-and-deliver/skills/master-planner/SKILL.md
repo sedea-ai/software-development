@@ -45,6 +45,20 @@ inputs:
       Optional absolute handover path to a dispatch-scoped plans write folder.
       When omitted, resolve from target/parent plan paths or flat plans root fallback.
     required: false
+  masterPlanPath:
+    type: string
+    description: >-
+      Absolute path to the Master Plan `.plan.md` this lane owns. Squad Leader
+      may omit at spawn (pre-scaffold); lane must set from Step 5 scaffold output
+      before Step 7 decomposition. Required before any Step 7b/7c decomposition
+      or expand option is offered.
+    required: false
+  targetPlanSlug:
+    type: string
+    description: >-
+      Slug derived from `masterPlanPath` basename (strip `.plan.md` only).
+      Set together with `masterPlanPath`; required at decomposition gates.
+    required: false
 laneRules:
   - ".sedea/centers/sedea/rules/2_ask-question-instructions.mdc"
   - ".sedea/centers/software-development/rules/30_planning-target-resolution.mdc"
@@ -218,6 +232,8 @@ The **Squad Leader** must pass **`inputs`** keys that match this skill’s front
 | `prdRef` | yes | Readable PRD URL, `@path`, or absolute path |
 | `parent` | yes | Parent slug, `@path`, or absolute plan path. When §4 seed has **`Parent: null`**, emit **`"parent": "null"`** (string sentinel) in spawn JSON — **not** JSON `null`. |
 | `related` | no | Array; use `[]` when §4 has no related docs |
+| `masterPlanPath` | when known at spawn | Absolute Master Plan path; Squad Leader may omit pre-scaffold — lane **must** set after Step **5** write |
+| `targetPlanSlug` | when `masterPlanPath` set | Basename of `masterPlanPath` without `.plan.md` — derive only from that path |
 
 ### Wire encoding — nullable `parent` (binding)
 
@@ -568,6 +584,8 @@ prs: []
 
 Both files must be written in the same skill turn so the operations plan pair is consistent on first write.
 
+**Persist target identity (binding):** After the scaffold write, set lane ledger **`masterPlanPath`** = absolute path to `<slug>.plan.md` and **`targetPlanSlug`** = slug from basename (strip `.plan.md` only). Echo both in the status line. These fields are required before Step **7b** decomposition or expand options — see § *Target identity preflight*.
+
 After writing, present the plan file as a backtick path so Mission Control can open it. Prefer the hosting-absolute path; a `.sedea/operations/…/plans/…` path is also valid:
 
 > Plan file: `<absolute-targetPlanPath>`
@@ -743,6 +761,24 @@ Do **not** draft section 6 (`Delivery phases | PR breakdown`) or section 7 (Cave
 
 §6 decomposition runs **`delivery-phases`** or **`pr-breakdown`** **inline on this lane** (no child lane for those skills). §7 **Caveats** is drafted **inline** in this skill when the user selects that option.
 
+### Target identity preflight (binding)
+
+Run **before** Step **7b** offers **`route-6`**, **`expand-eligible-pr`**, **`expand-next-phase`**, or any inline **`delivery-phases`** / **`pr-breakdown`** handoff (Step **7c**).
+
+1. Resolve **`masterPlanPath`** (highest confidence first): spawn **`inputs.masterPlanPath`** → Step **5** scaffold absolute path on lane ledger → prior terminal **`outputs.masterPlanPath`** on re-emit.
+2. Derive **`targetPlanSlug`** from **`masterPlanPath`** basename — strip **`.plan.md`** only. **Forbidden:** PR-index inference, mtime sort, or search under **`.sedea/operations/**/plans/`** to discover the active Master Plan.
+3. When either field is missing or the path is not readable on disk → **stop** before decomposition menus. Open contract-gap structured choice via **`mission_control_present_structured_choice`**:
+
+| Option id (example) | Label (brief) |
+|---------------------|---------------|
+| `paste-plan-path` | Paste authoritative Master Plan path |
+| `defer` | Defer decomposition |
+| `more-details` | More details for option _ |
+
+**Forbidden on contract gap:** candidate-plan search; **`ls`** / mtime sort across operations plans; selecting a plan from PR list index alone without authoritative path + slug.
+
+4. On every **`mission_control_send_agent_result`** re-emit, include **`outputs.masterPlanPath`** and **`outputs.masterPlanSlug`** (alias **`targetPlanSlug`** on inline handoff tables).
+
 **Continuation ownership.** When this skill runs as a spawned **Master Plan agent** under **`plan and deliver`**, this lane owns post–Master Plan continuation and downstream spawning **except phase-scoped delivery** — once inline **`new-plan`** opens a **`phase-planner`** child lane, that child owns the phase subtree until **`phaseShipComplete`** or explicit defer/abandon; this lane **acknowledges only** (Step **7b** *Phase-planner child active*). The **Squad Leader** only acknowledges status and maintains the closure ledger — no duplicate route **AskQuestion** on the leader lane. Include `continuationOwner: "master-plan-agent"` and `continuationStatus: "active"` in the terminal result while follow-up remains on this lane.
 
 ### Step 7a — Recap after initial draft
@@ -765,6 +801,8 @@ Apply the shared planning open-item contract from `../README.md` to every **mast
 **When no open items remain** — use the existing single terminal gate question for Step **7b**, Step **7c**, §7 approval, or resume/expand.
 
 ### Step 7b — Structured choice: primary next moves
+
+**Prerequisite:** § *Target identity preflight* must pass — **forbidden** offer **`route-6`** or expand options when **`masterPlanPath`** / **`targetPlanSlug`** are absent.
 
 Invoke **AskQuestion** or **`mission_control_present_structured_choice`** in the **same turn** as step **7a** recap when practical. **Obsolete:** structured choice in a **separate** assistant message after step **7a** without MCP structured choice on that follow-up. Build options from plan state and Step 6c band.
 
@@ -835,12 +873,13 @@ Execute **only** what the user selected in **AskQuestion** (or the matching **`o
 
 #### Route §6 decomposition (`route-6`)
 
-1. **Structured choice** — **AskQuestion**, **`mission_control_present_structured_choice`**: **Delivery phases** vs **PR breakdown** (align with **`### Decomposition assessment`** when possible). Prefer one message; split only when a long draft was sent in the prior message.
-2. Load and follow the chosen skill **inline** on this lane (see **Inline handoff** above):
+1. **Preflight:** § *Target identity preflight* must pass — **forbidden** load inline decomposition skills when **`masterPlanPath`** / **`targetPlanSlug`** are missing.
+2. **Structured choice** — **AskQuestion**, **`mission_control_present_structured_choice`**: **Delivery phases** vs **PR breakdown** (align with **`### Decomposition assessment`** when possible). Prefer one message; split only when a long draft was sent in the prior message.
+3. Load and follow the chosen skill **inline** on this lane (see **Inline handoff** above):
  - `.sedea/centers/software-development/missions/plan-and-deliver/skills/delivery-phases/SKILL.md` — `routeLock: "delivery-phases"`
  - `.sedea/centers/software-development/missions/plan-and-deliver/skills/pr-breakdown/SKILL.md` — `routeLock: "pr-breakdown"`; under Checkpoint trust follow § *Checkpoint turn UX (skill-local)* (Step **4** route gate when dual-title is `_TBD_`; Step **6** PR list approval when **K > 0**)
-3. Pass inline context: `targetPlanPath`, `targetPlanSlug`, `parentAgentRole: "master-plan-agent"`, `ledgerParent: <masterPlanSlug>`, `complexityBand`, `complexityScore`, `decompositionAssessment`, `routeLock`.
-4. When the inline skill returns **`## Completion (inline)`** fields, merge `activeLanes`, `openLedgerEntries`, `spawnedPlans`, `remainingTasks`, **`expandEligibleIndices`**, and **`expandNextEligibleIndex`** into this skill’s ledger. Append each new child **`planPath`** / **`planSlug`** from inline **`new-plan`** (including inline **`pr-plan`**) into **`outputs.spawnedPlans`** on the next **`mission_control_send_agent_result`** re-emit so Mission Control lane documents list PR plans — not only **`masterPlanPath`**. If the inline skill opened **`phase-planner`** child lanes or **`coding-session`** from inline **`pr-plan`**, wait on this lane for their **`mission_control_send_agent_result`** deliveries per that skill’s aggregation step, then continue **`master-planner`** Step **7b** — **do not** emit child lanes for **`delivery-phases`**, **`pr-breakdown`**, or **`new-plan`**.
+4. Pass inline context from preflight only: `targetPlanPath` = **`masterPlanPath`**, `targetPlanSlug` = **`targetPlanSlug`**, `parentAgentRole: "master-plan-agent"`, `ledgerParent: <targetPlanSlug>`, `complexityBand`, `complexityScore`, `decompositionAssessment`, `routeLock`. **Forbidden:** infer `targetPlanPath` from modal option id or PR row index alone.
+5. When the inline skill returns **`## Completion (inline)`** fields, merge `activeLanes`, `openLedgerEntries`, `spawnedPlans`, `remainingTasks`, **`expandEligibleIndices`**, and **`expandNextEligibleIndex`** into this skill’s ledger. Append each new child **`planPath`** / **`planSlug`** from inline **`new-plan`** (including inline **`pr-plan`**) into **`outputs.spawnedPlans`** on the next **`mission_control_send_agent_result`** re-emit so Mission Control lane documents list PR plans — not only **`masterPlanPath`**. If the inline skill opened **`phase-planner`** child lanes or **`coding-session`** from inline **`pr-plan`**, wait on this lane for their **`mission_control_send_agent_result`** deliveries per that skill’s aggregation step, then continue **`master-planner`** Step **7b** — **do not** emit child lanes for **`delivery-phases`**, **`pr-breakdown`**, or **`new-plan`**.
 
 5. Run Step **7c.5** when `newFeatureFlag` is still unset and §6 made delivery PR (or multi-phase) count known — **before** Step **7b** menus or Start coding session handoff when this lane still owns the next pick.
 
