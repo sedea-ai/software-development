@@ -392,6 +392,7 @@ When the **committed hosting diff** for this ship chain is **gitlink-only** — 
 |------|---------|
 | Repo rules reconciliation | [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) |
 | Ship cut-point | [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) |
+| Before deploy gate | [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) |
 | Before deploy walk | [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) |
 | Pre-PR handback | [Pre-PR review handoff](#pre-pr-review-handoff) |
 | PR opened | [Post-create-pr handoff gate](#post-create-pr-handoff-gate) |
@@ -1583,6 +1584,15 @@ Before ending a turn that opens [Ship cut-point gate](#ship-cut-point-gate-appro
 4. **`commit-push`** and create-PR option ids are **absent** unless [Pre-PR ship gate (push/PR)](#pre-pr-ship-gate-pushpr) allows **`executive-override-push`** on this message.
 5. Message contains **no** prose-only *advisory* / *pick in chat* / *I'll wait* closing — if any check fails, fix before send.
 
+### Pre-send self-check (Before deploy gate)
+
+Before ending a turn that stops at [Before deploy gate (Checkpoint — binding)](#before-deploy-gate-checkpoint--binding) for manual §7 testing (including **`mission_control_present_structured_choice`** via inline **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding)):
+
+1. Resolve **`outputs.worktreePath`** / **`WORKTREE_ROOT`** from session state — **forbidden** `—` on **Worktree** or **Code IO** rows while the session worktree exists.
+2. **`displayMarkdown`** **must** lead with [Session orientation table (binding)](#session-orientation-table-binding) — populate **Worktree**, **Code IO**, **Branch**, **Deploy scope** (`Before deploy`), and **Plan** when known.
+3. Inline **`deploy-walk`** manual presentations inherit the same table per **`deploy-walk`** § *Session orientation table (binding)* — parent **`coding-session`** **must not** omit worktree path before first manual step presentation.
+4. **Forbidden:** prose-only manual-step stop, modal, or *tell me when* handoff without absolute worktree path — developer cannot run local app tests without **`cd <WORKTREE_ROOT>`**.
+
 ### Act after ship cut-point pick
 
 Run on the **developer's response turn** after a cut-point pick — **not** in the same assistant turn as the modal.
@@ -1639,10 +1649,11 @@ If commit fails or tree stays dirty after commit, stop with `partial` — do not
 **Entry (plan-anchored — binding):**
 
 1. Set `outputs.shipPhase: before-deploy-gate-pending` when entering from cut-point **Act**.
-2. Run [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) inline (`deployWalkScope: before-deploy-only`) — **even when** §7 **`### Before deploy`** items are already `[x]` (re-attest on the walk).
-3. **Manual §7 steps (binding):** After agent-executable pass completes, **must** emit **`mission_control_present_structured_choice`** per **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) on the **same turn** as first manual step presentation — **forbidden** spawn **`pre-pr-review`** while manual items remain `[ ]` without documented skip or developer confirmation.
-4. **Agent-executable-only §7 (binding):** When every Before deploy line is agent-executable and inline **`deploy-walk`** autonomous pass succeeds, **auto-advance** — flip applicable `[x]` with dated notes, set **`beforeDeployStatus: complete`**, **`outputs.shipPhase: pre-pr-spawn-pending`** **same turn** — no extra modal.
-5. **Hard invariant:** **Forbidden** spawn **`pre-pr-review`** while **`outputs.beforeDeployStatus`** is unset, **`pending`**, or manual Before deploy items remain `[ ]` without skip documentation.
+2. **Worktree path visibility (binding):** Resolve and record **`outputs.worktreePath`** from **`WORKTREE_ROOT`**. Every turn that stops at this gate for manual §7 testing **must** lead **`displayMarkdown`** with [Session orientation table (binding)](#session-orientation-table-binding) per [Pre-send self-check (Before deploy gate)](#pre-send-self-check-before-deploy-gate) — **forbidden** manual-step modal without populated **Worktree** / **Code IO** rows while session worktree exists.
+3. Run [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) inline (`deployWalkScope: before-deploy-only`) — **even when** §7 **`### Before deploy`** items are already `[x]` (re-attest on the walk).
+4. **Manual §7 steps (binding):** After agent-executable pass completes, **must** emit **`mission_control_present_structured_choice`** per **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) on the **same turn** as first manual step presentation — **forbidden** spawn **`pre-pr-review`** while manual items remain `[ ]` without documented skip or developer confirmation.
+5. **Agent-executable-only §7 (binding):** When every Before deploy line is agent-executable and inline **`deploy-walk`** autonomous pass succeeds, **auto-advance** — flip applicable `[x]` with dated notes, set **`beforeDeployStatus: complete`**, **`outputs.shipPhase: pre-pr-spawn-pending`** **same turn** — no extra modal.
+6. **Hard invariant:** **Forbidden** spawn **`pre-pr-review`** while **`outputs.beforeDeployStatus`** is unset, **`pending`**, or manual Before deploy items remain `[ ]` without skip documentation.
 
 **Free-form / skip paths:** **`commit-only-skip-before-deploy`** / **`skip-before-deploy`** at cut-point set **`beforeDeployStatus: skipped`** with dated note — then **`pre-pr-spawn-pending`** on the **next** turn only.
 
