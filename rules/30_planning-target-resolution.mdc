@@ -238,6 +238,19 @@ Each planning skill (**new-plan**, **phase-planner**, **pr-plan**, **delivery-ph
 
 Skills still run their own **template / stage verification** on disk. If a skill loads without a resolved target, **stop** and resolve via this rule before proceeding.
 
+## Handoff invariants (plan identity)
+
+Planning target resolution governs **which plan file** is active; upstream skills must **supply** identity before downstream skills consume it.
+
+| Layer | Responsibility |
+|-------|----------------|
+| **`master-planner`** | Owns Master Plan path; persists **`masterPlanPath`** / **`targetPlanSlug`** before Step **7b** decomposition (see **`master-planner/SKILL.md`** § *Target identity preflight*) |
+| **`pr-breakdown`** | Validates inline handoff **`targetPlanPath`** / **`targetPlanSlug`** before Step **1** and before **`approve-list`** → **`new-plan`** |
+| **`new-plan`** | **Generates** child slug and path (`§ Slug and filename` in **`new-plan/SKILL.md`**) |
+| **`pr-plan`** | **Consumes** pre-resolved **`targetPlanPath`** / **`targetPlanSlug`** from inline handoff — does not infer from PR index or filesystem search |
+
+**Regression cue:** Two-row PR breakdown with missing target identity → contract-gap structured choice on the planning lane, not candidate-plan search under **`.sedea/operations/**/plans/`**.
+
 ## Checkpoint step continuation (binding)
 
 This file is the **planning-target resolution contract** (snapshot tables, depth-first gates, plan-path binding) — not a mission protocol with executable ship steps. Under **`trustLevel: checkpoint`**, developer-pick UX for ambiguous targets and lane-change snapshots still uses **AskQuestion** / **`mission_control_present_structured_choice`** per § *Sedea input channel*; mid-flow unambiguous hops **auto-advance**. **Do not** add literal `USER_CHECKPOINT` gate markers here for happy-path resolution or depth-first eligibility compute — markers and option tables live on invoker planning skills (`master-planner`, `phase-planner`, `pr-plan`, `new-plan`, …) and rule **2**.

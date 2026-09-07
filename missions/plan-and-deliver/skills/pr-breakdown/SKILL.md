@@ -212,6 +212,14 @@ Under Checkpoint trust, **happy-path** protocol steps (target verify, assessment
 
 ### Inline invoker lane (binding)
 
+When **`parentAgentRole`** is **`master-plan-agent`** or **`phase-planner-agent`**, this skill runs **inline** on the invoker lane — **not** standalone spawned.
+
+**Inline invoker target preflight (binding — before Step 1):**
+
+1. Require **`inputs.targetPlanPath`** and **`inputs.targetPlanSlug`** — both must be non-empty absolute path + slug from upstream preflight.
+2. When either is missing → report **`## Completion (inline)`** with `status: partial`, `failureReason: contract-gap-missing-target`, and **forbidden** filesystem discovery under **`.sedea/operations/**/plans/`**.
+3. When path is missing on disk → same contract-gap return — **forbidden** candidate-plan search.
+
 When **`parentAgentRole`** is **`phase-planner-agent`**, this skill runs **inline on the active phase-planner child lane** with **`targetPlanPath`** = **the phase plan** — including single-PR (`prBreakdownShape: "single"`). The **write target** and **execution lane** align on the phase file.
 
 **Forbidden:**
@@ -497,6 +505,8 @@ When approval or expansion has open items (sequencing caveats, row-specific bloc
 ### Act after developer selects
 
 In a **new** assistant turn after the developer selects an option in the approval modal:
+
+**Preflight before `approve-list` / `expand-eligible` (binding):** Re-assert **`inputs.targetPlanPath`** and **`inputs.targetPlanSlug`** are present and readable. When missing, return **`## Completion (inline)`** with `failureReason: contract-gap-missing-target` — **forbidden** run inline **`new-plan`**. Pass both fields unchanged into each inline **`new-plan`** handoff.
 
 | Choice | Action |
 | --- | --- |
