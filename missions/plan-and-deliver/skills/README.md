@@ -185,7 +185,7 @@ Host MCP spawn/result and forbidden identity keys — rule **4** § *Agent-to-ag
 |------|--------|
 | M1 | Read target **`SKILL.md`** — confirm it documents MCP as primary (or MCP with MCP first) before switching off MCP-only |
 | M2 | Every **`required: true`** input in skill frontmatter appears in MCP **`inputs`** with a valid value (see MCP spawn preflight) |
-| M2b | **`master-planner`** / inline decomposition invokers — `masterPlanPath` + `targetPlanSlug` (or `targetPlanPath` + `targetPlanSlug` for **`pr-breakdown`**) present before decomposition menus or **`approve-list`** act; contract-gap gate when absent — **forbidden** operations-folder search |
+| M2b | **`master-planner`** / inline decomposition invokers — `masterPlanPath` + `targetPlanSlug` (or `targetPlanPath` + `targetPlanSlug` for **`pr-breakdown`**) present before decomposition menus or **`approve-list`** act; contract-gap gate when absent — **forbidden** operations-folder search. After reload, also accept re-injected spawn **`inputs`** / terminal **`outputs`** and single unambiguous Relevant Links plan per **`master-planner`** § *Post-restore reload* |
 | M3 | Required MCP args present: **`skillPath`**, **`slug`**, **`name`**, **`description`**, **`inputs`** — camelCase keys match skill frontmatter |
 | M4 | **Forbidden args absent** — no host-resolved identity keys (§ *Host-resolved identity* above) |
 | M5 | Optional only when needed: **`warmUpRules`**, **`initiatingPrompt`** (≤ 32 KiB) |

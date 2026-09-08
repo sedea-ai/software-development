@@ -764,7 +764,12 @@ Do **not** draft section 6 (`Delivery phases | PR breakdown`) or section 7 (Cave
 
 Run **before** Step **7b** offers **`route-6`**, **`expand-eligible-pr`**, **`expand-next-phase`**, or any inline **`delivery-phases`** / **`pr-breakdown`** handoff (Step **7c**).
 
-1. Resolve **`masterPlanPath`** (highest confidence first): spawn **`inputs.masterPlanPath`** → Step **5** scaffold absolute path on lane ledger → prior terminal **`outputs.masterPlanPath`** on re-emit.
+1. Resolve **`masterPlanPath`** (highest confidence first):
+   - spawn **`inputs.masterPlanPath`** / **`inputs.targetPlanSlug`** (includes post-restore re-injection per [`.sedea/centers/sedea/rules/4_mission.mdc`](.sedea/centers/sedea/rules/4_mission.mdc) § *Resume after reload / app restart (spawned lanes)*)
+   - re-injected prior terminal **`outputs.masterPlanPath`** / **`outputs.masterPlanSlug`** in spawn handover or post-restore preamble
+   - exactly **one** lane **Relevant Links** entry with **`kind: plan`** — use that absolute path when unambiguous; **forbidden** when zero or more than one
+   - Step **5** scaffold absolute path on lane ledger (live session)
+   - prior terminal **`outputs.masterPlanPath`** on re-emit (same session)
 2. Derive **`targetPlanSlug`** from **`masterPlanPath`** basename — strip **`.plan.md`** only. **Forbidden:** PR-index inference, mtime sort, or search under **`.sedea/operations/**/plans/`** to discover the active Master Plan.
 3. When either field is missing or the path is not readable on disk → **stop** before decomposition menus. Open contract-gap structured choice via **`mission_control_present_structured_choice`**:
 
@@ -775,6 +780,16 @@ Run **before** Step **7b** offers **`route-6`**, **`expand-eligible-pr`**, **`ex
 | `more-details` | More details for option _ |
 
 **Forbidden on contract gap:** candidate-plan search; **`ls`** / mtime sort across operations plans; selecting a plan from PR list index alone without authoritative path + slug.
+
+#### Post-restore reload (binding)
+
+On the **first substantive turn** after Mission Control reload, app restart, or post-restore cold send (see rule **4** § *Resume after reload / app restart (spawned lanes)*):
+
+1. **Re-anchor** — read assigned **`SKILL.md`** and re-injected spawn handover before acting; **forbidden** infer next step from center rules or README alone.
+2. Run § *Target identity preflight* using the expanded resolution order in step **1** above — consume re-injected **`inputs`** / terminal **`outputs`** when the host supplies them.
+3. When the host omits re-injected path identity, contract-gap structured choice is **correct** — **forbidden** compensate with filesystem search.
+
+Host fix spec (Track A): hosting-repo operations doc `master-planner-reload-host-fix-report.md` — skill pass (Track B) documents consumption only; does not replace host re-injection.
 
 4. On every **`mission_control_send_agent_result`** re-emit, include **`outputs.masterPlanPath`** and **`outputs.masterPlanSlug`** (alias **`targetPlanSlug`** on inline handoff tables).
 
