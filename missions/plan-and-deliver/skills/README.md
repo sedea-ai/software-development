@@ -91,8 +91,7 @@ Omit `plansBasePath` for flat root. rule **30**; [`spawn-ship-contracts.md`](../
 
 ## Ship spawn (detached / coding-session chain)
 
-**On-demand:** [`docs/spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) — parallel **`hosting-repo-rules`** fork, worktree-bootstrap drain gate D1–D5, worktree removal ownership detail.
-
+**On-demand:** [`docs/spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) — parallel **`hosting-repo-rules`** fork, worktree drain gate D1–D5.
 
 Detached/nested ship lanes — **`## Completion (spawned)`** vs inline per skill.
 
@@ -121,9 +120,7 @@ When a ship skill finishes a milestone on a **detached** lane, the terminal **`m
 | `deploy-walk` | Active **`coding-session`** agent on its lane (Before deploy after commit, After deploy after merge, or deploy phrases) | `## Completion (inline)` | `deploy-walk` via **`coding-session`** terminal re-emit — no separate child terminal |
 | `plan-reconcile` | Active **`coding-session`** agent on its lane (after deploy, stale worktree pick, or *plan reconcile* phrase) | `## Completion (inline)` | `reconcile` / `done` via **`coding-session`** terminal re-emit — no separate child terminal |
 
-**`pr-review`**, **`create-pr`**, **`deploy-walk`**, and **`plan-reconcile`** return through the **active ship invoker** (**`coding-session`** or **`hosting-repo-rules`**). §8 updates on the leader dispatch via invoker terminal re-emit and host sync when documented (**`../plan.mdc`** §8).
-
-
+**`pr-review`**, **`create-pr`**, **`deploy-walk`**, and **`plan-reconcile`** return through the active ship invoker. §8 updates via invoker terminal re-emit (**`../plan.mdc`** §8).
 
 ## Required terminal notification (all spawned children)
 
@@ -149,7 +146,7 @@ When Mission Control dispatches **`centerSlug === software-development`**, the h
 |------|---------|
 | `.sedea/centers/software-development/rules/bootstrap.mdc` | Sole Software Development `alwaysApply: true` bootstrap (≤10 KB) — mirrors **`.sedea/centers/sedea/rules/bootstrap.mdc`** pattern |
 
-Spawned skill **`SKILL.md`** § *Warm-up manifest* tables document this row under **`bootstrapRules`**. **`laneRules`** and **`skillWarmUp`** tables in the same section are unchanged by bootstrap authoring alone — numbered Software Development rules stay **`alwaysApply: true`** until the flip PR lands.
+Spawned **`SKILL.md`** warm-up tables document **`bootstrapRules`**. Numbered SD rules stay **`alwaysApply: true`** until flip PR lands.
 
 ## Definitive `laneRules` (plan and deliver)
 
@@ -186,6 +183,7 @@ Host MCP spawn/result and forbidden identity keys — rule **4** § *Agent-to-ag
 | M1 | Read target **`SKILL.md`** — confirm it documents MCP as primary (or MCP with MCP first) before switching off MCP-only |
 | M2 | Every **`required: true`** input in skill frontmatter appears in MCP **`inputs`** with a valid value (see MCP spawn preflight) |
 | M2b | **`master-planner`** / inline decomposition invokers — `masterPlanPath` + `targetPlanSlug` (or `targetPlanPath` + `targetPlanSlug` for **`pr-breakdown`**) present before decomposition menus or **`approve-list`** act; contract-gap gate when absent — **forbidden** operations-folder search. After reload, also accept re-injected spawn **`inputs`** / terminal **`outputs`** and single unambiguous Relevant Links plan per **`master-planner`** § *Post-restore reload* |
+| M2c | **Brainstorm handoff** — invoker §2.5 *Brainstorm→downstream preflight* after terminal **`brainstorm-research`**; detail [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) |
 | M3 | Required MCP args present: **`skillPath`**, **`slug`**, **`name`**, **`description`**, **`inputs`** — camelCase keys match skill frontmatter |
 | M4 | **Forbidden args absent** — no host-resolved identity keys (§ *Host-resolved identity* above) |
 | M5 | Optional only when needed: **`warmUpRules`**, **`initiatingPrompt`** (≤ 32 KiB) |
