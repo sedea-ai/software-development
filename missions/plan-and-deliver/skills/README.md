@@ -75,7 +75,7 @@ Mission Control delivery: recap + modal + act. Canonical rules: **`.sedea/center
 
 ## Planning spawn (summary)
 
-Squad Leader §§3/§5 spawn **`author-prd`** / **`master-planner`**; decomposition runs **`delivery-phases`**, **`pr-breakdown`**, **`new-plan`**, **`pr-plan`**, **`phase-planner`** per **§ Normative execution mode**. Depth-first expansion: **`planning-mode-templates.md`** § *Depth-first plan-tree traversal*; rule **30** § *Depth-first expansion eligibility*.
+Squad Leader §§3/§5 spawn **`author-prd`** / **`master-planner`**; decomposition runs **`delivery-phases`**, **`pr-breakdown`**, **`new-plan`**, **`pr-plan`**, **`phase-planner`** per **§ Normative execution mode**. Depth-first expansion: **`planning-mode-templates.md`** § *Depth-first plan-tree traversal*; rule **30** § *Depth-first expansion eligibility*. **After §§1–5:** **`master-planner`** child opens Step **7b** (not path-only) — **`route-6`** → inline **`delivery-phases`**/**`pr-breakdown`** → **`new-plan`** → **`phase-planner`** spawn; Squad Leader ack-only. Table: **`master-planner/SKILL.md`** § *After §§1–5 — continuation chain*.
 
 **On-demand:** Full planning spawn table, implementation consent layers, and depth-first notify — [`docs/spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) § *Planning spawn*.
 
@@ -215,17 +215,13 @@ Truncate semantic title only when the full string exceeds rule **9** max **`titl
 
 **This section is the canonical stop rule** for all **`## Completion (spawned)`** blocks in this mission, even when an individual `SKILL.md` ends that section after the host-protocol paragraph without repeating the sentence below.
 
-After emitting **`mission_control_send_agent_result`**, **stop on that lane** for the current skill turn:
+After **`mission_control_send_agent_result`**, **stop on that lane**:
 
-1. Do **not** emit another **`mission_control_spawn_agent`** unless a later user message on the same lane explicitly continues the skill (then call **`mission_control_send_agent_result`** again with updated **`outputs`** for the same spawn session).
-2. Do **not** call MCP **`mission_control_propose_dispatch_resolution`** — only the **plan and deliver** Squad Leader closes the dispatch.
-3. Do **not** run the next protocol step in the same turn after **`mission_control_send_agent_result`** (including “wait for child” announcements — the stop applies **after** the MCP result is sent).
+1. No further **`mission_control_spawn_agent`** until the user continues this skill on the lane.
+2. No **`mission_control_propose_dispatch_resolution`** — Squad Leader only.
+3. No next protocol step same turn after the MCP result (including wait-for-child prose).
 
-**Canonical closing sentence** (optional in skill prose; meaning is required either way):
-
-> Stop after the MCP result is sent.
-
-**Order when gated:** structured choice → refocus (when eligible) → MCP result → stop. Refocus/detail: [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md).
+**Order when gated:** structured choice → refocus (when eligible) → MCP result → stop. Detail: [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md).
 
 
 ## Default warm-up

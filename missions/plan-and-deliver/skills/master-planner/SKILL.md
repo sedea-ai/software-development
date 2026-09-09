@@ -755,6 +755,25 @@ Do **not** draft section 6 (`Delivery phases | PR breakdown`) or section 7 (Cave
 - **§ 6 Delivery phases | PR breakdown** is owned by **`delivery-phases`** and **`pr-breakdown`** (modes #2 and #3), invoked **inline on this lane** after the user picks **Route §6 decomposition** (Step 7c–7d). Either skill drafts the dual-title list; child stubs use **`new-plan`** (indexed spawn via **AskQuestion** on list index **N**, per **30_planning-target-resolution**). Do **not** draft §6 inline in **`master-planner`** prose alone.
 - **§ 7 Caveats** often only emerges once § 6 reveals concrete constraints. Drafting it from the PRD alone risks listing PRD-level worries that aren't real planning caveats.
 
+### After §§1–5 — continuation chain (binding)
+
+When §§1–5 (including **`### Decomposition assessment`** and **`### Complexity score`**) are drafted and echoed, **do not stop at a path-only recap**. Present the **Step 7** structured continuation gate in the **same turn** (Step **7a** status line + Step **7b** modal via **`mission_control_present_structured_choice`**).
+
+| Stage | Who acts | Action |
+|-------|----------|--------|
+| §§1–5 complete | **This `master-planner` lane** | Echo sections + complexity; open Step **7b** gate |
+| Developer picks **`route-6`** | **This lane** | Run **`delivery-phases`** or **`pr-breakdown`** **inline** (Step **7c**–**7d**) — **forbidden** Squad Leader spawn |
+| §6 list approved; next phase index eligible | **This lane** | Run **`new-plan`** **inline** using authoritative **`masterPlanPath`** |
+| Phase plan created | **Inline `new-plan` on this lane** | Spawns **`phase-planner`** child — **forbidden** Squad Leader duplicate spawn |
+| Phase active | **`phase-planner` child** | Owns phase subtree until **`phaseShipComplete`**, defer, or abandon — this lane **ack-only** |
+| Explicit continue request; phase eligible | **This lane** | Enter applicable inline handoff/gate; state exact next action or blocking choice — **forbidden** path-only handoff |
+
+**Continuation chain (normative):** Step **7b** **`route-6`** → inline **`delivery-phases`** / **`pr-breakdown`** → inline **`new-plan`** → spawn **`phase-planner`**. After phase **N** ship-complete, depth-first unlocks phase **N+1** via inline **`new-plan`** on **this lane** — not Squad Leader re-route.
+
+**Planning vs implementation:** This lane owns planning and decomposition spawns only. **`coding-session`** implements application code on child lanes after **`pr-plan`** §5c — **forbidden** imply this lane implements product code.
+
+**Reload:** Retain **`masterPlanPath`**, **`targetPlanSlug`**, and prior continuation state (`activeLanes`, `spawnedPlans`) before offering decomposition — see § *Target identity preflight* and § *Post-restore reload*.
+
 ## Step 7 — Next moves (AskQuestion + inline decomposition)
 
  §§ 1–5 are drafted (including **`### Complexity score`**); §6 and §7 stay `_TBD_` until the user chooses next moves. Collect each next-move pick per **`.sedea/centers/software-development/rules/30_planning-target-resolution.mdc`** § *Sedea input channel* and **`../README.md`** § *Recap, structured choice, act* — **`AskQuestion`** or **`mission_control_present_structured_choice`** in **one turn** (`displayMarkdown` + `askQuestion`). Execute **one** chosen action per turn.
