@@ -107,8 +107,7 @@ Detached/nested ship lanes — **`## Completion (spawned)`** vs inline per skill
 
 The Squad Leader **§8** ship ledger updates via Mission Control **host sync** when ship child lanes emit terminals with required **`outputs`**. See **`../plan.mdc`** §8 *Mission Control host sync* and **development-process.md** § *Leader-lane §8 host sync*.
 
-**Child registry ≠ ship complete (binding):** An empty parent-child registry, **`childCount === 0`**, or a missing registered ship lane is **not** evidence that §8 ship work finished. The Squad Leader reconciles **`ship-ledger.v1.json`** / host-sync fields and runs the owning mission **`plan.mdc`** §8 *Pre-resolution checklist* and *Missing-lane recovery* before **`mission_control_propose_dispatch_resolution`**.
-
+**Child registry ≠ ship complete (binding):** Empty registry / **`childCount === 0`** is not ship-complete — see [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) *Leader registry guard* and **`../plan.mdc`** §8 *Missing-lane recovery*.
 
 ### §8 terminal contract (ship skills)
 
