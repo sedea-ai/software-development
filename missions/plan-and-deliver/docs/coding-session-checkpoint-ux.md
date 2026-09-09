@@ -185,7 +185,7 @@ On spawned **`coding-session`** lanes, **any** assistant turn where the develope
 | Await point | Modal section |
 |-------------|----------------|
 | Worktree / implementation | [Worktree-open gate](../skills/coding-session/SKILL.md#worktree-open-gate) |
-| Implementation batch (no ship gate open) | [Implementation continuation gate](#implementation-continuation-gate) — **Checkpoint:** auto-advance **`ready-for-review`** when clean; modal only on exception |
+| Implementation batch (no ship gate open) | [Implementation continuation gate](#implementation-continuation-gate) — **always modal** on every trust level |
 | Plan §5 → `.mdc` reconcile (plan-anchored) | [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) |
 | Review-ready / commit / Before deploy | [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) — **Checkpoint:** auto-advance **`commit-only`** + **Act same turn** when clean; [Yield gate](#yield-gate-checkpoint--binding) if Act cannot continue; modal on exception |
 | Before deploy manual step | § [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff) step 4 |
@@ -198,6 +198,23 @@ On spawned **`coding-session`** lanes, **any** assistant turn where the develope
 | **After deploy manual §7 step** (inline **`deploy-walk`**) | **`deploy-walk`** [Manual step await gate](../deploy-walk/SKILL.md#manual-step-await-gate-binding) — **same turn** as Step 4 presentation |
 
 **Forbidden:** ending a turn with only a PR link, *PR created — review on GitHub*, *tell me when*, *reply with results*, or *pick … in chat* when a gate table exists for that await point. **Forbidden:** treating **developer-input** gates as **external-wait** — see § [Developer input vs external-wait (Checkpoint)](#developer-input-vs-external-wait-checkpoint).
+
+### Implementation continuation gate (binding)
+
+<a id="implementation-continuation-gate"></a>
+
+Normative owner: [`coding-session/SKILL.md`](../skills/coding-session/SKILL.md) § *Implementation review gate* and § *Terminal emission invariant (binding — read first)*.
+
+When **`outputs.shipPhase`** is **`implementing`** or **`worktree`** and no other ship gate in § *Every developer-await turn* is open, close an implementation batch here.
+
+**Mandatory before terminal (binding):**
+
+- **Always modal** on the **implementation completion turn** — every trust level, including Checkpoint.
+- **Forbidden:** **`mission_control_send_agent_result`** or **`mission_control_refocus_parent_lane`** before the developer picks at this gate.
+- **Forbidden:** treating tests passing, §§5–8 fill, or parent wording as substitute for the gate.
+- **`defaultOptionId`** may recommend **`approve-implementation-proceed-ship-cutpoint`** when clean criteria pass — **not** permission to skip the modal.
+
+**Calibration:** `incident_coding_session_premature_terminal_after_implementation_2026-09-09.agent-incident-report.md` (operations docs when present).
 
 ### Post-reload / cold session (binding)
 
@@ -285,7 +302,7 @@ When **`openPrBatch.length > 1`**, use **`approve-ship-batch`** instead of per-P
 | **Worktree-open gate** | **Gate** when layer 2 modal required — **first developer-pick gate on spawned lane** | Authorize worktree (below) |
 | **Generic flow** steps **1–4** — setup, sidecar, attach, bootstrap | Auto-advance on happy path | exception: bootstrap / attach failure |
 | **Spawned implementation** steps **5–6** | Auto-advance through implementation batches | exception: blocking stop → `partial` result |
-| **Implementation continuation gate** | **Auto-advance** — resolve **`ready-for-review`** when [clean implementation](#implementation-continuation-gate) criteria pass | **Gate** when any clean criterion fails — [Implementation continuation gate](#implementation-continuation-gate) |
+| **Implementation continuation gate** | **Gate** — **always** emit modal on implementation batch completion (see § below) | exception: none — tests passing do not skip the gate |
 | **Repo rules reconciliation** + **pre-review verification** (steps **7–8**) | Auto-advance on happy path before ship cut-point | exception: action bullets without `.mdc` diff; verification failures — [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) |
 | **Ship cut-point gate** | **Auto-advance** — resolve **`commit-only`** and **Act same turn** (full path: commit + inline Before deploy **`deploy-walk`** when plan-anchored) when [clean cut-point](#ship-cut-point-gate-approve-commit-before-deploy) criteria pass; if Act cannot continue this turn → [Yield gate](#yield-gate-checkpoint--binding) | **Gate** when any clean criterion fails — [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) |
 | **Pre-PR review feedback** | **Auto-advance** — **`fix-now-session`** **same turn** when **`actionablePrePrFindings`** (implement Must + Should; append follow-ups to plan); after clean **`go`**, [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) then inline **`create-pr`** without findings; **`approve-followups-create-pr`** **same turn** when **`hasProposedFollowUps`** only | Exception: developer **`defer`** / **`revise-scope`** in **same** message — [Review feedback approval gate](#review-feedback-approval-gate) Non-Checkpoint modal only |

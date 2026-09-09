@@ -124,6 +124,40 @@ warmUpRules:
 
 # Coding session
 
+## Terminal emission invariant (binding — read first)
+
+**Intermediate states are never terminal.** Implementation complete, tests passing, and PR plan §§5–8 filled are **milestones inside** the ship chain — not permission to emit **`mission_control_send_agent_result`** with **`status: success`**.
+
+**Forbidden terminal shapes (binding):**
+
+| Condition on this lane | `status: success` |
+|------------------------|-------------------|
+| Dirty worktree / uncommitted edits after implementation | **Forbidden** |
+| [Implementation review gate](#implementation-continuation-gate) unselected on the implementation completion turn | **Forbidden** |
+| No open PR and ship chain incomplete | **Forbidden** |
+| PR open but merge, cleanup, After deploy, or reconcile tail pending | **Forbidden** |
+| `outputs.continuationStatus` is `active` | **Forbidden** |
+| `outputs.prShipComplete` absent or not `true` | **Forbidden** |
+| `outputs.shipPhase` is not `done` | **Forbidden** |
+
+**Pre-flight before any terminal emit (binding):** Run this checklist immediately before **`mission_control_send_agent_result`**:
+
+1. **`outputs.continuationStatus: terminal`** (or documented abandon with genuine external blocker).
+2. **`outputs.prShipComplete: true`** and **`outputs.shipPhase: done`** when product ship completed.
+3. Required ship-chain milestone fields populated on terminal re-emits (see [Ship-chain lifecycle state table](../docs/coding-session-ship-chain.md#ship-chain-lifecycle-state-table-binding)).
+4. [Implementation review gate](#implementation-continuation-gate) satisfied when leaving **`implementing`** / **`worktree`**.
+5. [MCP result preflight](#mcp-result-preflight-mission_control_send_agent_result) **R7** passes.
+
+**Valid terminal outcomes only:**
+
+1. Ship chain complete — **`continuationStatus: terminal`**, **`prShipComplete: true`**, **`shipPhase: done`**.
+2. Genuine external blocker — **`status: partial`** or **`failure`**, naming the blocked step and resume actions.
+3. Explicit developer **`defer`** / stop at a required structured-choice gate.
+
+**Required same turn after implementation batch:** [Implementation-to-ship handoff invariant](#implementation-to-ship-handoff-invariant-binding) — open [Implementation review gate](#implementation-continuation-gate); **forbidden** terminal result or parent refocus on the implementation completion turn.
+
+**Calibration:** `incident_coding_session_premature_terminal_after_implementation_2026-09-09.agent-incident-report.md` (operations docs when present).
+
 Hand off a unit of work into a **dedicated git worktree**, with the worktree visible in the **same Sedea workbench** (multi-root workspace), not a second editor process. Worktree **setup** is **center `worktree-setup.sh` only** (from **`HOSTING_ROOT`**); workbench **attach** is **`sedea_add_worktree_folder` only** — see [Hard rules — git worktree vs workbench attach (binding)](#hard-rules--git-worktree-vs-workbench-attach-binding) and [Center worktree scripts (binding)](#center-worktree-scripts-binding). **Execution mode** after setup depends on entry path — see [Execution mode after worktree attach](#execution-mode-after-worktree-attach).
 
 **Owns:** per-PR plan §§ **5–8** during implementation (repo rules impact, tests, deploy plan, caveats); center **`worktree-setup.sh`**, JSON hint parsing, `plan-state.mjs set-worktrees` / `set-session`, Mission Control worktree attach, bootstrap status from setup hints (`outputs.bootstrapStatus: success` before implementation — no default-path inline **`worktree-bootstrap`**), pre-worktree validation + worktree-open gate; **spawned-lane implementation** or curated **prompt-only** session prompt emission; post-merge **center `worktree-cleanup.sh`** after MCP detach; [Ship chain after implementation](#ship-chain-after-implementation-coding-session-lane) ([Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) — one modal approve + commit + Before deploy **`deploy-walk`** inline → **auto-spawn **`pre-pr-review`** → **auto inline **`create-pr`** on clean **go** → **auto** [Post-merge workspace cleanup](#post-merge-workspace-cleanup) when merged → After deploy **`deploy-walk`** inline).
@@ -3146,7 +3180,7 @@ Required `outputs` per **## Implementation handoff result**, **Mission Control s
 | R4 | Re-emit updated MCP result after user-requested follow-up on this lane (same spawn session; host resolves **`correlationId`**) |
 | R5 | **`mission_control_refocus_parent_lane`** — when **Required** per § *MCP parent refocus* below; **omit** on detached / parentless entry |
 | R6 | **Post-merge cleanup terminal emit guard** — when **`prState: merged`** and [Post-merge workspace cleanup](#post-merge-workspace-cleanup) ownership preconditions pass, **`postMergeCleanupStatus`** must be **`success`**, **`skipped_no_stale`**, or documented defer before **`prShipComplete: true`** / success terminal |
-| R7 | **Implementation-to-ship handoff guard** — **`status: success`** **forbidden** unless **`outputs.prShipComplete: true`**, **`outputs.shipPhase: done`**, and required cleanup/reconciliation outputs present; **`status: partial`** **forbidden** when the only blocker is unselected [Implementation review gate](#implementation-continuation-gate) or incomplete ship chain — see [Implementation-to-ship handoff invariant](#implementation-to-ship-handoff-invariant-binding) |
+| R7 | **Implementation-to-ship handoff guard** — **`status: success`** **forbidden** unless **`outputs.prShipComplete: true`**, **`outputs.shipPhase: done`**, **`outputs.continuationStatus: terminal`**, and required cleanup/reconciliation outputs present; **`status: partial`** **forbidden** when the only blocker is unselected [Implementation review gate](#implementation-continuation-gate), incomplete ship chain, or uncommitted post-implementation work — see [Terminal emission invariant (binding — read first)](#terminal-emission-invariant-binding--read-first) and [Implementation-to-ship handoff invariant](#implementation-to-ship-handoff-invariant-binding) |
 
 ### MCP parent refocus (`mission_control_refocus_parent_lane`)
 
