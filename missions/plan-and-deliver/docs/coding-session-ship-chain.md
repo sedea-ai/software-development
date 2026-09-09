@@ -83,7 +83,29 @@ Emit the [Implementation review gate](../skills/coding-session/SKILL.md#implemen
 
 Normative owner for invariant detail: [Implementation-to-ship handoff invariant](../skills/coding-session/SKILL.md#implementation-to-ship-handoff-invariant-binding).
 
-**Calibration:** `incident_coding_session_implementation_terminal_before_checkpoint_2026-09-07.agent-incident-report.md` (operations docs when present).
+**Calibration:** `incident_coding_session_implementation_terminal_before_checkpoint_2026-09-07.agent-incident-report.md`; `incident_coding_session_premature_terminal_after_implementation_2026-09-09.agent-incident-report.md` (operations docs when present).
+
+## Ship-chain lifecycle state table (binding)
+
+<a id="ship-chain-lifecycle-state-table-binding"></a>
+
+Normative owner for terminal preflight: [`coding-session/SKILL.md`](../skills/coding-session/SKILL.md) § *Terminal emission invariant (binding — read first)*. Agents **must** populate milestone fields on terminal re-emits; **`status: success`** is **forbidden** while any row below shows **Terminal? = No**.
+
+| Phase | Key `outputs` fields | Terminal? |
+|-------|---------------------|-----------|
+| Worktree / bootstrap | `bootstrapStatus`, `shipPhase: worktree` | No |
+| Implementing | `implementationStatus` (when set), `shipPhase: implementing`, `continuationStatus: active` | No |
+| Implementation review gate | gate unselected; `shipPhase: implementing` or `review-ready` | No |
+| Repo rules + pre-review verification | `repoRulesReconciliationStatus`, `preReviewVerificationStatus` (when set) | No |
+| Ship cut-point | `shipCutPointStatus` (when set), `shipPhase: before-deploy-gate-pending` | No |
+| Commit / Before deploy | `commitStatus` (when set), `beforeDeployStatus` | No |
+| Pre-PR review child | `prePrReviewStatus`, `prePrReviewRecommendation` | No |
+| PR open / inline review | `prState`, `prUrl`, `prReviewStatus`, `githubReconciliationStatus` | No |
+| Merge / post-merge cleanup | `mergeStatus` (when set), `postMergeCleanupStatus`, `mainPullStatus` | No |
+| After deploy | `afterDeployStatus`, `deployStatus`, `deployTodoStatus` | No |
+| Reconcile / row close | `prShipComplete: true`, `shipPhase: done`, `continuationStatus: terminal` | **Yes** |
+
+**Intermediate-state rule (binding):** Implementation complete, tests passing, and PR plan §§5–8 filled match rows **Implementing** through **After deploy** — **never** terminal rows alone.
 
 | Step | Section | Mode | Commit required? | Modal? |
 |------|---------|------|------------------|--------|

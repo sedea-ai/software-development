@@ -110,7 +110,7 @@ The Squad Leader **§8** ship ledger updates via Mission Control **host sync** w
 
 ### §8 terminal contract (ship skills)
 
-When a ship skill finishes a milestone on a **detached** lane, the terminal **`mission_control_send_agent_result`** **must** include **`targetPlanPath`**, **`shipPhase`**, and **`rowStatus`** (host may infer phase when documented). **Do not** nudge manual recap on the leader dispatch. Field hints: § *Mission Control section 8 sync* in each ship `SKILL.md`.
+When a ship skill finishes a milestone on a **detached** lane, terminal **`mission_control_send_agent_result`** **must** include **`targetPlanPath`**, **`shipPhase`**, and **`rowStatus`**. **Do not** nudge manual recap on the leader dispatch. §8 field hints: each ship `SKILL.md`. Success rejection: [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md).
 
 ## Inline-only (no spawn)
 

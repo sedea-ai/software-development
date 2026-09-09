@@ -142,6 +142,22 @@ Depth-first expansion ( **`development-process.md`** § *Depth-first plan-tree t
 | **Spawn `mission_control_send_agent_result`** | **`coding-session`** child terminal after inline **`plan-reconcile`** with merge + main pull + archive | Parent merges **`prShipComplete`**; unlock next PR per **`### Sequencing`** |
 | **Host sync on leader** | Detached **`coding-session`** terminal with §8 **`outputs`** | Squad Leader §8 row updates automatically — no manual recap |
 
+### coding-session success rejection (binding)
+
+**`coding-session`** **must not** emit **`mission_control_send_agent_result`** with **`status: success`** when the ship chain is incomplete.
+
+| Reject `status: success` when | Reason |
+|-------------------------------|--------|
+| `outputs.continuationStatus` is `active` | Lane still owns ship work |
+| `outputs.prShipComplete` is absent or not `true` | Product row not closed |
+| `outputs.shipPhase` is not `done` | Ship chain incomplete |
+| [Implementation review gate](../skills/coding-session/SKILL.md#implementation-continuation-gate) unselected after implementation | Intermediate state |
+| Required milestone fields from [Ship-chain lifecycle state table](coding-session-ship-chain.md#ship-chain-lifecycle-state-table-binding) missing on terminal re-emit | Host/agent cannot validate resume |
+
+**Spawned child obligation:** Before terminal emit, run **`coding-session`** [MCP result preflight](../skills/coding-session/SKILL.md#mcp-result-preflight-mission_control_send_agent_result) **R7** and § *Terminal emission invariant (binding — read first)*. **Forbidden:** treating [`skills/README.md`](../skills/README.md) § *Terminal stop (normative)* as permission to stop after implementation alone.
+
+**Calibration:** `incident_coding_session_premature_terminal_after_implementation_2026-09-09.agent-incident-report.md` (operations docs when present).
+
 ### Required terminal fields — **`coding-session`** (reconcile complete)
 
 When **`outputs.shipPhase`** is **`done`** and **`outputs.rowStatus`** is **`closed`** after inline **`plan-reconcile`**, also set:
