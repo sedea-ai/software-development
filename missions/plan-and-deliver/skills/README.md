@@ -77,6 +77,20 @@ Mission Control delivery: recap + modal + act. Canonical rules: **`.sedea/center
 
 Squad Leader §§3/§5 spawn **`author-prd`** / **`master-planner`**; decomposition runs **`delivery-phases`**, **`pr-breakdown`**, **`new-plan`**, **`pr-plan`**, **`phase-planner`** per **§ Normative execution mode**. Depth-first expansion: **`planning-mode-templates.md`** § *Depth-first plan-tree traversal*; rule **30** § *Depth-first expansion eligibility*.
 
+## Master Plan continuation (after §§1–5)
+
+When **`master-planner`** completes §§1–5, the child lane **must** open Step **7b** structured choice — **forbidden** stop at plan path alone.
+
+| Step | Owner | Skill chain |
+|------|-------|-------------|
+| §§1–5 draft | **`master-planner` child** | Echo + Step **7b** gate |
+| Route §6 | **`master-planner` child** (inline) | **`delivery-phases`** / **`pr-breakdown`** |
+| Phase expansion | **`master-planner` child** (inline) | **`new-plan`** → spawn **`phase-planner`** |
+| Phase delivery | **`phase-planner` child** | Owns subtree until ship-complete |
+| Squad Leader | Ack + ledger only | **No** duplicate **`phase-planner`** spawn |
+
+Normative detail: **`master-planner/SKILL.md`** § *After §§1–5 — continuation chain*.
+
 **On-demand:** Full planning spawn table, implementation consent layers, and depth-first notify — [`docs/spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) § *Planning spawn*.
 
 ## Spawn handover inputs
