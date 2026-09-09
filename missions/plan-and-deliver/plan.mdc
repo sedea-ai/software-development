@@ -803,6 +803,7 @@ Use this when the **plan and deliver** leader dispatch cannot propose **`resolve
 | No silent **`Mission Control: ship-ledger sync (section 8).`** message | Host sync skipped (missing `outputs`), older Mission Control build, or work ran outside MC | Fix child terminal; rebuild/reload Mission Control extension; read **`ship-ledger.v1.json`** when present |
 | PR comment triage done but §8 stuck at `pr-open` | **`pr-review`** is inline — **`coding-session`** did not re-emit with `shipPhase: pr-review` | Re-emit **`coding-session`** terminal with `prReviewStatus` / `githubReconciliationStatus` |
 | Developer says “done” but resolution blocked | *Pre-resolution checklist* — no host-sync update this session for open/blocked rows | **AskQuestion**: wait for ship child re-emit, planning-only close, or **`partial`** — do not guess `phase` from chat |
+| Registry empty but §8 row still `open`/`blocked` | Child lane missing from parent-child registry while ship ledger shows active work | Run *Missing-lane recovery* USER_CHECKPOINT — **forbidden** auto-**`partial`** / **`resolved`** from registry cardinality alone |
 | UI ledger disagrees with agent state | Leader tab may lag **`ship-ledger.v1.json`** | Prefer host-sync message + dispatch bundle file |
 
 **Never:** treat silence on a detached lane as ship complete; advance §8 `phase` from **`pr-plan`** `readyForImplementation` alone; emit **`resolved`** while any row is `open`/`blocked` without a host-sync update this session (unless planning-only **AskQuestion**); or accept manual **Ship recap** paste as §8 input.
@@ -848,6 +849,21 @@ Before calling MCP **`mission_control_propose_dispatch_resolution`** when the de
      - **Ship still on detached lane** (propose **`partial`**, not **`resolved`**)
      - **More details for option _**
    - After host sync arrives, parse it, refresh §8 rows, then continue to *Dispatch resolution gates*.
+2a. **Child registry is not completion evidence (binding):** Reconcile §8 ship rows **before** choosing any dispatch-resolution status. **Forbidden:** treating **`childCount === 0`**, an empty parent-child registry, absence of a registered ship lane, host “no child lanes”, or **`terminalEmitted`** alone as proof that ship work finished or that **`partial`** / **`resolved`** is authorized while any §8 row is **`open`** or **`blocked`**.
+2b. **Missing-lane recovery:** When any §8 row is **`open`** or **`blocked`** and no registered child lane owns that row (registry empty for the ship slug, or host reports zero children while the ledger shows active ship):
+
+USER_CHECKPOINT — recover missing ship lane vs close dispatch.
+
+   - **Forbidden:** auto-propose **`partial`** or **`resolved`** in that turn.
+   - Open structured choice (**#external-wait**) with required options **in this order** (then universal modal trailer):
+     - **`recover-ship-lane`** — re-spawn or refocus the ship lane; keep dispatch active
+     - **`wait-for-ship-sync`** — child must re-emit terminal with §8 `outputs`
+     - **`planning-only-close`** — close dispatch without ship tracking
+     - **`propose-partial-documented`** — propose **`partial`** with explicit remaining ship work in the JSON **`summary`**
+     - **More details for option _**
+
+   **Calibration:** `premature-partial-dispatch-resolution_5197b779.agent-incident-report.md` (operations docs when present).
+
 3. **Developer done-language alone** does not satisfy step 2 — host-sync fields or explicit planning-only choice are required.
 4. When proposing **`resolved`**, the **`summary`** must name each tracked PR plan (path or slug) and its final `phase` + `rowStatus`.
 5. **Release-versions dissolve gate** — run [Release-versions dissolve gate](#release-versions-dissolve-gate-binding) **before** any `mission_control_propose_dispatch_resolution` call (including **`partial`** / **`abandoned`** / **`aborted`** when the gate applies). Ship pre-resolution above remains mandatory; this gate is **additional**.
@@ -946,6 +962,7 @@ USER_CHECKPOINT — release-note skill pending or failed; run or retry only (no 
 
 - Any ship row is `open` or `blocked` and the developer has not explicitly chosen **planning-only** dispatch closure.
 - The developer signals done or wrap-up but **no** host-sync update was parsed on the leader dispatch this session for rows that are still `open` or `blocked` (use *Pre-resolution checklist* USER_CHECKPOINT first).
+- **`childCount === 0`**, an empty parent-child registry, or a missing registered ship lane is the only “completion” signal while §8 rows remain **`open`** or **`blocked`** (use *Missing-lane recovery* USER_CHECKPOINT first).
 - Only the **planning** ledger is empty — objectives 4–7 in this mission plan still imply ship unless the developer opted out via §8 USER_CHECKPOINT.
 - Release-versions gate applies and `releaseNoteStatus` is not `success` or `skipped` (hard-block).
 

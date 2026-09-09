@@ -184,6 +184,8 @@ Each parent **must** handle **`Mission Control: agent-result-response delivered.
 
 **Re-emit rule:** After merging a child ship-complete result, the parent re-sends `mission_control_send_agent_result` with updated `outputs` (same spawn `correlationId` resolved by the host) before stopping — so *its* parent receives fresh `outputs`. Silence on the child lane is **not** ship-complete.
 
+**Leader registry guard (binding):** On the Squad Leader dispatch, **`childCount === 0`**, an empty parent-child registry, or absence of a registered ship lane is **not** ship-complete when §8 rows remain **`open`** or **`blocked`**. Route to the owning mission **`plan.mdc`** §8 *Missing-lane recovery* — **forbidden** automatic **`partial`** / **`resolved`** from registry cardinality alone. **Calibration:** `premature-partial-dispatch-resolution_5197b779.agent-incident-report.md` (operations docs when present).
+
 ## Upstream parent follow-up notification (spawn chain)
 
 Depth-first delivery plans phases and PRs as work starts. During PR development, **`coding-session`** may discover scope-adjacent items that belong in **future** phase or PR planning — not in the current PR scope. Those items live on the PR plan **`## Follow-ups`** during the session; **`plan-reconcile`** drains them at archive. **Before ship-complete**, parents (**`master-planner`**, **`phase-planner`**, and intermediate **`pr-plan`** / **`new-plan`** bubble chain) need a **notification** so they can schedule future rows without waiting for archive.

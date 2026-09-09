@@ -128,3 +128,18 @@ test('documentation table rows are exempt', async () => {
 test('warn-only exits 0 even when hits exist on hosting repo', () => {
   assert.equal(runScriptExit(), 0);
 });
+
+test('--enforce passes required binding anchors on software-development center', async () => {
+  const centerRoot = path.resolve(SCRIPTS, '../../..');
+  const out = execFileSync(
+    process.execPath,
+    [path.join(SCRIPTS, 'verify-checkpoint-steps.mjs'), '--enforce'],
+    { cwd: centerRoot, encoding: 'utf8' },
+  );
+  assert.match(out, /0 pattern hit/);
+  const planBody = await fs.readFile(
+    path.join(centerRoot, 'missions/plan-and-deliver/plan.mdc'),
+    'utf8',
+  );
+  assert.match(planBody, /Child registry is not completion evidence/);
+});
