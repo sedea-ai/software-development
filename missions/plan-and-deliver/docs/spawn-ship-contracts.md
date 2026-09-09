@@ -285,6 +285,19 @@ Spawned child lanes call **`mission_control_refocus_parent_lane`** on **true ski
 
 **Forbidden globally on notify-only turns:** **`mission_control_refocus_parent_lane`** solely because a child notification arrived — merge notify, then continue ownership on this lane until a true terminal.
 
+### Brainstorm handoff observability (binding)
+
+Distinguish valid **#external-wait** (brainstorm child **`continuationStatus: active`** or awaiting terminal result) from **stale-busy** (leader attempted downstream spawn without preflight pass, or spawn validation failed silently).
+
+| Signal | Meaning |
+|--------|---------|
+| Child **`run`** + no terminal result | Valid wait — leader holds **#external-wait** until **`brainstorm-research`** terminal |
+| Terminal `developerApprovedReport: true` + leader idle | Leader must run §2.5 *Brainstorm→downstream preflight* before next spawn |
+| Spawn validation failure | **Forbidden** spawn — open structured recovery on leader; log rejection reason in recap |
+| Downstream spawn without preflight | Mission gap — see calibration `mission-control-prd-handoff-gate_487cd16e.agent-incident-report.md` |
+
+Invoker **`plan.mdc`** §2.5 *Brainstorm→downstream preflight* and **`skills/README.md`** row **M2c** are normative for leader behavior.
+
 | Skill | Explicit “Stop after the MCP result is sent” in `## Completion (spawned)`? | Notes |
 |-------|------------------------------------------------------------------------|--------|
 | `author-prd` | Yes | Also forbids downstream planning spawns |

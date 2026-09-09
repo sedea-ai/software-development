@@ -247,6 +247,20 @@ USER_CHECKPOINT — revise report, approve and send to Squad Leader, or abandon 
 | `quick-fix` | `quick-fix-plan` | §2.5 → §3 **`quick-fix-plan`** with synthesized bullets from report |
 | `debug-and-fix` | `enrich-debug-intake` | §2.5 → §2 issue context enriched; continue §3 **`debug-and-fix`** |
 
+## Terminal approval preflight (binding)
+
+Before setting `developerApprovedReport: true` or emitting terminal MCP result on **Approve report send**:
+
+| Check | Requirement |
+|-------|-------------|
+| T1 | Post-write revision gate pick was **`approve-report-send`** on this lane (not inferred from chat) |
+| T2 | Every request in the ledger is **`done`** |
+| T3 | Final report file exists at `outputs.brainstormReportPath` |
+| T4 | `outputs.downstreamHandoffSummary` is non-empty |
+| T5 | `outputs.downstreamSpawnTarget` matches **Downstream mapping** for `outputs.invokerMissionSlug` |
+
+**Forbidden:** `developerApprovedReport: true` unless T1–T5 pass. **Forbidden:** leader inferring approval from lane presence, partial analysis, or pre-write gate picks alone. The **post-write revision gate** is the sole surface that authorizes terminal approval on this lane.
+
 ## Completion (spawned)
 
 ### MCP result preflight (`mission_control_send_agent_result`)
@@ -255,7 +269,7 @@ USER_CHECKPOINT — revise report, approve and send to Squad Leader, or abandon 
 |------|--------|
 | R1 | Call **`mission_control_send_agent_result`** with **`status`**, **`summary`**, optional **`outputs`** / **`errors`** |
 | R2 | **Forbidden args absent** — no **`correlationId`**, **`dispatchId`**, **`slotId`**, or other host-resolved keys |
-| R3 | Populate **`outputs`** from the required field list below |
+| R3 | Populate **`outputs`** from the required field list below; terminal approve uses **`status: success`** |
 | R4 | Re-emit updated MCP result after user-requested follow-up on this lane (same spawn session; host resolves **`correlationId`**) |
 | R5 | **`mission_control_refocus_parent_lane`** — **Required** on Approve / Abandon terminal per procedure steps 8–9; **forbidden** while **`continuationStatus: active`** |
 

@@ -85,7 +85,8 @@ Spawned when the developer selects **`brainstorm-first`** at mission intake (§2
 | **Analysis gate** | First structured-choice gate: **`continue-analyzing`** (default) · **`approve-write-report`** (all requests **`done`**) · **`abandon-dispatch`**. Recap includes proposed next steps tied to the intake task. |
 | **Final report** | **`*.brainstorm-report.md`** written only after all requests are **`done`** and the developer approves write. Contains conclusions, recommendation, and handoff summary. |
 | **Post-write revision gate** | After the final report write: **`revise-report`** (default) · **`approve-report-send`** · **`abandon-dispatch`** — one revision pass before terminal handoff to the Squad Leader. |
-| **Downstream** | Unchanged — invoker Squad Leader auto-chains **`author-prd`**, **`ad-hoc-prd`**, **`quick-fix-plan`**, or debug intake per invoker **`plan.mdc`** §2.5. |
+| **Leader preflight** | Squad Leader validates terminal approval and compiles typed downstream **`inputs`** before spawn — see each invoker **`plan.mdc`** §2.5 *Brainstorm→downstream preflight*. |
+| **Downstream** | After leader preflight passes — invoker Squad Leader auto-chains **`author-prd`**, **`ad-hoc-prd`**, **`quick-fix-plan`**, or debug intake per invoker **`plan.mdc`** §2.5. |
 
 #### Center-repo PR base (binding)
 

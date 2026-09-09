@@ -96,6 +96,21 @@ This skill **never** emits **`mission_control_spawn_agent`** for **`master-plann
 
 **File type:** **`.ad-hoc-prd.md`** so tooling recognizes the shape (§§ 1–3 + **Master Plan** placeholder line).
 
+## Upstream brainstorm handoff (binding)
+
+When the Squad Leader spawns this skill after **`brainstorm-research`** terminal approval (invoker **`plan.mdc`** §2.5 *Brainstorm→downstream preflight*), expect leader-compiled **`inputs`**:
+
+| Input | Source |
+|-------|--------|
+| `createIntent` | `true` |
+| `details` | `outputs.downstreamHandoffSummary` from brainstorm terminal |
+| `title` | optional — `outputs.reportTitle` |
+| `sourceSummary` | report path or `@` ref from `outputs.brainstormReportRef` |
+| `roadmapHints` | **array** — default `[]` when absent; **forbidden** string value |
+| `operationsDocsDirectory` | from lane identity / spawn preamble — required |
+
+**Forbidden on invoker lane:** spawn when brainstorm terminal lacks `developerApprovedReport: true` or typed **`inputs`** fail validation.
+
 ## Agent messaging (MCP)
 
 **MCP spawn/result skill.** Parent→child spawn and child terminal result use MCP tools per **`.sedea/centers/sedea/rules/4_mission.mdc`** § *Agent-to-agent spawn protocol*.

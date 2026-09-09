@@ -202,6 +202,19 @@ USER_CHECKPOINT — pick next step when brainstorm child reports failure or part
 
 **Procedure:** **Spawn turn:** emit exactly one **`mission_control_spawn_agent`** with **`warmUpRules`** including **`debug-and-fix/plan.mdc`** — **alone** per **Squad Leader spawn turn sequencing**. **Next turn:** after host-visible spawn confirmation, open **next-step resume** structured choice (**#external-wait**) before StreamFinal. On approved report continue §3 without repeat §2 USER_CHECKPOINT.
 
+#### Brainstorm→downstream preflight (binding)
+
+Before emitting downstream **`mission_control_spawn_agent`** on a terminal brainstorm child result:
+
+1. **Approval gate:** `outputs.developerApprovedReport === true`, `outputs.continuationStatus === "terminal"`, child terminal **`status === "success"`**, `outputs.abandonMission !== true`.
+2. **Report evidence:** non-empty `outputs.brainstormReportPath`, `outputs.brainstormReportRef`, and `outputs.downstreamHandoffSummary`.
+3. **Correlation:** terminal child result received on this dispatch via host child result — **forbidden** inferring approval from prose recap, lane **`run`** state, or spawn-ack alone.
+4. **Leader ledger:** record `brainstormHandoff` `{ reportPath, reportRef, handoffSummary, downstreamSpawnTarget, invokerMissionSlug }`.
+5. **Compile downstream `inputs`** per **`next-step resolution`** above (enriched §3 handover — unchanged field mapping).
+6. **Spawn input validation:** validate compiled **`inputs`** against target **`SKILL.md`** frontmatter types locally — required strings non-empty, **`operationsDocsDirectory`** present when applicable.
+7. **On validation failure:** open structured recovery — **forbidden** spawn attempt; options include fix inputs · retry after corrected child result · abandon dispatch.
+8. **On pass:** emit §3 spawn **alone** per **Squad Leader spawn turn sequencing** (rule **4**).
+
 ### 3. Debug and fix (spawned skill)
 
 - `type`: Agent engagement and handover.
