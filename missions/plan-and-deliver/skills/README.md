@@ -110,23 +110,7 @@ The Squad Leader **§8** ship ledger updates via Mission Control **host sync** w
 
 ### §8 terminal contract (ship skills)
 
-When a ship skill finishes a milestone on a **detached** lane, the terminal **`mission_control_send_agent_result`** **must** include **`targetPlanPath`**, **`shipPhase`**, and **`rowStatus`** (host may infer phase when documented). **Do not** nudge manual recap on the leader dispatch. Field hints: § *Mission Control section 8 sync* in each ship `SKILL.md`.
-
-### coding-session success rejection (binding)
-
-**`coding-session`** **must not** emit **`status: success`** when the ship chain is incomplete.
-
-| Reject `status: success` when | Reason |
-|-------------------------------|--------|
-| `outputs.continuationStatus` is `active` | Lane still owns ship work |
-| `outputs.prShipComplete` is absent or not `true` | Product row not closed |
-| `outputs.shipPhase` is not `done` | Ship chain incomplete |
-| [Implementation review gate](../skills/coding-session/SKILL.md#implementation-continuation-gate) unselected after implementation | Intermediate state |
-| Required milestone fields from [Ship-chain lifecycle state table](../docs/coding-session-ship-chain.md#ship-chain-lifecycle-state-table-binding) missing on terminal re-emit | Host/agent cannot validate resume |
-
-**Spawned child obligation:** Before **`mission_control_send_agent_result`**, run **`coding-session`** [MCP result preflight](../skills/coding-session/SKILL.md#mcp-result-preflight-mission_control_send_agent_result) **R7** and § *Terminal emission invariant (binding — read first)*. **Forbidden:** treating § *Terminal stop (normative)* below as permission to stop after implementation alone.
-
-**Host note (non-blocking on this pass):** Mission Control may persist and validate ship-chain continuation fields on recovery when available — center contract above is authoritative for agent behavior.
+When a ship skill finishes a milestone on a **detached** lane, terminal **`mission_control_send_agent_result`** **must** include **`targetPlanPath`**, **`shipPhase`**, and **`rowStatus`**. **Do not** nudge manual recap on the leader dispatch. §8 field hints: each ship `SKILL.md`. Success rejection: [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md).
 
 ## Inline-only (no spawn)
 
