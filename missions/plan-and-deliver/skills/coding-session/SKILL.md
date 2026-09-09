@@ -2990,6 +2990,8 @@ Do not propose dispatch resolution from this skill; the Squad Leader closes the 
 
 This skill usually runs **off** the **plan and deliver** leader lane. Mission Control host sync delivers §8 updates to the Squad Leader when this lane emits terminal or **re-emitted** **`mission_control_send_agent_result`** with required **`outputs`**. **Forbidden:** nudging manual **Ship recap** on the leader dispatch.
 
+**Leader closure (binding):** The Squad Leader must not propose dispatch resolution from parent-child registry cardinality. Detached **`coding-session`** must **re-emit** terminal with §8 `outputs` after inline ship milestones — silence on this lane is **not** ship-complete for the leader ledger. When the registry shows zero children but §8 rows remain **`open`** or **`blocked`**, the leader runs the owning mission's *Missing-lane recovery* gate — not automatic **`partial`** / **`resolved`**. **Calibration:** `premature-partial-dispatch-resolution_5197b779.agent-incident-report.md` (operations docs when present).
+
 | Milestone in this skill | `shipPhase` | Required `outputs` |
 |-------------------------|-------------|-------------------|
 | Worktrees attached; setup complete (`implementationMode: prompt-only` or pre-code) | `worktree` | `targetPlanPath`, `shipPhase`, `rowStatus`, `worktrees`, `developerApprovedImplementation: true`, `remainingTasks` |

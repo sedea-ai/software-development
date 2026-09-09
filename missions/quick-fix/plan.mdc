@@ -275,7 +275,25 @@ Same automation contract as plan-and-deliver §8 (*Mission Control host sync*) w
 
 USER_CHECKPOINT — pick planning-only close vs keep ship active when pre-resolution checklist fails.
 
-**Pre-resolution checklist:** Before **`mission_control_propose_dispatch_resolution`**, re-scan ship rows — do not propose **`resolved`** while `open`/`blocked` rows lack host-sync this session unless developer chose planning-only close via USER_CHECKPOINT gate above. **Mandatory next:** run [Release-versions dissolve gate](#release-versions-dissolve-gate-binding) below before any dissolve call.
+**Pre-resolution checklist:** Before **`mission_control_propose_dispatch_resolution`**, re-scan §7 ship rows — do not propose **`resolved`** while `open`/`blocked` rows lack host-sync this session unless developer chose planning-only close via USER_CHECKPOINT gate above.
+
+**Child registry is not completion evidence (binding):** Reconcile §7 ship rows **before** choosing any dispatch-resolution status. **Forbidden:** treating **`childCount === 0`**, an empty parent-child registry, absence of a registered ship lane, host “no child lanes”, or **`terminalEmitted`** alone as proof that ship work finished or that **`partial`** / **`resolved`** is authorized while any ship row is **`open`** or **`blocked`**.
+
+**Missing-lane recovery:** When any ship row is **`open`** or **`blocked`** and no registered child lane owns that row:
+
+USER_CHECKPOINT — recover missing ship lane vs close dispatch.
+
+   - **Forbidden:** auto-propose **`partial`** or **`resolved`** in that turn.
+   - Open structured choice (**#external-wait**) with required options **in this order** (then universal modal trailer):
+     - **`recover-ship-lane`** — re-spawn or refocus the ship lane; keep dispatch active
+     - **`wait-for-ship-sync`** — child must re-emit terminal with §8 `outputs`
+     - **`planning-only-close`** — close dispatch without ship tracking
+     - **`propose-partial-documented`** — propose **`partial`** with explicit remaining ship work in the JSON **`summary`**
+     - **More details for option _**
+
+   **Calibration:** `premature-partial-dispatch-resolution_5197b779.agent-incident-report.md` (operations docs when present).
+
+**Mandatory next:** run [Release-versions dissolve gate](#release-versions-dissolve-gate-binding) below before any dissolve call.
 
 ### Release-versions dissolve gate (binding)
 
@@ -375,6 +393,7 @@ USER_CHECKPOINT — release-note skill pending or failed; run or retry only (no 
 
 - Any §7 ship row is `open` or `blocked` and the developer has not explicitly chosen **planning-only** dispatch closure.
 - The developer signals done or wrap-up but **no** host-sync update was parsed on the leader dispatch this session for rows that are still `open` or `blocked` (use pre-resolution checklist USER_CHECKPOINT first).
+- **`childCount === 0`**, an empty parent-child registry, or a missing registered ship lane is the only “completion” signal while ship rows remain **`open`** or **`blocked`** (use *Missing-lane recovery* USER_CHECKPOINT first).
 
 - Release-versions gate applies and `releaseNoteStatus` is not `success` or `skipped` (hard-block).
 

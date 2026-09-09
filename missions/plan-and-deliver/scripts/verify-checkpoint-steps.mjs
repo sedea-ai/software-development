@@ -136,6 +136,29 @@ const GATE_TERMINAL_PATTERNS = [
 
 const ALL_PATTERNS = [...IDLE_HANDOFF_PATTERNS, ...GATE_TERMINAL_PATTERNS];
 
+/**
+ * Required binding anchors — under --enforce, missing substrings fail the scan.
+ * Paths are repo-relative from the active governance scan root (center or hosting).
+ * @type {{ rel: string; anchor: string; hint: string }[]}
+ */
+const REQUIRED_BINDING_ANCHORS = [
+  {
+    rel: 'missions/plan-and-deliver/plan.mdc',
+    anchor: 'Child registry is not completion evidence',
+    hint: 'plan-and-deliver §8 pre-resolution must forbid registry cardinality as ship-complete',
+  },
+  {
+    rel: 'missions/single-phase/plan.mdc',
+    anchor: 'Child registry is not completion evidence',
+    hint: 'single-phase §8 pre-resolution must forbid registry cardinality as ship-complete',
+  },
+  {
+    rel: 'missions/quick-fix/plan.mdc',
+    anchor: 'Child registry is not completion evidence',
+    hint: 'quick-fix §7 pre-resolution must forbid registry cardinality as ship-complete',
+  },
+];
+
 function die(msg) {
   process.stderr.write(`verify-checkpoint-steps: ${msg}\n`);
   process.exit(1);
@@ -302,6 +325,25 @@ function scanFile(body, rel) {
   return findings;
 }
 
+/**
+ * @param {string} body
+ * @param {string} rel
+ * @param {string} anchor
+ * @returns {Finding[]}
+ */
+function scanRequiredAnchor(body, rel, anchor) {
+  if (body.includes(anchor)) return [];
+  return [
+    {
+      rel,
+      line: 1,
+      category: 'gate-terminal',
+      patternId: 'missing-binding-anchor',
+      excerpt: `missing required anchor: ${anchor}`,
+    },
+  ];
+}
+
 async function loadPathsFromFile(scanRoot, pathsFile) {
   const raw = await fs.readFile(pathsFile, 'utf8');
   return raw
@@ -336,6 +378,28 @@ async function main() {
       continue;
     }
     allFindings.push(...scanFile(body, rel));
+  }
+
+  if (enforce) {
+    for (const { rel, anchor, hint } of REQUIRED_BINDING_ANCHORS) {
+      const relFromScanRoot =
+        ctx.mode === 'hosting' ? `.sedea/centers/software-development/${rel}` : rel;
+      const abs = path.join(ctx.scanRoot, relFromScanRoot);
+      let body;
+      try {
+        body = await fs.readFile(abs, 'utf8');
+      } catch (err) {
+        allFindings.push({
+          rel,
+          line: 1,
+          category: 'gate-terminal',
+          patternId: 'missing-binding-anchor',
+          excerpt: `could not read for anchor check: ${err.message} (${hint})`,
+        });
+        continue;
+      }
+      allFindings.push(...scanRequiredAnchor(body, relFromScanRoot, anchor));
+    }
   }
 
   if (allFindings.length === 0) {

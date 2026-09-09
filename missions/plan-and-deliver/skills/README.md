@@ -107,6 +107,7 @@ Detached/nested ship lanes — **`## Completion (spawned)`** vs inline per skill
 
 The Squad Leader **§8** ship ledger updates via Mission Control **host sync** when ship child lanes emit terminals with required **`outputs`**. See **`../plan.mdc`** §8 *Mission Control host sync* and **development-process.md** § *Leader-lane §8 host sync*.
 
+**Child registry ≠ ship complete:** Empty registry / **`childCount === 0`** is not ship-complete — see [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) *Leader registry guard*.
 
 ### §8 terminal contract (ship skills)
 
