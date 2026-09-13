@@ -81,8 +81,6 @@ Squad Leader §§3/§5 spawn **`author-prd`** / **`master-planner`**; decomposit
 
 ## Spawn handover inputs
 
-**Product-first `coding-session` handoff (binding):** When implementation targets a product, center, or registered center-content repository, pass its substantive checkout in `repoPath` / `repoPaths` and name its role and `HOSTING_ROOT` relationship in `initiatingPrompt`. Do not silently substitute the hosting root; missing or hosting-only targeting is a spawn validation failure. Source review and merge precede mechanical hosting gitlink promotion.
-
 | Input | When | Behavior |
 |-------|------|----------|
 | **`plansBasePath`** | Nested folder | Write dir; forward |
