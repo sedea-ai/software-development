@@ -40,6 +40,12 @@ On every Software Development ship lane (**`coding-session`**, **`plan-reconcile
 
 ## Squad Leader on HOSTING_ROOT vs agent sessions in worktrees
 
+### Product-first source repository routing (binding)
+
+The Squad Leader remains on `HOSTING_ROOT` for orchestration and operations, but `coding-session` implements and performs substantive review in the selected source repository when the PR plan targets a product, center, or registered center-content repo. Pass the source repository explicitly through `repoPath` / `repoPaths`; never infer that the hosting shell is the code target merely because it launched the dispatch.
+
+The hosting repository records integration gitlinks. After the source-repository PR is reviewed and merged, use the script-backed pin-promotion path for the hosting gitlink. A gitlink-only hosting PR is mechanical and must not replace source-repository review.
+
 There are two kinds of agent sessions:
 
 - **Squad Leader is the main session** — stays on **`HOSTING_ROOT`** (primary hosting clone, usually on `main`), handles lightweight tasks that do not need a worktree because they do not alter tracked hosting-repo code:

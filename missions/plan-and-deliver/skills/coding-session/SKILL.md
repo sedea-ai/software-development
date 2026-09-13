@@ -120,9 +120,16 @@ warmUpRules:
   - ".sedea/centers/software-development/missions/plan-and-deliver/skills/README.md"
   - ".sedea/centers/software-development/rules/20_efficient-pr-shipping.mdc"
   - ".sedea/centers/sedea/rules/7_stacked-pr-worktree-naming.mdc"
+  - ".sedea/centers/sedea/rules/0_hosting-repo.mdc"
 ---
 
 # Coding session
+
+## Product-first repository targeting (binding)
+
+Before creating a worktree, resolve the substantive repository from `inputs.repoPath` / `inputs.repoPaths` and classify it with [`.sedea/centers/sedea/rules/0_hosting-repo.mdc`](../../../../../../sedea/rules/0_hosting-repo.mdc). Product, center, and registered center-content repositories are the implementation and substantive review surfaces. `HOSTING_ROOT` is the integration shell for operations, worktree orchestration, and later script-backed gitlink promotion; it is not a fallback implementation target when a source repository is named.
+
+The handoff must identify the source repository role, source worktree, and any hosting gitlink relationship. If a plan names a source repository but `repoPath` is missing, ambiguous, or points only to `HOSTING_ROOT`, stop at the repository-target gate and request correction. Complete source-repository review and verify the source merge before running hosting pin promotion. A hosting gitlink-only PR is an agent-managed integration record, not the substantive review surface.
 
 ## Terminal emission invariant (binding — read first)
 

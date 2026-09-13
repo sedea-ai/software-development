@@ -81,6 +81,12 @@ Squad Leader §§3/§5 spawn **`author-prd`** / **`master-planner`**; decomposit
 
 ## Spawn handover inputs
 
+### Product-first `coding-session` handoff (binding)
+
+When implementation targets a product, center, or registered center-content repository, the `coding-session` spawn must carry `repoPath` or `repoPaths` for the substantive source checkout, plus an `initiatingPrompt` that names its repository role and the relationship to `HOSTING_ROOT`. Do not use the hosting root as a silent substitute for a named source repository. The child must resolve the source worktree and review there first; hosting gitlink promotion is a later integration transaction.
+
+Missing, ambiguous, or hosting-only targeting when the plan names a source repository is a handoff validation failure. Correct the inputs before spawning; do not open a hosting implementation worktree as a fallback.
+
 | Input | When | Behavior |
 |-------|------|----------|
 | **`plansBasePath`** | Nested folder | Write dir; forward |
