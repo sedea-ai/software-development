@@ -188,6 +188,7 @@ Per [`.sedea/centers/sedea/docs/lane-manifest-contract.md`](.sedea/centers/sedea
 | `.sedea/centers/software-development/missions/plan-and-deliver/skills/README.md` | Spawn contracts, terminal stop, cap exceptions |
 | `.sedea/centers/software-development/rules/20_efficient-pr-shipping.mdc` | Worktree naming, ship chain, bootstrap |
 | `.sedea/centers/sedea/rules/7_stacked-pr-worktree-naming.mdc` | Normative `WORKTREES_DIR` / `WORKTREE_ROOT` path formula before setup |
+| `.sedea/centers/sedea/rules/0_hosting-repo.mdc` | Product/center/content repository role resolution and source-first review/pin routing |
 
 **Omitted from frontmatter (384 KiB spawn cap — runtime `Read`):** `plan.mdc`, `development-process.md` — load via **`inputs.targetPlanPath`** and explicit **`Read`** when ship-chain or procedure steps require them.
 
