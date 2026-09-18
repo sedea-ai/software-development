@@ -60,6 +60,8 @@ Turn-end structured choice is keyed by dispatch **`trustLevel`** — normative d
 
 Spawned lanes without the AskQuestion tool **must** call **`mission_control_present_structured_choice`** when a gate surface (or non-Checkpoint every-turn policy) requires structured choice. Full wire format: rule **2** § *`mission_control_present_structured_choice` MCP tool contract (binding)*. **Forbidden:** treating this bootstrap summary as license to skip Checkpoint gate modals, or as requiring a modal on every Checkpoint happy-path hop.
 
+**Parent spawn list-before-retry (binding):** Parent lanes on plan-and-deliver and other spawn-heavy missions must call **`mission_control_list_child_lanes`** on the follow-up turn when spawn outcome is uncertain after **`mission_control_spawn_agent`** — await the **delivered** list envelope before retry. **Forbidden:** duplicate spawn from stdio MCP ack alone. Authoritative detail: [`.sedea/centers/sedea/rules/4_mission.mdc`](.sedea/centers/sedea/rules/4_mission.mdc) § *List-before-retry (binding)*; operator checklist row **M10** in [`.sedea/centers/software-development/missions/plan-and-deliver/skills/README.md`](../missions/plan-and-deliver/skills/README.md).
+
 ---
 
 ## Checkpoint step continuation (binding)
