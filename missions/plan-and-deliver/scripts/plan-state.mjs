@@ -26,6 +26,7 @@ const SCRIPT_DIR = path.dirname(fileURLToPath(import.meta.url));
 let SEDEA_REPO_ROOT = null;
 /** Absolute plan directories (all operations scopes; non-joint scopes before joint). */
 let SEDEA_PLAN_DIRS = null;
+let _centerRegistryCache = new Map();
 
 // ---------- small utils ----------
 
@@ -175,6 +176,7 @@ export function resetPlanStateContextForTests() {
   SEDEA_REPO_ROOT = null;
   SEDEA_PLAN_DIRS = null;
   _hostingOrgRepoCache = null;
+  _centerRegistryCache = new Map();
 }
 
 function parseGithubRemote(url) {
@@ -197,7 +199,37 @@ async function gitOriginOrgRepo(repoPath) {
   return { ok: true, orgRepo };
 }
 
+/**
+ * Resolve a registered, enabled non-built-in center slug to its source repo.
+ * The registry is durable metadata and must remain usable after the center
+ * checkout/worktree has been removed. Unknown or malformed entries fail closed.
+ */
+export async function resolveRegisteredCenterRepo(centerSlug, hostingRepoRoot) {
+  if (!centerSlug || centerSlug === 'sedea' || !hostingRepoRoot) return null;
+  const root = path.resolve(hostingRepoRoot);
+  if (!_centerRegistryCache.has(root)) {
+    const registryPath = path.join(root, '.sedea', 'centers', 'centers.yaml');
+    let registry;
+    try {
+      registry = parseDocument(await fs.readFile(registryPath, 'utf8')).toJS();
+    } catch {
+      registry = null;
+    }
+    const entries = Array.isArray(registry?.centers) ? registry.centers : [];
+    const bySlug = new Map(
+      entries
+        .filter((entry) => entry && entry.enabled === true && typeof entry.slug === 'string')
+        .map((entry) => [entry.slug, entry]),
+    );
+    _centerRegistryCache.set(root, bySlug);
+  }
+  const entry = _centerRegistryCache.get(root).get(centerSlug);
+  return entry ? parseGithubRemote(entry.source) : null;
+}
+
 async function resolveFullRepoForReconcile(pr, worktrees, hostingRepoRoot) {
+  const registeredRepo = await resolveRegisteredCenterRepo(pr.repo, hostingRepoRoot);
+  if (registeredRepo) return { fullRepo: registeredRepo, error: null };
   for (const wt of worktrees) {
     if (wt.repo === pr.repo && wt.path) {
       const g = await gitOriginOrgRepo(wt.path);
