@@ -141,7 +141,7 @@ Populate **`outputs`** from the skill's **`## Completion (spawned)`** and any re
 
 ## Definitive `bootstrapRules` (Software Development center layer — plan and deliver)
 
-When Mission Control dispatches **`centerSlug === software-development`**, the host merges this path into **`effectiveWarmUp`** after the Sedea bootstrap layer (PRD §5.4; host resolver ships in phase 6 PR 3):
+When Mission Control dispatches **`centerSlug === software-development`**, the host merges this path into **`effectiveWarmUp`** after the Sedea bootstrap layer:
 
 | Path | Purpose |
 |------|---------|
@@ -169,7 +169,7 @@ Normative minimum **`laneRules`** paths per lane role — merged into **`effecti
 **Spawn binding exceptions** (`ad-hoc-prd`, **`quick-fix-plan`** mission `plan.mdc`) — [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) § *Default warm-up*.
 
 
-**Parity / verify:** **`verify-lane-warmup-parity.mjs --bootstrap full`** (and **`--bootstrap slim`** before alwaysApply flip); **`verify-warmup-bytes.mjs --table`** for per-role spawn byte CI; **`--enforce-spawn-byte-budget`** when CI enforce is enabled. Roles, sign-off, and spawn **`warmUpRules`** binding detail — [`docs/spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) § *Default warm-up — cap exceptions and maintenance*.
+**Parity / verify:** [`docs/spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md) § *Default warm-up — cap exceptions and maintenance* (`verify-lane-warmup-parity.mjs`, `verify-warmup-bytes.mjs`).
 
 ## Universal spawn preflight (all plan-and-deliver spawners)
 
@@ -191,8 +191,8 @@ Host MCP spawn/result and forbidden identity keys — rule **4** § *Agent-to-ag
 | M6 | **`skillPath`** resolves under the correct center (Software Development skills under **`.sedea/centers/software-development/`**) |
 | M7 | On tool validation failure: stop, fix the failing row, retry spawn — new successful spawn mints a **new** host **`correlationId`** |
 | M8 | **`name`** / **`description`** — **lane title prefix** + semantic title per [rule **50**](../../../../rules/50_mission-control-display-metadata-discipline.mdc) § *Lane title prefix conventions* and § *Lane title prefix (spawn `name`)* below; refresh stale child tab via **`mission_control_update_lane_display`** |
-| M9 | **Spawn-ack semantics** — MCP response with **`transcriptOnly: true`** / **`hostMirrorRequired: true`** is **transcript acknowledgment only**, not host spawn success, child lane open, or **`correlationId`** delivery proof; spawn turn emits **`mission_control_spawn_agent` alone** — **forbidden** parallel spawn + wait modal on the same turn; verify host-visible child before external-wait narration — see [`.sedea/centers/sedea/rules/4_mission.mdc`](.sedea/centers/sedea/rules/4_mission.mdc) § *Spawn-ack semantics (binding)* |
-| M10 | **List-before-retry** — on the follow-up turn when spawn outcome is uncertain after **`mission_control_spawn_agent`**, call **`mission_control_list_child_lanes`** first (**`correlationIdFilter`** when the spawn correlation id is known); await the **delivered** host mirror list response — **forbidden** duplicate **`mission_control_spawn_agent`** from stdio spawn or list ack alone — see rule **4** § *List-before-retry (binding)* |
+| M9 | **Spawn-ack semantics** — spawn turn emits **`mission_control_spawn_agent` alone**; **forbidden** parallel spawn + wait modal — rule **4** § *Spawn-ack semantics* |
+| M10 | **List-before-retry** — uncertain spawn outcome → **`mission_control_list_child_lanes`** first; **forbidden** duplicate spawn — rule **4** § *List-before-retry* |
 
 Child terminal: use § *MCP result preflight* in the spawned skill’s **`## Completion (spawned)`** — call **`mission_control_send_agent_result`** at terminal (host resolves **`correlationId`**; omit host-resolved identity keys from MCP args).
 
@@ -222,7 +222,6 @@ After **`mission_control_send_agent_result`**, **stop on that lane**:
 3. No next protocol step same turn after the MCP result (including wait-for-child prose).
 
 **Order when gated:** structured choice → refocus (when eligible) → MCP result → stop. Detail: [`spawn-ship-contracts.md`](../docs/spawn-ship-contracts.md).
-
 
 ## Default warm-up
 
