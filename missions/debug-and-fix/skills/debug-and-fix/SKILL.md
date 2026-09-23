@@ -257,6 +257,7 @@ USER_CHECKPOINT — confirm manual test scenario results on this lane.
 | `scenario-fail` | Scenario failed — return to diagnosis | Return to step **2** (logs first on new evidence) |
 | `run-tests-outside-chat` | Running tests outside chat — resume when done | External-wait — same gate on resume with results |
 | `copy-dsv-handoff` | Copy Deploy Step Verification agent prompt | Emit [Deploy Step Verification (agent handoff)](#deploy-step-verification-agent-handoff-binding) in the same turn’s **`displayMarkdown`** (or re-emit if already shown); re-open this gate — does **not** mark the scenario passed |
+| `testing-agent-handoff` | Testing Agent Handoff | Same turn: emit [Testing Agent Handoff](#testing-agent-handoff-binding) in **`displayMarkdown`**; re-open this gate — does **not** mark the scenario passed |
 | `blocked-manual` | Blocked — cannot complete manual test | Set **`fixStatus: blocked`**; terminal with evidence |
 | `more-details` | More details for option _ | Elaborate; re-open this gate |
 
@@ -318,6 +319,14 @@ For each scenario:
 ````
 
 After the developer runs DSV and returns, they resume this gate with **`scenario-pass`** / **`scenario-fail`** (or **`run-tests-outside-chat`** while waiting).
+
+##### Testing Agent Handoff (binding)
+
+When the developer picks **`testing-agent-handoff`** on the manual-test gate (Before/After-style scenario lists or any other manual scenario modal on this skill), emit a copy-paste prompt in **`displayMarkdown`** and **re-open this gate**. Does **not** mark the scenario passed.
+
+**Role (binding):** The testing agent **runs simulations** for the listed scenarios. **No third agent** will run those simulations. Their job is **not** only to check the log. Their job **is** to run scenario simulations **and guide the user** through the scenarios.
+
+Reuse the DSV dispatch start (`sedea-for-testing` / **`perform deploy step verification`** when that center exists) plus the Role block above. **Forbidden:** log-only job description; implying a third agent will simulate.
 
 ### 6 — Fix loop
 

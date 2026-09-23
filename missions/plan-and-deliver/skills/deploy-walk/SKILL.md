@@ -257,6 +257,7 @@ Every **AskQuestion** / **`mission_control_present_structured_choice`** gate whi
 |-----------|---------------|
 | *(gate-specific)* | Step done / skip / block / closure / present-next — per [Manual step await gate](#manual-step-await-gate-binding) |
 | `all-manual-steps-done` | All remaining manual steps passed — one take |
+| `testing-agent-handoff` | Testing Agent Handoff |
 | `return-to-implementation-new-worktree` | Label per [Return-to-implementation option label](../coding-session/SKILL.md#return-to-implementation-option-label-binding) — when **`worktreePath`** is set, use **Continue implementation on the same worktree** |
 | `more-details` | More details for option _ |
 
@@ -278,6 +279,51 @@ Every **AskQuestion** / **`mission_control_present_structured_choice`** gate whi
 
 **`return-to-implementation-new-worktree`** — developer found a product defect during deploy verification (including after the PR merged). Set **`outputs.returnToImplementation: true`** in **`## Completion (inline)`** and stop the walk. Parent **`coding-session`** runs [Return to implementation from deploy walk](../coding-session/SKILL.md#return-to-implementation-from-deploy-walk-new-worktree) on the **next** turn (**Branch A — same worktree** when session path exists; **Branch B — new worktree** when gone) — **do not** edit product code from this skill.
 
+### Testing Agent Handoff (binding)
+
+Every [Manual step await gate](#manual-step-await-gate-binding) for **`### Before deploy`** and **`### After deploy`** (and any other §7 deploy checklist this walk covers) **must** include option **`testing-agent-handoff`** (**Testing Agent Handoff**).
+
+**When the developer picks `testing-agent-handoff`:**
+
+1. Same turn: put a copy-pasteable fenced prompt in **`displayMarkdown`** under **`### Testing Agent Handoff`**.
+2. **Re-open** the Manual step await gate. Generating the handoff does **not** flip `[ ]` or mark the step done.
+
+**Handoff body (binding — LLM consumer):**
+
+````markdown
+### Testing Agent Handoff
+
+Copy into a **new** Mission Control dispatch for testing (center **`sedea-for-testing`**, mission **Perform Deploy Step Verification**, command phrase **`perform deploy step verification`**, when that center exists on the hosting repo).
+
+```text
+You are the testing agent for this deploy-test walk.
+
+## Role (binding)
+- You **run simulations** for the listed test scenarios.
+- **No third agent** will run simulations for those scenarios.
+- Your job is **not** only to check the log.
+- Your job **is** to run scenario simulations **and guide the user** through the scenarios.
+
+## Context
+- Hosting root: <absolute HOSTING_ROOT>
+- Worktree (if present): <absolute worktreePath or none>
+- Plan: <targetPlanPath>
+- Active sub-section: <Before deploy | After deploy>
+- Current step N: <verbatim checklist line>
+
+## Scenarios
+1. <scenario / Testing steps from the current manual step>
+2. …
+
+## How to work
+- Run simulations (commands, UI walkthroughs, HTTP, log grep as needed) yourself.
+- Guide the user through each scenario; do not hand simulation off to another agent.
+- Record pass/fail + evidence. The coding-session / deploy-walk lane still owns checkbox flips (`deploy-step-n-done`).
+```
+````
+
+**Forbidden:** implying a third agent will simulate scenarios; telling the testing agent their job is log-only; treating this pick as step pass.
+
 ### Manual step await gate (binding)
 
 Every gate after presenting a **manual** step (or when inline bootstrap stops on the first manual step) **must** call **`mission_control_present_structured_choice`** or **AskQuestion** with **all** rows below unless a gate table elsewhere explicitly omits one. Put the current step presentation and a numbered list of **remaining manual** steps (when ≥2) in **`displayMarkdown`**.
@@ -291,8 +337,12 @@ USER_CHECKPOINT — confirm manual deploy step verification or pick next walk ac
 | `deploy-step-n-block` | Block step N — with reason | **`deploy-walk <N> block: <reason>`** |
 | `present-next-manual-step` | Present next manual step — one by one | **`deploy-walk present <N+1>`** when N+1 is manual; if N+1 is agent-executable, run [Autonomous agent-executable pass](#autonomous-agent-executable-pass) first |
 | `all-manual-steps-done` | All remaining manual steps passed — one take | [§ `deploy-walk all-manual-done`](#deploy-walk-all-manual-done--batch-flip-remaining-manual-steps) |
+| `testing-agent-handoff` | Testing Agent Handoff | Same turn: emit [Testing Agent Handoff](#testing-agent-handoff-binding) in **`displayMarkdown`**; **re-open this gate**. Does **not** mark the step done |
 | `return-to-implementation-new-worktree` | Label per [Return-to-implementation option label](../coding-session/SKILL.md#return-to-implementation-option-label-binding) | Set **`outputs.returnToImplementation: true`**; hand back to **`coding-session`** |
 | `more-details` | More details for option _ | Elaborate; re-open gate |
+| `have-question` | I have a question | Answer; re-open this gate |
+| `introspect-incident` | Introspect: I'll explain the issue. | Alignment Safeguard |
+| `other` | Other | Divergence; re-open this gate |
 
 - **`defaultOptionId: deploy-step-n-done`** when the developer is reviewing the currently presented manual step with no blockers surfaced.
 - **Next-step resolution:** Auto-advance through [Inline walk bootstrap](#inline-walk-bootstrap) and [Autonomous agent-executable pass](#autonomous-agent-executable-pass) on the happy path — no `USER_CHECKPOINT` until a **manual** step is presented per [Step 4 — Step presentation contract](#step-4--step-presentation-contract).

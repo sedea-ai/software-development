@@ -24,7 +24,7 @@ alwaysApply: false
 | **PR count** | **Exactly one** PR plan per dispatch (single indexed child) |
 | **Skipped** | Full **`author-prd`**, **`master-planner`** Master Plan, **`pr-breakdown`**, **`delivery-phases`**, **`phase-planner`** |
 | **Out of scope redirect** | Complexity **>6**, multi-PR decomposition, or work needing Master Plan → **`plan and deliver a single phase`** (**1–6** PRs, complexity **≤ 20**) or **`plan and deliver`** (detached dispatch) |
-| **Ship chain** | Same detached **`coding-session`** order as plan-and-deliver §8 |
+| **Ship chain** | Same detached **`coding-session`** order as plan-and-deliver §8 — including **`deploy-walk`** [Manual step await gate](.sedea/centers/software-development/missions/plan-and-deliver/skills/deploy-walk/SKILL.md#manual-step-await-gate-binding) option **`testing-agent-handoff`** (**Testing Agent Handoff**) on Before deploy and After deploy manual-test lists |
 
 ### Operations filesystem invariant (binding)
 
