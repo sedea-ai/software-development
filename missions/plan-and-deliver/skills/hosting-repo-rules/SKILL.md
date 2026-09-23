@@ -61,6 +61,8 @@ warmUpRules:
 
 # Hosting-repo rules (detached ship lane)
 
+> **Hosting-repository worktree lifecycle:** Use `worktree-setup.sh` to create a worktree and `worktree-cleanup.sh` to remove an authorized worktree after merge. Do not invoke `git worktree add` or `git worktree remove` directly. This does not change separately governed center-repository or CLI-only exceptions.
+
 **Spawnable detached lane** for hosting-repo **`.cursor/rules/*.mdc`** updates when a **`coding-session`** terminal indicates §5 repo-rule work was **not fully landed** on the product lane. Distinct skill identity and lane slug from **`coding-session`** — same sedea ship primitives, different designation and scope.
 
 **Normative execution:** **`spawned`** (detached child lane). Parent **`master-planner`** / **`phase-planner`** emit **fire-and-forget** **`mission_control_spawn_agent`** — do **not** add the rules lane to **`pendingByParent`** or block next-row expand.

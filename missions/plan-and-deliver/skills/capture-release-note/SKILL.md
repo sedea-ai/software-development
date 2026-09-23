@@ -270,6 +270,8 @@ Call **`mission_control_present_structured_choice`** (`modalTitle`: *Release not
 
 ### 5. Worktree setup + write unreleased fragment(s)
 
+> **Hosting-repository worktree lifecycle:** Use `worktree-setup.sh` to create the fragment worktree and `worktree-cleanup.sh` to remove it after merge. Do not invoke `git worktree add` or `git worktree remove` directly.
+
 **After** `approve-fragment` — **worktree before first byte** (binding):
 
 1. From **`HOSTING_ROOT`**, run center **`worktree-setup.sh`** (docs-only fragment ship — short **`docs/`** or **`improve/`** worktree name per rule **7**). When hint **`nextAction: attach-required`**, MCP **`sedea_add_worktree_folder`**. Record absolute **`WORKTREE_ROOT`** for this capture pass.

@@ -38,6 +38,8 @@ warmUpRules:
 
 # Debug and fix
 
+> **Hosting-repository worktree lifecycle:** Use `worktree-setup.sh` to create the debug worktree and `worktree-cleanup.sh` to remove it after its authorized ship chain. Do not invoke `git worktree add` or `git worktree remove` directly. This does not change separately governed center-repository or CLI-only exceptions.
+
 **Intent:** **Debug and Fix agent** runs a log-first diagnosis on **`HOSTING_ROOT`** (read-only), proposes a fix for developer approval, then creates a worktree and applies the approved fix. Prioritize log access before substantive analysis. When the fix is verified, recommend a post-fix exit: **`code-promotion`** (parent creates a PR plan anchor through **new-plan/pr-plan**, then runs **coding-session** with `targetPlanPath`), **`ad-hoc-prd`** (parent captures fix context without immediate code promotion), or **`findings-report-only`** (parent produces a debug session findings report with no downstream spawn).
 
 **Normative mode:** **Spawned only** on this mission — child lane owns worktree lifecycle for the debug session unless protocol explicitly re-spawns **`coding-session`** for promotion.
