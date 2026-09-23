@@ -116,6 +116,8 @@ Marker syntax: [`.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md`](.s
 
 ## Protocol
 
+> **Hosting-repository worktree lifecycle:** The `coding-session` ship chain uses `worktree-setup.sh` to create a worktree and `worktree-cleanup.sh` to remove an authorized worktree after merge. Do not invoke `git worktree add` or `git worktree remove` directly. This does not change separately governed center-repository or CLI-only exceptions.
+
 ### 1. Infer intent from the opening command phrase
 
 - **Type:** Branching logic

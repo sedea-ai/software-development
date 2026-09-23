@@ -125,6 +125,8 @@ warmUpRules:
 
 # Coding session
 
+> **Hosting-repository worktree lifecycle:** Use `worktree-setup.sh` to create a worktree and `worktree-cleanup.sh` to remove an authorized worktree after merge. Do not invoke `git worktree add` or `git worktree remove` directly. This does not change separately governed center-repository or CLI-only exceptions.
+
 ## Product-first repository targeting (binding)
 
 Before creating a worktree, resolve the substantive repository from `inputs.repoPath` / `inputs.repoPaths` and classify it with [`.sedea/centers/sedea/rules/0_hosting-repo.mdc`](../../../../../sedea/rules/0_hosting-repo.mdc). Product, center, and registered center-content repositories are the implementation and substantive review surfaces. `HOSTING_ROOT` is the integration shell for operations, worktree orchestration, and later script-backed gitlink promotion; it is not a fallback implementation target when a source repository is named.

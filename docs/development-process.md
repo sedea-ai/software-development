@@ -29,6 +29,8 @@ The six principles below are the non-negotiables. Everything in **Planning Modes
 
 ## Development tools
 
+> **Hosting-repository worktree lifecycle:** Use `worktree-setup.sh` to create a hosting-repository worktree and `worktree-cleanup.sh` to remove it. Do not invoke `git worktree add` or `git worktree remove` directly. This does not change separately governed center-repository or CLI-only exceptions.
+
 Single catalogue of **what we use** in this process. Later sections still spell out **agent roles** wherever a role appears (e.g. **a coding agent**) so a developer reader scanning a template never has to chase definitions.
 
 ### Center and mission governance

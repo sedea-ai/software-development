@@ -41,6 +41,8 @@ inputs:
 
 # Ship release-note fragment
 
+> **Hosting-repository worktree lifecycle:** Use `worktree-setup.sh` to create the fragment worktree and `worktree-cleanup.sh` to remove it after merge. Do not invoke `git worktree add` or `git worktree remove` directly.
+
 **Inline from capture (worktree-first).** [`capture-release-note`](../capture-release-note/SKILL.md) Step **6** reads and runs this skill **in-session** after approve + worktree write. **Do not** spawn a child agent for this skill on the capture happy path.
 
 **Lane requirement (no separate warm-up).** This skill has **no** frontmatter **`warmUpRules`** / **`laneRules`** by design — invoker lane already loaded ship rules.

@@ -87,6 +87,8 @@ Marker syntax: [`.sedea/centers/sedea/docs/user-checkpoint-marker-syntax.md`](.s
 
 ## Protocol
 
+> **Hosting-repository worktree lifecycle:** Use `worktree-setup.sh` to create the debug worktree and `worktree-cleanup.sh` to remove it after its authorized ship chain. Do not invoke `git worktree add` or `git worktree remove` directly. This does not change separately governed center-repository or CLI-only exceptions.
+
 ```mermaid
 flowchart TD
   A[Infer command] --> B[Collect issue context]

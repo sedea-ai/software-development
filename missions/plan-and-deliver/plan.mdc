@@ -214,6 +214,8 @@ Mission Control **host strip (phase 2 — merged app#282 / app#288)** removed Hu
 
 ## Protocol
 
+> **Hosting-repository worktree lifecycle:** Use `worktree-setup.sh` to create a worktree and `worktree-cleanup.sh` to remove an authorized worktree after merge. Do not invoke `git worktree add` or `git worktree remove` directly. This does not change separately governed center-repository or CLI-only exceptions.
+
 Session command phrases are declared in `mission.yaml`. **§§1–7** define Squad Leader routing for **planning** on **`plan and deliver`**. **§8** defines Squad Leader **ship cadence oversight** and **dispatch resolution gates** while implementation/ship skills still execute as **detached** branches (see **Squad operations** — the Squad Leader does **not** spawn **`coding-session`**, **`pre-pr-review`**, **`create-pr`**, etc. from §§1–7).
 
 ```mermaid

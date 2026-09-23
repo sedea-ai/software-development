@@ -61,6 +61,8 @@ warmUpRules:
 
 # Worktree bootstrap
 
+> **Hosting-repository worktree lifecycle:** The parent must use `worktree-setup.sh` to create the worktree and `worktree-cleanup.sh` to remove it when authorized. Do not invoke `git worktree add` or `git worktree remove` directly.
+
 > **Deprecated (read-only):** Normative bootstrap is **`.sedea/centers/sedea/scripts/worktree-setup.sh`** on the **`coding-session`** lane — see [`coding-session/SKILL.md`](../coding-session/SKILL.md) § *Center worktree scripts (binding)* and § *Worktree bootstrap (mandatory)*. This skill file stays on disk until [drain criteria](../README.md#worktree-bootstrap-skill-drain-gate) pass; do **not** spawn by default.
 
 ## Warm-up manifest (spawned)
