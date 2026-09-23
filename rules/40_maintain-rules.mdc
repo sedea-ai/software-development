@@ -17,6 +17,8 @@ This file lives under **`.sedea/centers/software-development/rules/`** and is **
 
 ## Scope
 
+**Worktree lifecycle:** For implementation-repository work, create worktrees with `worktree-setup.sh` and clean eligible worktrees with `worktree-cleanup.sh`; do not invoke `git worktree add` or `git worktree remove` directly.
+
 This rule applies to **domain-specific Cursor rules** under **`.cursor/rules/*.mdc`** in the **hosting repo where code changes land** — for example a Sedea-enabled **hosting repo** (root contains `.sedea/centers/sedea/`) or a **hosting repo worktree** (`user-auth`, `payments-web`, and similar). Those files help agents **navigate and understand that codebase**: architecture, conventions, call patterns, module boundaries, and repo-specific tooling — not Sedea platform governance.
 
 ### Where to edit which governance (routing)

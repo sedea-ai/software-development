@@ -61,7 +61,7 @@ Subsections below are **indexes** — load linked rules, skills, or on-demand do
 | Topic | Load when |
 | --- | --- |
 | Center submodule git (two repos) | [`.sedea/centers/sedea/rules/3_center.mdc`](.sedea/centers/sedea/rules/3_center.mdc) § *Git repo semantics*; [`promote-submodule-pin`](.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md) after center merge (promote scripts use **`worktree-setup.sh --pin-only`**) — **center-repo PR is the review surface**; hosting pin is **agent-owned background** (conduct **1** § **Reviewable delivery before pin promotion** / § **Pin transcript silence**); § *Center-repo PR base (binding)* below for **`--base`** |
-| Git governance (worktree-only) | [`.sedea/centers/software-development/rules/20_efficient-pr-shipping.mdc`](../rules/20_efficient-pr-shipping.mdc); Sedea rules **0**, **6**, **7** |
+| Git governance (worktree-only) | [`.sedea/centers/software-development/rules/20_efficient-pr-shipping.mdc`](../rules/20_efficient-pr-shipping.mdc); Sedea rules **0**, **6**, **7**. Create worktrees with `worktree-setup.sh` and clean eligible worktrees with `worktree-cleanup.sh`; never invoke `git worktree add` or `git worktree remove` directly. |
 | Governance scripts / CI | `./scripts/verify-center-governance.sh` on hosting repo; [`.github/workflows/center-governance.yml`](../.github/workflows/center-governance.yml) on this center repo |
 | PRD routing | **`plan-and-deliver/plan.mdc`** §§2–3; **`author-prd/SKILL.md`** |
 | Brainstorm pre-intake | **`brainstorm-research/SKILL.md`**; invoker mission **`plan.mdc`** §2.5 |

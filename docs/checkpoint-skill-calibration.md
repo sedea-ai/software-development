@@ -64,6 +64,8 @@ Derived index of **Checkpoint trust** turn behavior for **software-development**
 
 ## Cluster B — Ship-chain skills (row 3)
 
+**Worktree lifecycle:** Create worktrees with `worktree-setup.sh` and clean eligible worktrees with `worktree-cleanup.sh`; do not invoke `git worktree add` or `git worktree remove` directly.
+
 | Skill | First developer-pick gate | Notable auto-advance surfaces | Source |
 |-------|---------------------------|-------------------------------|--------|
 | **coding-session** | Worktree-open gate **or** auto-authorize skip | Generic flow **1–4**, implementation **5–6**, clean ship cut-point, post-merge tail | [`coding-session/SKILL.md`](../missions/plan-and-deliver/skills/coding-session/SKILL.md) § Checkpoint turn UX |

@@ -90,7 +90,7 @@ Load these **explicitly** when **`laneRules`**, **`skillWarmUp`**, spawn handove
 | Rule | Path | Load when |
 |------|------|-----------|
 | **10** Plan naming | [`.sedea/centers/software-development/rules/10_plan-naming-convention.mdc`](10_plan-naming-convention.mdc) | Plan/PR/worktree naming, forbidden-word policy |
-| **20** PR shipping | [`.sedea/centers/software-development/rules/20_efficient-pr-shipping.mdc`](20_efficient-pr-shipping.mdc) | Worktrees, commit/push cadence, ship chain, PR creation gate |
+| **20** PR shipping | [`.sedea/centers/software-development/rules/20_efficient-pr-shipping.mdc`](20_efficient-pr-shipping.mdc) | Worktrees: `worktree-setup.sh` creates and `worktree-cleanup.sh` cleans eligible paths; never direct `git worktree add/remove`. Commit/push cadence, ship chain, PR creation gate |
 | **30** Planning targets | [`.sedea/centers/software-development/rules/30_planning-target-resolution.mdc`](30_planning-target-resolution.mdc) | Resolve `.plan.md` targets, snapshot tables, depth-first gates |
 | **31** Dispatch scope | [`.sedea/centers/software-development/rules/31_dispatch-scope.mdc`](31_dispatch-scope.mdc) | `dispatchId`, `operationsDocsDirectory` / DbOnly, explicit plan paths |
 | **40** Maintain rules | [`.sedea/centers/software-development/rules/40_maintain-rules.mdc`](40_maintain-rules.mdc) | Hosting-repo **`.cursor/rules/*.mdc`** routing vs center rules |
