@@ -20,7 +20,7 @@ This mission is a **simplified** variant of [`.sedea/centers/software-developmen
 | **§6 decomposition** | Master Plan **always** uses **`PR breakdown`** — never **`Delivery phases`**. |
 | **Forbidden skills** | **`delivery-phases`**, **`phase-planner`** — do not spawn or run inline on any lane. |
 | **PR count cap** | **`pr-breakdown`** lists **1–6** PR rows. **> 6** PRs or multi-initiative scope → use **`plan and deliver`**. |
-| **Implementation / ship** | **`coding-session`** and detached ship chain unchanged — same skills and gates as plan-and-deliver. |
+| **Implementation / ship** | **`coding-session`** and detached ship chain unchanged — same skills and gates as plan-and-deliver, including **`deploy-walk`** **`testing-agent-handoff`** (**Testing Agent Handoff**) on Before/After deploy manual-test option lists. |
 | **Command phrase** | **`plan and deliver a single phase`** only (see **`mission.yaml`**). |
 
 Skill paths reuse [`.sedea/centers/software-development/missions/plan-and-deliver/skills/`](.sedea/centers/software-development/missions/plan-and-deliver/skills/) unless this mission later adds mission-local copies.
