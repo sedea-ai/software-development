@@ -24,8 +24,8 @@ async function fixture(registry) {
 afterEach(() => resetPlanStateContextForTests());
 
 test('resolves an enabled registered center without requiring its checkout', async () => {
-  const root = await fixture(`centers:\n  - slug: sedea-v2\n    source: git@github.com:sedea-ai/sedea-v2.git\n    enabled: true\n`);
-  assert.equal(await resolveRegisteredCenterRepo('sedea-v2', root), 'sedea-ai/sedea-v2');
+  const root = await fixture(`centers:\n  - slug: sedea-builtin-center-gen2\n    source: git@github.com:sedea-ai/sedea-builtin-center-gen2.git\n    enabled: true\n`);
+  assert.equal(await resolveRegisteredCenterRepo('sedea-builtin-center-gen2', root), 'sedea-ai/sedea-builtin-center-gen2');
 });
 
 test('fails closed for unknown, disabled, and built-in slugs', async () => {
