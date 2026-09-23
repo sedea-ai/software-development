@@ -210,8 +210,16 @@ Each PR's standalone plan file has these sections only — sections 1–7 are re
  The **`**Status:**`** line tracks the section's lifecycle: `drafted` (PR plan written, nothing deployed yet) → `deployed` (PR landed in the target env; After-deploy steps unlocked) → `done` (all checks complete). Each transition appends a dated `*(YYYY-MM-DD: <note>)*` entry; history is **append-only** and serves as the audit trail for what was verified when. The **`deploy-walk`** protocol branch drives this lifecycle: it **auto-runs** agent-executable steps (tests, scripts, automatable checks) and flips boxes on pass; **manual** steps are presented for the developer with agent assistance. Plans authored without the lifecycle marker still validate (legacy form), but `deploy-walk` will surface the missing-marker case as a flag and recommend adding it.
 
  **Sub-sections:**
- - **Before deploy** — what to verify locally / in staging before merging the PR.
- - **After deploy** — what to verify in production after the PR ships (smoke checks, monitors / alerts to watch, rollback trigger conditions).
+ - **Before deploy** — what to verify locally / in staging before merging the PR. **Every manual test** for this PR must appear here as a numbered GFM task (`1. [ ]` …) — not After-only.
+ - **After deploy** — what to verify in production after the PR ships (smoke checks, monitors / alerts to watch, rollback trigger conditions), **plus a replica of every Before deploy manual test**.
+
+ **Manual tests in Before + After replica (binding).** Classify each §7 step as **manual** vs **agent-executable** per **`deploy-walk/SKILL.md`** § *Agent-executable vs manual steps*. For **manual** steps:
+
+ 1. **Must list in `### Before deploy`** — do not author a manual verification that exists only under **`### After deploy`**.
+ 2. **Must replicate in `### After deploy`** — either numbered retest rows that mirror each Before manual item, **or** one umbrella manual item (*Smoke — re-run all Before deploy manual checks*), plus After-only production items (gitlink/reload note, monitors, rollback).
+ 3. Agent-executable Before steps need not be copied to After unless they remain valid production checks.
+
+ Cross-ref: **development-process.md** § *§7 Deploy test plan — ship-chain boundary*; **`pr-plan/SKILL.md`** §7 fill; **`coding-session/SKILL.md`** / **`deploy-walk/SKILL.md`** walk-time parity.
 
  **After deploy prerequisite (binding — product gitlink ships):** When the PR ships code via a **product submodule** (for example **`app`**) or any path where hosting gitlink promotion applies, the first **`### After deploy`** item (or plan author note above the numbered list) must state that manual smoke requires **hosting product gitlink promoted to the merged source SHA**, **`HOSTING_ROOT`** refreshed (`git pull` + submodule update), and **Reload Window** before production/packaged verification. **`coding-session`** enforces this in [After deploy deploy-walk handoff](../missions/plan-and-deliver/skills/coding-session/SKILL.md#after-deploy-deploy-walk-handoff) — do not duplicate **`promote-submodule-pin`** as a §7 checkbox row (see ship-chain exclusion below).
 

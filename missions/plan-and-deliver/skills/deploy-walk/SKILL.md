@@ -187,9 +187,12 @@ Canonical table: **`.sedea/centers/software-development/docs/development-process
 | **Before deploy** | Primary bug-fix window — session worktree still open; fix defects here before PR |
 | **After deploy** | Post-merge smoke / regression — low probability when Before deploy was thorough; harder to fix (session worktree usually removed after post-merge cleanup) |
 
+**Authoring (binding):** Plan authors must list every **manual** test in **`### Before deploy`** and replicate it in **`### After deploy`** (**planning-mode-templates.md** §7). This section enforces coverage at walk time.
+
 When **`Status:`** is `deployed` and the active sub-section is **`### After deploy`**:
 
-1. **Coverage (binding):** The walk **must** cover every **manual** step from **`### Before deploy`** — either numbered retest rows mirroring Before manual items, **or** one umbrella manual step (for example *Smoke — re-run all Before deploy manual checks*) plus After-specific rows.
+**Authoring (binding):** Plan §7 **must** list those manuals under **`### Before deploy`** first — **forbidden** to invent After-only manuals that never appeared in Before (except After-specific production/monitor/rollback rows). See **planning-mode-templates.md** § mode #3 § 7.
+
 2. **Forbidden:** After deploy walk that presents only After-specific manual steps when Before deploy had manual `[ ]` items — unless plan §7 documents an approved umbrella row that explicitly covers them.
 3. **Defect handback:** On **`deploy-step-blocked`**, developer-reported regression during an After deploy [Manual step await gate](#manual-step-await-gate-binding), or pick of **`return-to-implementation-new-worktree`**: set **`outputs.returnToImplementation: true`**, **`outputs.afterDeployDefect: true`**, and hand back to **`coding-session`** [Return to implementation from deploy walk](../coding-session/SKILL.md#return-to-implementation-from-deploy-walk-new-worktree) — **Branch B** when the session worktree path is missing (typical post-merge).
 

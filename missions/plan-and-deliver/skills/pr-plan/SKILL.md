@@ -501,7 +501,10 @@ When the developer chooses **`prefill-sections`** or asks for a § 7 sketch on t
 
 **`plan-reconcile` wording (binding):** **Forbidden** After deploy lines such as *Archive via plan-reconcile when dispatch closes* or *defer plan-reconcile to dispatch close*. Correct timing: inline on the **active `coding-session` lane while the dispatch is open**, before Squad Leader dispatch resolution — see **development-process.md** § *§7 Deploy test plan — ship-chain boundary*.
 
-Mark § 7 sketches explicitly as *sketch* in echo; **`coding-session`** owns substantive fill and may revise steps once code paths are known.
+**Manual tests in Before + After replica (binding):** When sketching or filling §7, every **manual** verification must be a numbered GFM task under **`### Before deploy`** and **replicated** under **`### After deploy`** (explicit retest rows **or** one umbrella *Smoke — re-run all Before deploy manual checks*), plus After-only production items. **Forbidden:** manuals only in After; After that omits Before manuals without an umbrella. Align with **planning-mode-templates.md** §7 and **development-process.md** § *§7 Deploy test plan*.
+
+**Manual tests in Before + After replica (binding):** Every **manual** §7 item **must** appear under **`### Before deploy`**. **`### After deploy`** **must** replicate that set (numbered retest rows or umbrella *Smoke — re-run all Before deploy manual checks*) plus After-only production checks. **Forbidden:** sketches that put manuals only in After, omit After replica, or empty Before while After lists manuals. Align with **planning-mode-templates.md** § mode #3 § 7.
+
 
 ## Step 5 — Resolve implementation readiness
 
