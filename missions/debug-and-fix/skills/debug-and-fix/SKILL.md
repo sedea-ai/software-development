@@ -257,6 +257,7 @@ USER_CHECKPOINT — confirm manual test scenario results on this lane.
 | `scenario-fail` | Scenario failed — return to diagnosis | Return to step **2** (logs first on new evidence) |
 | `run-tests-outside-chat` | Running tests outside chat — resume when done | External-wait — same gate on resume with results |
 | `copy-dsv-handoff` | Copy Deploy Step Verification agent prompt | Emit [Deploy Step Verification (agent handoff)](#deploy-step-verification-agent-handoff-binding) in the same turn’s **`displayMarkdown`** (or re-emit if already shown); re-open this gate — does **not** mark the scenario passed |
+| `testing-agent-handoff` | Testing Agent Handoff | Emit [Testing Agent Handoff](#testing-agent-handoff-debug-binding) in **`displayMarkdown`**; re-open this gate — does **not** mark the scenario passed |
 | `blocked-manual` | Blocked — cannot complete manual test | Set **`fixStatus: blocked`**; terminal with evidence |
 | `more-details` | More details for option _ | Elaborate; re-open this gate |
 
@@ -314,6 +315,36 @@ For each scenario:
 ## Out of scope
 - Do not re-implement the product fix.
 - Do not mark debug-and-fix scenarios passed — report results back so the developer can pick scenario-pass / scenario-fail on the debug lane.
+```
+````
+
+
+##### Testing Agent Handoff (debug) (binding)
+
+When the developer picks **`testing-agent-handoff`** on a manual-test gate, emit a copy-paste prompt. The testing agent **runs scenario simulations and guides the user**. **Forbidden:** telling them the job is only to check logs; implying a third agent will run simulations; marking the scenario passed from this pick.
+
+````markdown
+### Testing Agent Handoff
+
+```text
+You are the testing agent for these debug-session manual scenarios.
+
+## Your job
+- **You** run simulations for the listed test scenarios.
+- **No third agent** will run simulations for those scenarios.
+- Your job is **not** only to check the log.
+- Your job **is** to run scenario simulations **and guide the user** through the scenarios.
+
+## Context
+- Hosting root: <absolute HOSTING_ROOT>
+- Debug worktree: <absolute WORKTREE_ROOT or none>
+
+## Scenarios
+<approved proposal scenarios>
+
+## How to work
+- Execute simulations yourself; guide the user through remaining UI/env steps.
+- Record pass/fail + evidence. Do not mark debug-and-fix scenarios passed — developer picks scenario-pass / scenario-fail on the debug lane.
 ```
 ````
 
