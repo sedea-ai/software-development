@@ -145,7 +145,7 @@ Legacy installs may still have `user`, `joint`, or per-user UUID scope folders �
 
 ## Customer migration (legacy scope → workspace-bound layout)
 
-**Prerequisite — worktree quiescence (binding):** Before running the migration script, reach **zero active git worktrees** on the hosting repo (close or merge in-flight PR worktrees, remove stale worktree directories). Active worktrees hold plan sidecars and absolute paths tied to the pre-migration layout.
+**Prerequisite — worktree quiescence (binding):** Before running the migration script, reach **zero active git worktrees** on the hosting repo (close or merge in-flight PR worktrees, clean eligible worktree directories). Create worktrees with `worktree-setup.sh` and clean them with `worktree-cleanup.sh`; do not invoke `git worktree add` or `git worktree remove` directly. Active worktrees hold plan sidecars and absolute paths tied to the pre-migration layout.
 
 From **`HOSTING_ROOT`**:
 

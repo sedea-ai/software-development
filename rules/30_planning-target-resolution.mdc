@@ -33,6 +33,8 @@ When a turn **requires a user reply** before you continue (pick a planning branc
 | **`coding-session`** after inline **`pr-review`** | PR comment triage finished on the coding lane | Re-emit **`coding-session`** terminal with `shipPhase: pr-review` | Assume host sync ran without re-emit |
 | Squad Leader **`plan and deliver`** dispatch | Host-sync message parsed | Refresh §8 rows; then resolution gates | Close dispatch **`resolved`** while rows `open`/`blocked` without host sync — **`plan.mdc`** §8 *§8 troubleshooting* |
 
+**Worktree lifecycle:** The spawned `coding-session` lane creates its worktree through `worktree-setup.sh` and cleans an eligible worktree through `worktree-cleanup.sh`; do not invoke `git worktree add` or `git worktree remove` directly.
+
 **Lane rule:** Planning skills (**`pr-plan`**, **`master-planner`**, decomposition tree) ≠ ship skills (**`coding-session`** → **`pre-pr-review`** → **`create-pr`** → …). **`pr-plan`** may spawn **`coding-session`** on a child lane (§5d); worktrees and implementation stay on the child.
 
 ## §8 ship ledger and inline `pr-review`

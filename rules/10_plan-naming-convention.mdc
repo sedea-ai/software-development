@@ -7,7 +7,7 @@ alwaysApply: false
 
 **On-demand rule.** Mission Control warm-up loads [`.sedea/centers/software-development/rules/bootstrap.mdc`](bootstrap.mdc) as the sole Software Development `alwaysApply: true` bootstrap. Read **this file** when you need plan/PR/worktree naming and forbidden-word policy — not on every dispatch warm-up.
 
-Applies to **plan filenames and headings**, **worktree names** (`-b` on `git worktree add`), **PR titles and descriptions**, **chat titles**, and **commit messages** across all repos.
+Applies to **plan filenames and headings**, **worktree names** (`--worktree-name` on `worktree-setup.sh`), **PR titles and descriptions**, **chat titles**, and **commit messages** across all repos. Create worktrees with `worktree-setup.sh` and clean eligible worktrees with `worktree-cleanup.sh`; do not invoke `git worktree add` or `git worktree remove` directly.
 
 ## Forbidden word: r-e-f-a-c-t-o-r (and its forms)
 
@@ -66,7 +66,7 @@ foot-guns eliminated, future work unblocked>
 
 ## Worktree names (which repo?)
 
-Worktree naming depends on the **hosting repo** that receives the code change, not necessarily the hosting repo where `.sedea/` planning scripts run. The **worktree name** is the `-b` argument to **`git worktree add`**.
+Worktree naming depends on the **hosting repo** that receives the code change, not necessarily the hosting repo where `.sedea/` planning scripts run. The **worktree name** is passed as `--worktree-name` to **`worktree-setup.sh`**.
 
 | Hosting repo | Pattern | Authority |
 |--------------|---------|-----------|

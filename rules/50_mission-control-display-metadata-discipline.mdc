@@ -96,7 +96,7 @@ When the user asks why a tab still shows an old title after reload:
 1. Re-read spawn context and rule **9** — durable labels come from **`dispatch-tab.v1.json`** (and governed MCP updates), not chat prose.
 2. **Child lanes** refresh **own** slot via **`mission_control_update_lane_display`** when the child owns the correction.
 3. **Squad Leader** refreshes **dispatch** chrome via **`mission_control_update_dispatch_display`** when the dispatch scope label is wrong.
-4. If MCP fails or the wrong lane owns the update, use structured choice once — do not guess cross-slot permissions from **`git worktree list`** or transcript alone.
+4. If MCP fails or the wrong lane owns the update, use structured choice once — do not guess cross-slot permissions from **`git worktree list`** or transcript alone. `git worktree list` is orientation-only; create worktrees with `worktree-setup.sh` and clean eligible worktrees with `worktree-cleanup.sh`, never direct `git worktree add` or `git worktree remove`.
 
 Full recovery steps: [`.sedea/centers/software-development/docs/mission-control-display-metadata-host-spec.md`](docs/mission-control-display-metadata-host-spec.md) § *Stale tab title recovery*.
 
