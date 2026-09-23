@@ -24,7 +24,7 @@ alwaysApply: false
 | **PR count** | **Exactly one** PR plan per dispatch (single indexed child) |
 | **Skipped** | Full **`author-prd`**, **`master-planner`** Master Plan, **`pr-breakdown`**, **`delivery-phases`**, **`phase-planner`** |
 | **Out of scope redirect** | Complexity **>6**, multi-PR decomposition, or work needing Master Plan → **`plan and deliver a single phase`** (**1–6** PRs, complexity **≤ 20**) or **`plan and deliver`** (detached dispatch) |
-| **Ship chain** | Same detached **`coding-session`** order as plan-and-deliver §8 — including **`deploy-walk`** [Manual step await gate](.sedea/centers/software-development/missions/plan-and-deliver/skills/deploy-walk/SKILL.md#manual-step-await-gate-binding) option **`testing-agent-handoff`** (**Testing Agent Handoff**) on Before deploy and After deploy manual-test lists |
+| **Ship chain** | Same detached **`coding-session`** order as plan-and-deliver §8 — including **`deploy-walk`** [Manual step await gate](.sedea/centers/software-development/missions/plan-and-deliver/skills/deploy-walk/SKILL.md#manual-step-await-gate-binding) option **`testing-agent-handoff`** (**Testing Agent Handoff**) on Before deploy and After deploy manual-test lists. PR plan **§7** follows **planning-mode-templates.md**: every **manual** test in **Before deploy**, replicated in **After deploy**. |
 
 ### Operations filesystem invariant (binding)
 
@@ -50,7 +50,7 @@ Detached **`coding-session`** lanes execute canonical plan-and-deliver repo-rule
 
 2. **Single PR plan** — Produce one PR plan under `.sedea/operations/` via minimal parent scaffold, **`new-plan`** (indexed child), and **`pr-plan`** inline (§§1–4 populated).
 
-3. **Standard ship** — Hand off to **`coding-session`** for implementation and the full plan-and-deliver ship chain (worktree, cut-point, deploy-walk, pre-pr-review, create-pr, pr-review, post-merge cleanup, optional plan-reconcile). PR plan § 7 lists PR-specific deploy verification only — not ship-chain rows (**development-process.md** § *§7 Deploy test plan — ship-chain boundary*).
+3. **Standard ship** — Hand off to **`coding-session`** for implementation and the full plan-and-deliver ship chain (worktree, cut-point, deploy-walk, pre-pr-review, create-pr, pr-review, post-merge cleanup, optional plan-reconcile). PR plan § 7 lists PR-specific deploy verification only — not ship-chain rows (**development-process.md** § *§7 Deploy test plan — ship-chain boundary*). **Manual tests in Before + After replica:** same contract as plan-and-deliver (**planning-mode-templates.md** § mode #3 § 7).
 
 4. **Squad Leader oversight** — Track planning completion and detached ship progress; gate **`mission_control_propose_dispatch_resolution`**.
 

@@ -1654,7 +1654,10 @@ If commit fails or tree stays dirty after commit, stop with `partial` — do not
 | **Before deploy** | Primary bug-fix window — worktree still open; fix defects here before PR |
 | **After deploy** | Post-merge smoke / regression — low probability when Before deploy was thorough; **harder to fix** because post-merge cleanup usually removed the session worktree |
 
-**After deploy manual parity (binding):** Inline **`deploy-walk`** for **`### After deploy`** must cover every Before deploy **manual** step — explicit retest rows or one umbrella manual item in plan §7, plus After-specific checks. See **`deploy-walk/SKILL.md`** § *Before/After deploy manual parity (binding)*.
+**Authoring (binding):** Every **manual** test must already be listed in **`### Before deploy`** and replicated in **`### After deploy`** (see **planning-mode-templates.md** §7). Walk-time coverage cannot invent After-only manuals.
+
+**Manual tests in Before (binding):** Every **manual** §7 check **must** be listed under **`### Before deploy`** (not After-only). **After deploy manual parity** still applies: After **replicates** those manuals (retest rows or umbrella) plus After-specific checks.
+
 
 **After deploy defect → restart (binding):** When **`outputs.afterDeployDefect: true`**, inline **`deploy-walk`** sets **`outputs.returnToImplementation: true`**, or the developer picks **`return-to-implementation-new-worktree`** from an After deploy manual gate **after merge**:
 
