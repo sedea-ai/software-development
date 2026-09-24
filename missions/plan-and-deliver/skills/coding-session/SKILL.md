@@ -36,11 +36,14 @@ inputs:
     required: false
   repoPath:
     type: string
-    description: Absolute path to the hosting repo root for a single-repo coding session.
+    description: >-
+      Absolute substantive repository path for a single-repo session. May point to HOSTING_ROOT
+      for hosting-tracked files or to a registered product gitlink under HOSTING_ROOT (for example
+      HOSTING_ROOT/app). Resolve the enclosing HOSTING_ROOT separately via sedea_get_hosting_root.
     required: false
   repoPaths:
     type: array
-    description: Absolute paths to hosting repo roots for a multi-repo coding session.
+    description: Absolute substantive repository paths for a multi-repo session; classify each before setup.
     required: false
     default: []
   baseRef:
@@ -132,6 +135,21 @@ warmUpRules:
 Before creating a worktree, resolve the substantive repository from `inputs.repoPath` / `inputs.repoPaths` and classify it with [`.sedea/centers/sedea/rules/0_hosting-repo.mdc`](../../../../../sedea/rules/0_hosting-repo.mdc). Product, center, and registered center-content repositories are the implementation and substantive review surfaces. `HOSTING_ROOT` is the integration shell for operations, worktree orchestration, and later script-backed gitlink promotion; it is not a fallback implementation target when a source repository is named.
 
 The handoff must identify the source repository role, source worktree, and any hosting gitlink relationship. If a plan names a source repository but `repoPath` is missing, ambiguous, or points only to `HOSTING_ROOT`, stop at the repository-target gate and request correction. Complete source-repository review and verify the source merge before running hosting pin promotion. A hosting gitlink-only PR is an agent-managed integration record, not the substantive review surface.
+
+### Product gitlink checkout routing (binding — before generic setup)
+
+**Branching logic:** Classify the planned changed paths against rule **0** § *Three-repo submodule taxonomy* and the active hosting overlay's product pin rows **before** [Generic flow](#generic-flow-single-repo). If all changes are hosting-tracked, keep the existing `WORKTREE_ROOT` flow. If they belong to a registered root-level product gitlink (for example `app/` or `vscode/`), use the following two-repository mapping throughout this skill. Center-repo content uses its separately governed `CENTER_WORKTREE_ROOT`; an unregistered, mixed, or ambiguous target is a structured repository-target stop, **not** permission to edit the hosting shell.
+
+| Name | Product PR meaning |
+|------|--------------------|
+| `HOSTING_ROOT` | Primary hosting clone: operations plan/sidecar authority and setup/cleanup scripts; **not** product code or source-PR cwd |
+| `HOSTING_WORKTREE_ROOT` | Exact hosting worktree created by center `worktree-setup.sh`; owns Gitlink checkout and hosting lifecycle, **not** source PR commits |
+| `SOURCE_ROOT` | Initialized `<HOSTING_WORKTREE_ROOT>/<registered-product-gitlink>`; product **Git repository** for code, tests, branch, commits, push, PR, and review |
+
+1. **Setup and verify:** Run normal (not `--pin-only`) center `worktree-setup.sh` from `HOSTING_ROOT` with the resolved hosting worktree name. Its `extensions-only-link` bootstrap initializes product gitlinks; `mode: none` does not guarantee initialization. Require a success-class setup/bootstrap hint **and** independently verify `SOURCE_ROOT` is a populated Git checkout at the declared gitlink SHA, with source `origin` matching the overlay remote and an available declared integration ref. If setup did not initialize it, use the documented `git submodule update --init --recursive <gitlink>` from `HOSTING_WORKTREE_ROOT` before any source edits; stop on failures or a different remote/SHA. Do not branch or modify the primary `HOSTING_ROOT/<gitlink>` checkout.
+2. **Source branch:** An initialized Gitlink is normally detached HEAD. Verify the checkout is clean, resolve the source integration branch from the overlay (not `centers.yaml`), fetch the source remote, and establish a dedicated source feature branch **inside `SOURCE_ROOT`** from the intended pinned/base commit before editing. If a feature branch already exists, reuse only when it matches this PR and its ownership is attested; if the checkout is dirty, branch/name conflicts, or the pinned commit is unsuitable for the planned base, stop at a structured exception gate rather than reset, force-switch, overwrite, or silently start from another SHA. The hosting worktree branch and source branch are different Git refs even when names coincide. **Forbidden:** raw product `git worktree add`, source commits on a detached HEAD, or treating the hosting setup branch as the source PR branch.
+3. **Attach and record:** After setup and branch verification, MCP `sedea_add_worktree_folder` mounts `SOURCE_ROOT` for product implementation; record `HOSTING_WORKTREE_ROOT`, `SOURCE_ROOT`, source branch, source remote/base, source mount, hosting worktree creator and ownership, and any separately mounted hosting folder. Do not substitute a hosting-root-only mount for the source mount. The plan sidecar on `HOSTING_ROOT` may record the hosting worktree for its cleanup scripts, but this does **not** make it Code IO. For product scope, every orientation table, prompt, review handover, Git/`gh` action, code/test command, and source PR must use `SOURCE_ROOT` (Code IO); show the hosting worktree separately. These product-specific rules take precedence over generic `WORKTREE_ROOT = Code IO`, generic attach-path, and generic hosting-diff instructions below.
+4. **Ship and cleanup:** Run the ship cut-point, source `pre-pr-review`, and source `create-pr` against the branch in `SOURCE_ROOT`; do not invoke the hosting submodule merge gate **before source PR creation**. Review and merge the source PR in the product repository first; verify its merged commit on the declared integration line, then run inline `promote-submodule-pin` for the registered product path and verify hosting `origin/main` adopts that source tip before reporting ship complete. Do not attempt to promote a feature-branch-only SHA or treat a hosting Gitlink PR as source review. For post-merge cleanup, check source checkout clean and source PR merged; detach **each folder actually mounted by this pass** (source first, hosting if mounted), then use center `worktree-cleanup.sh` **only for the exact owned `HOSTING_WORKTREE_ROOT`** under rule **0** Path A or B with truthful mount/detach attestations. The initialized source Gitlink is nested in the hosting worktree, **not** an independently registered product worktree: verify it disappears when authorized hosting cleanup succeeds, rather than running raw product `git worktree remove` or deleting it by hand. If dirty, independently in use, ownership is missing, or cleanup fails, preserve it, record partial status, and open a structured exception gate. Never claim `postMergeCleanupStatus: success` while the owned source checkout or hosting worktree remains.
 
 ## Terminal emission invariant (binding — read first)
 
@@ -372,9 +390,9 @@ Give developers a **consistent state snapshot** at ship gates so they can re-ori
 |-------|-------|
 | Plan | `<slug>` @ `<path>` or — |
 | Plan IO host | `<absolute HOSTING_ROOT>` or — |
-| Code IO | `<absolute WORKTREE_ROOT>` or — |
-| Worktree | `<absolute WORKTREE_ROOT>` or — |
-| Branch | `<worktreeName>` or — |
+| Code IO | `<absolute SOURCE_ROOT>` for product scope; otherwise `<absolute WORKTREE_ROOT>` or — |
+| Worktree | `<absolute HOSTING_WORKTREE_ROOT>` + source checkout/mount for product scope; otherwise `<absolute WORKTREE_ROOT>` or — |
+| Branch | `<source branch>` for product scope; otherwise `<worktreeName>` or — |
 | PR | `<url>` (#N) · `pin-only (agent)` · — |
 | Source repo(s) | `<role>` · `<repo>` · `<branch/SHA>` · `<file summary>` or — |
 | Ship phase | `<shipPhase>` |
@@ -387,7 +405,7 @@ Give developers a **consistent state snapshot** at ship gates so they can re-ori
 | Rule | Requirement |
 |------|-------------|
 | No invention | Use `—` when unknown; never guess paths or PR numbers |
-| Plan IO host / Code IO | Set after worktree attach — **Plan IO host** = **`HOSTING_ROOT`**; **Code IO** = **`WORKTREE_ROOT`** (see § *Plan and sidecar IO (binding)*) |
+| Plan IO host / Code IO | **Plan IO host** = **`HOSTING_ROOT`**; **Code IO** = **`SOURCE_ROOT`** for registered product scope, **`WORKTREE_ROOT`** for hosting-tracked scope (see § *Product gitlink checkout routing* and § *Plan and sidecar IO*) |
 | Worktree row | Populated while session worktree exists; `—` after authorized cleanup |
 | PR row | Populated when `prUrl` or `prNumber` exists; when [Gitlink-only hosting PR](#gitlink-only-hosting-pr-binding) applies, use `pin-only (agent)` — **forbidden** a hosting PR URL the developer is expected to open for content review |
 | Source repo(s) row | Populated when gitlink-only scope applies — role(s) per [`.sedea/centers/sedea/rules/0_hosting-repo.mdc`](.sedea/centers/sedea/rules/0_hosting-repo.mdc) § *Three-repo submodule taxonomy*; list substantive changed paths |
@@ -1041,7 +1059,7 @@ Normative path when **`pr-plan`** (or another spawner) opens a **coding-session*
 2. **Bootstrap prerequisite (assert first)** — If `outputs.bootstrapStatus !== 'success'` (and no documented attested `--skip-*` in `outputs.bootstrapSkipFlags`), this section is **out of scope**. Only bootstrap recovery per [Worktree bootstrap (mandatory)](#worktree-bootstrap-mandatory) is allowed until success or attested skip flags are recorded. When bootstrap is `pending` or `failed`, **stop** — do not warm up, read the plan for implementation, or edit the worktree. **Forbidden until `outputs.bootstrapStatus: success`:** worktree product edits, plan §§ **5–8** fill, tests, local `npm` / compile, `git commit`, `git push`, [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy), inline **`deploy-walk`** (Before deploy), spawn **`pre-pr-review`**, inline **`create-pr`**, and ad-hoc Before-deploy checkbox edits that substitute for [Before deploy deploy-walk handoff](#before-deploy-deploy-walk-handoff).
 3. **Warm-up on this lane** — Follow [Session prompt structure](#session-prompt-structure) Phase 1 steps (workspace readiness, worktree name check, load **Project rules** from the worktree, plan file + sidecar when anchored). You may skip emitting a fenced **external** session prompt unless the developer asks for a copy.
 4. **Read the anchored PR plan** — Load `targetPlanPath` (from spawn `inputs` / `initiatingPrompt`). Use §§ **1–4** for scope context; **first implementation work** is substantive fill of §§ **5–8** (replace `_TBD_` as code paths become known), then code/tests/docs per those sections.
-5. **Implement** — Make edits in the appropriate worktree until **implementation ready for developer review** or a blocking stop. **Hosting-repo** tracked files: **`WORKTREE_ROOT`**. **Center git content** under **`.sedea/centers/software-development/`**: open **`../README.md`** § *Software Development center edit destination gate* **before** first center write; edit only in **`CENTER_WORKTREE_ROOT`** (rule **7** § *Worktree directory path (center repo)*, rule **3** § *Center-repo worktree procedure*) — on **`centers-development-hosting-repo`**, default **`ship-ce-center-rd`**, not app-host framing. **Do not** `git commit` or `git push` during implementation — see **20_efficient-pr-shipping.mdc** § *Review before commit* and [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) (ship cut-point also requires `outputs.bootstrapStatus: success`). Maintain **`## Follow-ups`** on the PR plan per **development-process** § *Coding Session*.
+5. **Implement** — Make edits in the appropriate checkout until **implementation ready for developer review** or a blocking stop. **Registered product gitlink**: only **`SOURCE_ROOT`**, on the source PR branch per [Product gitlink checkout routing](#product-gitlink-checkout-routing-binding--before-generic-setup); **hosting-repo** tracked files: **`WORKTREE_ROOT`**. **Center git content** under **`.sedea/centers/software-development/`**: open **`../README.md`** § *Software Development center edit destination gate* **before** first center write; edit only in **`CENTER_WORKTREE_ROOT`** (rule **7** § *Worktree directory path (center repo)*, rule **3** § *Center-repo worktree procedure*) — on **`centers-development-hosting-repo`**, default **`ship-ce-center-rd`**, not app-host framing. **Do not** `git commit` or `git push` during implementation — see **20_efficient-pr-shipping.mdc** § *Review before commit* and [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy) (ship cut-point also requires `outputs.bootstrapStatus: success`). Maintain **`## Follow-ups`** on the PR plan per **development-process** § *Coding Session*.
 6. **Continuation** — Keep `outputs.continuationStatus: "active"` and `outputs.shipPhase: "implementing"` while work remains. When an implementation batch passes verification, follow [Implementation-to-ship handoff invariant](#implementation-to-ship-handoff-invariant-binding) — **forbidden** terminal result or parent refocus on the completion turn. Emit **`mission_control_send_agent_result`** with `status: partial` only for **blockers**; do **not** use `partial` or terminal status to hand off after unselected [Implementation review gate](#implementation-continuation-gate).
 7. **Repo rules reconciliation** — When plan-anchored, run [Repo rules reconciliation (binding)](#repo-rules-reconciliation-binding) and pass [Repo rules reconciliation gate](#repo-rules-reconciliation-gate) before step **8** or [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy). Skip when `anchorType` is free-form or plan **§5** is `_None — no repo rule updates required for this PR._` only.
 8. **Pre-review verification** — Before [Ship cut-point gate](#ship-cut-point-gate-approve-commit-before-deploy), complete pre-review verification prescribed by applicable **Project rules** paths (hosting-repo **`.cursor/rules/*.mdc`** listed in the session prompt or plan **§5**). **`Read`** each cited rule and run its before-review steps; re-run after each implementation batch. Block the review modal until every prescribed step passes (**exit 0**). Commands and repo-specific paths live in those hosting rules only — do not duplicate them in this skill.
@@ -1197,7 +1215,7 @@ Run only **after** [Pre-worktree validation](#pre-worktree-validation-plan-compl
  ```
  Skip when the session has no plan anchor.
 
-3. **Attach the worktree in Sedea** (same workbench) — when setup JSON **`nextAction`** is **`attach-required`**, invoke MCP **`sedea_add_worktree_folder`** with JSON `{ "path": "<absolute-worktree-root>" }` (optional `"name"` for the explorer label). See **20_efficient-pr-shipping.mdc** — *Squad Leader on HOSTING_ROOT vs agent sessions in worktrees* and *Attach the worktree in Sedea*.
+3. **Attach the worktree in Sedea** (same workbench) — when setup JSON **`nextAction`** is **`attach-required`**, invoke MCP **`sedea_add_worktree_folder`** with JSON `{ "path": "<absolute-worktree-root>" }` (optional `"name"` for the explorer label). **Product exception:** initialize and branch `SOURCE_ROOT` as specified in [Product gitlink checkout routing](#product-gitlink-checkout-routing-binding--before-generic-setup), then attach the **source checkout** for Code IO; attach hosting root separately only if hosting tracked work also needs editing, and track each mount. See **20_efficient-pr-shipping.mdc** — *Squad Leader on HOSTING_ROOT vs agent sessions in worktrees* and *Attach the worktree in Sedea*.
 
  - **Forbidden (step 3):** Do **not** use editor **Add Folder to Workspace**, hand-edited **`.code-workspace`** files, or “open folder” as a substitute for **`sedea_add_worktree_folder`**. Workbench attach is **`sedea_add_worktree_folder` only** (after step 1 succeeds).
 
@@ -1925,14 +1943,14 @@ When the developer says *open a PR*, *create a pull request*, or similar **befor
 
 ### Product-direct implementation pattern (binding)
 
-When **`WORKTREE_ROOT`** (or **`outputs.worktreePath`**) resolves to a **product gitlink checkout** (for example **`…/app-hosting-repo-worktrees/…/app`**) **and** the ship chain merged a **product-repo PR** (not a hosting feature-branch PR):
+When **`SOURCE_ROOT`** (or legacy **`outputs.worktreePath`**) resolves to a **product gitlink checkout** (for example **`…/app-hosting-repo-worktrees/…/app`**) **and** the ship chain merged a **product-repo PR** (not a hosting feature-branch PR):
 
 1. **Derive gitlink scope from implementation venue** — map the absolute worktree path to the hosting-repo-relative submodule path per [`.sedea/centers/sedea/rules/0_hosting-repo.mdc`](.sedea/centers/sedea/rules/0_hosting-repo.mdc) § *Three-repo submodule taxonomy* (typically **`app`**).
 2. Set **`outputs.submoduleGitlinksInScope`** to include that path (union with hosting-diff detection — do not drop product paths when hosting committed diff is empty).
 3. Set **`outputs.submoduleMergeGateStatus: required`** and **`outputs.hostingPinCompleteStatus: required`** for the ship chain pass.
 4. Record merged product **`mergeCommit.oid`** on coding-session **`outputs`** for post-merge pin trigger comparison.
 
-**Forbidden:** marking [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) **`not-applicable`** solely because **`git diff origin/main...HEAD`** on hosting **`WORKTREE_ROOT`** shows no gitlink changes when implementation commits live only in the product submodule worktree.
+**Forbidden:** marking [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) **`not-applicable`** solely because hosting **`HOSTING_WORKTREE_ROOT`** shows no gitlink changes when implementation commits live in `SOURCE_ROOT`. For a product PR, this gate runs **after** the source PR has been created, reviewed, and merged; it must not block source **`create-pr`** on a feature-branch-only SHA. Its before-create-pr ordering applies to a separate hosting content PR, not the source PR.
 
 **Calibration:** `1_g4_product_direct_pin_before_after_deploy_gap.agent-incident-report.md`.
 
@@ -1942,20 +1960,20 @@ When the **committed hosting diff** for this PR touches a **submodule gitlink** 
 
 **Scope detection (binding):**
 
-1. Run [Product-direct implementation pattern (binding)](#product-direct-implementation-pattern-binding) **first** when **`WORKTREE_ROOT`** is under a product gitlink checkout — record paths in **`outputs.submoduleGitlinksInScope`** before hosting-diff-only inspection.
-2. From **`WORKTREE_ROOT`**, inspect the committed diff (`git diff origin/main...HEAD` or staged+committed tree vs integration base) for **any** path that is a **git submodule** (gitlink mode change or submodule pointer change) — including **`.sedea/centers/<centerSlug>/`**, **`app`**, and other hosting-repo submodule paths. Union results with step **1**.
+1. Run [Product-direct implementation pattern (binding)](#product-direct-implementation-pattern-binding) **first** when **`SOURCE_ROOT`** is under a product gitlink checkout — record paths in **`outputs.submoduleGitlinksInScope`** before hosting-diff-only inspection. Before the **source** PR is created or merged, route to source review/PR creation instead of source-on-main or pin promotion; resume this gate **after** source merge.
+2. From **`HOSTING_WORKTREE_ROOT`** for product scope (otherwise **`WORKTREE_ROOT`**), inspect the committed hosting diff for **any** path that is a **git submodule** (gitlink mode change or submodule pointer change) — including **`.sedea/centers/<centerSlug>/`**, **`app`**, and other hosting-repo submodule paths. Union results with step **1**; a hosting diff of `none` never erases the source-repository classification.
 3. Record affected paths in `outputs.submoduleGitlinksInScope` (array of repo-relative submodule paths).
 4. When **no** submodule gitlink is in scope **after steps 1–2**, set `outputs.submoduleMergeGateStatus: not-applicable`, `outputs.hostingPinCompleteStatus: not-applicable`, and continue to [Inline create-pr (auto on clean go)](#inline-create-pr-auto-on-clean-go) on the **same turn**.
-5. When one or more submodule gitlinks are in scope, set `outputs.submoduleMergeGateStatus: required`, `outputs.hostingPinCompleteStatus: required`, and run the procedure below **before** **`create-pr`**.
+5. When one or more submodule gitlinks are in scope, set `outputs.submoduleMergeGateStatus: required`, `outputs.hostingPinCompleteStatus: required`. Run the procedure below **before a hosting content `create-pr`**, but **after** the source `create-pr` and source merge for a product-direct pass.
 
-**Procedure (per affected `centerSlug` — binding order):**
+**Procedure (per affected source repository — binding order):**
 
-1. **Resolve center metadata** — Read **`.sedea/centers/centers.yaml`** for the center's git remote and **`defaultBranch`** (usually `main`).
+1. **Resolve source metadata** — For center repos read **`.sedea/centers/centers.yaml`**; for product repos read the **hosting overlay product pin row** for remote and integration branch. Never look up a product gitlink in `centers.yaml`.
 2. **Source-on-main verify** — Confirm the **intended submodule tip** (the commit the hosting gitlink will record) is **reachable on the center repo's `defaultBranch`**:
    - Use `gh api` / `git ls-remote` against the center remote **`defaultBranch`** tip.
    - **Strict SHA (binding):** hosting gitlink must target **submodule `defaultBranch` tip** — no content-equivalence heuristic in v1.
    - **If the tip is only on a feature branch:** **stop** the ship chain. Open and merge (or verify already merged) the **center-repo PR** on the submodule source repository **before** hosting **`create-pr`**. Pushing a submodule feature branch is **not** shippable — merge to submodule **`defaultBranch`** first.
-3. **Script-backed pin promotion** — After step 2 passes for **each** affected gitlink, load [`.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md`](.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md) and run it **inline on this lane** (skill § *Script invocation* — **`center-pull-promote-pin.sh`**, **`hosting-gitlink-pull-promote-pin.sh`**, or batch script). **Default on for every hosting-repo submodule** — **forbidden:** built-in **`sedea`** N/A skip; **forbidden:** inline `gh pr create` or **`create-pr`** for pin PRs.
+3. **Script-backed pin promotion** — After step 2 passes for **each** affected gitlink, load [`.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md`](.sedea/centers/sedea/skills/promote-submodule-pin/SKILL.md) and run it **inline on this lane** (skill § *Script invocation* — **`center-pull-promote-pin.sh`**, **`hosting-gitlink-pull-promote-pin.sh`**, or batch script). **Product source PR creation is not pin PR creation**: it must already have been reviewed and merged. **Forbidden:** built-in **`sedea`** N/A skip; **forbidden:** inline `gh pr create` or **`create-pr`** for pin PRs.
 4. **Record outputs** — Set `outputs.submoduleMergeGateStatus: complete` when all affected centers pass steps 2–3. Append per-center results to `outputs.promoteSubmodulePinOutcomes` (array of `{ centerSlug, sourceOnMainVerified, promoteStatus }`). These outputs feed **honest deploy attestation** — inline **`deploy-walk`** § *Submodule ship attestation* runs **`verify-submodule-ship-attestation.mjs`** on After deploy step 1; record outcomes here during the ship chain and pass through to **`deploy-walk`** inline context.
 
 **Checkpoint — auto-advance (binding):**
@@ -2008,9 +2026,11 @@ Set **`defaultOptionId: approve-merge-pr`** when rule **6** inspect shows **`mer
 
 After **`pre-pr-review`** **go** and [Submodule merge gate (before create-pr)](#submodule-merge-gate-before-create-pr) is **`complete`** or **`not-applicable`**, **stop before** Path B and inspect the committed hosting diff.
 
+**Product source precedence:** For registered product scope, `pre-pr-review` and `create-pr` operate on the source branch in `SOURCE_ROOT` first. Do **not** invoke the submodule merge gate or this hosting-diff router before the **source** PR is created, reviewed, and merged; source-on-main is impossible while the source PR is still open. After merge, derive Gitlink scope from `SOURCE_ROOT`, run script-backed pin promotion, and verify hosting `origin/main` via [Hosting-pin-complete gate](#hosting-pin-complete-gate-before-prshipcomplete). If hosting has no non-gitlink changes, finish via Path A (no second source PR and no hosting content PR). The generic before-create-pr sequence remains for hosting content PRs, not product source PRs.
+
 **Diff inspection (binding):**
 
-1. From **`WORKTREE_ROOT`**, compare committed tree vs integration base (`git diff origin/main...HEAD` or equivalent).
+1. From **`HOSTING_WORKTREE_ROOT`** for product scope (otherwise **`WORKTREE_ROOT`**), compare the hosting committed tree vs integration base (`git diff origin/main...HEAD` or equivalent). Product source commits in `SOURCE_ROOT` are **not** hosting commits.
 2. **Gitlink-only-only** — every changed path is a **submodule gitlink** (pointer/mode only); **no** non-submodule tracked files.
 3. Record `outputs.hostingDiffClass: gitlink-only-only | mixed | none`.
 
@@ -2413,6 +2433,10 @@ Under Checkpoint trust, after a **clean** rebase (or Checkpoint conflict resolve
 ### Post-merge workspace cleanup
 
 Run on this lane **after** `prState: merged` **and before** [After deploy deploy-walk handoff](#after-deploy-deploy-walk-handoff). Normative entry: [Act after post-create-pr pick](#act-after-post-create-pr-pick) (**`spawn-after-deploy-walk`** or **`check-pr-status`** → merged), explicit developer message (*pull main*, *remove worktree*, *post-merge cleanup*), or **auto-apply** when merge is confirmed and ownership preconditions pass.
+
+**Product checkout lifecycle:** For registered product scope, interpret the `WORKTREE_ROOT` candidate below as the exact **`HOSTING_WORKTREE_ROOT`** returned by center setup, **never** as `SOURCE_ROOT`. The product checkout is a nested submodule, not a second Git worktree registered on the product repository. Before running detect/apply, verify the source PR merge, completed hosting pin promotion, a clean `SOURCE_ROOT`, and ownership of the hosting worktree under rule **0** Path A/B. Detach the `SOURCE_ROOT` mount if this pass mounted it; detach the hosting worktree mount only if it was separately mounted by this pass or persisted Path B permits it. Pass truthful `--mounted-via-mcp` and `--detach-completed` flags for the **hosting** worktree to `worktree-cleanup.sh`; a source-only mount does not attest a hosting mount. Verify the nested source checkout disappears after authorized hosting cleanup. Dirty source, an in-use checkout, unclear ownership, or partial removal is an exception gate: preserve both paths and do not report successful cleanup. The generic detector's empty candidate list cannot by itself prove the source checkout was removed.
+
+Do not pass the **product** merge SHA to center hosting `worktree-cleanup.sh --merge-sha`: that option verifies ancestry on **hosting** `main`. Use a verified hosting PR merge SHA when there is a hosting content PR; on a source-only pin pass, rely on the separately verified product merge and hosting pin-complete gate instead of falsely attesting cross-repository ancestry.
 
 **Auto-apply (default):** When `prState: merged` and § *Worktree removal ownership* preconditions hold for **this pass’s** **`WORKTREE_ROOT`** **or** [Inherited worktree ownership](#inherited-worktree-ownership-upstream-handoff-binding) authorizes that exact path, run detect → dry-run recap (one line or **`displayMarkdown`** when long) → MCP detach → **`--apply`** in the **same assistant turn** **without** a cleanup authorization modal. Label the action in recap as *Run post-merge worktree cleanup now* when reporting to the developer.
 
