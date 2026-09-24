@@ -48,6 +48,8 @@ The Squad Leader remains on `HOSTING_ROOT` for orchestration and operations, but
 
 The hosting repository records integration gitlinks. After the source-repository PR is reviewed and merged, use the script-backed pin-promotion path for the hosting gitlink. A gitlink-only hosting PR is mechanical and must not replace source-repository review.
 
+**Registered product gitlink (binding):** For `app/`, `vscode/`, or another product row in the active hosting overlay, `coding-session` uses center `worktree-setup.sh` against `HOSTING_ROOT` to create a hosting worktree and initialize the Gitlink checkout; it then verifies and branches the **nested product checkout** as `SOURCE_ROOT` and attaches that source checkout for code work. The hosting setup branch is **not** the product PR branch. Source edits, tests, Git commands, substantive review, and PR occur in the product repository; operations writes remain on primary `HOSTING_ROOT`. Keep hosting and source paths and mount/cleanup ownership separate, merge the product PR before mechanical hosting pin promotion, and clean the authorized hosting worktree only after checking the source checkout is safe to remove. See [`coding-session/SKILL.md`](../missions/plan-and-deliver/skills/coding-session/SKILL.md) § *Product gitlink checkout routing* for the branch, attach, ship, and cleanup procedure; do **not** substitute raw product `git worktree add` or a hosting-shell PR for source implementation.
+
 There are two kinds of agent sessions:
 
 - **Squad Leader is the main session** — stays on **`HOSTING_ROOT`** (primary hosting clone, usually on `main`), handles lightweight tasks that do not need a worktree because they do not alter tracked hosting-repo code:
