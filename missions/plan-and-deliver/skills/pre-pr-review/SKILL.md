@@ -297,6 +297,12 @@ If the only “deferred” work you would list is post-merge deploy verification
 
 Verdict per row: `PASS`, `FLAG`, or `FAIL`. `FAIL` blocks PR creation or merge readiness.
 
+### Exhaustive review and clean verification pass (binding)
+
+Review **every changed file and applicable category** against the same committed cut point, anchor, and project rules. Keep a deduplicated findings ledger with file/location, evidence, category, severity (`FLAG` or `FAIL`), and an actionable remedy. Finding an issue, including a merge-blocking `FAIL`, **does not terminate the review**: inspect the rest of the diff and categories for independent issues. Do not emit an intermediate `mission_control_send_agent_result`, refocus the parent, or ask for a fresh spawn after the first finding.
+
+After completing the initial full review, **run the entire review again** from the diff and anchor, not just the files or categories with known findings. Add any distinct newly discovered issues to the ledger and repeat complete passes until one full verification pass finds **zero new issues**. A clean verification pass means no *additional* findings, **not** that existing findings have been fixed or that a `no-go` can become `go`. Keep all previously found blockers and flags in the final report. If required review inputs are unavailable or coverage cannot be completed, use the existing `failure` / degraded `partial` paths; never claim exhaustive verification for an incomplete pass. This is read-only review: do not change source or plan files to make a pass clean.
+
 ### Plan anchor categories
 
 | Cat | Focus |
@@ -320,7 +326,7 @@ Verdict per row: `PASS`, `FLAG`, or `FAIL`. `FAIL` blocks PR creation or merge r
 | **F2** | Repo-rule compliance |
 | **F3** | General code quality |
 
-- **Next-step resolution:** Auto-advance to Step **7** after category scoring — no `USER_CHECKPOINT` on this step.
+- **Next-step resolution:** Auto-advance to Step **7** only after all applicable categories and changed files have been inspected and a subsequent full pass adds zero new issues — no `USER_CHECKPOINT` on this step.
 
 ## Step 7 — Proposed follow-ups
 
@@ -340,6 +346,8 @@ For `free-form`, skip file writes.
 - **Next-step resolution:** Auto-advance to Step **8** — handoff only; no plan mutation and no `USER_CHECKPOINT` on this step.
 
 ## Step 8 — Report and result
+
+Report **once**, after Step **6** has completed its clean verification pass. Consolidate and deduplicate the full findings ledger across all passes; do not hand back one issue at a time. Preserve every unresolved `FAIL` as a blocker (`no-go`) even if the final pass found no new issues. Only the review-precluding exception paths in Steps **1–5** or degraded coverage in Step **6** may end without this verification.
 
 Report:
 
